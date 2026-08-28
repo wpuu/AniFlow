@@ -4,6 +4,7 @@ export interface BridgeHealth {
   ok: boolean;
   media_ready: boolean;
   capcut_ready: boolean;
+  frontend_ready: boolean;
   capcut_model?: string | null;
   bridge: string;
 }
