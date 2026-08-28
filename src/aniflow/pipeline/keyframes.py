@@ -15,7 +15,7 @@ class KeyframeSet:
 
 
 class KeyframeGenerator:
-    """Generate A/B/C while carrying character identity and previous-frame context forward."""
+    """Generate A/B/C while carrying character identity, style, and previous-frame context forward."""
 
     def __init__(self, key_pool: KeyPool, image_client: AgnesImageClient) -> None:
         self.key_pool = key_pool
@@ -26,17 +26,23 @@ class KeyframeGenerator:
         *,
         storyboard: Storyboard3,
         character_reference_urls: list[str],
+        style: str,
     ) -> KeyframeSet:
         refs = [url.strip() for url in character_reference_urls if url.strip()]
         if not refs:
             raise ValueError("At least one character reference image URL is required")
+        selected_style = style.strip()
+        if not selected_style:
+            raise ValueError("Visual style must not be empty")
 
         frame_a_url = await self._generate(
             prompt=(
                 f"{storyboard.frame_a.image_prompt}\n\n"
                 "Reference roles: the supplied images define the exact canonical character identity, "
-                "materials, colors, accessories and proportions. Create keyframe A as a vertical 9:16 "
-                "needle-felt animation frame. Preserve identity exactly. No text or watermark."
+                "materials, colors, accessories and proportions. "
+                f"Create keyframe A as a vertical 9:16 animation frame in this exact visual style: {selected_style}. "
+                "Preserve identity exactly. Do not introduce a different rendering medium. "
+                "No text or watermark."
             ),
             references=refs,
         )
@@ -46,10 +52,11 @@ class KeyframeGenerator:
                 f"{storyboard.frame_b.image_prompt}\n\n"
                 "Reference roles: the first reference image(s) define the canonical character. "
                 "The final reference image is keyframe A and defines the established scene, camera, "
-                "lighting and material language. Create keyframe B as the next story state while "
-                "preserving the same character identity and scene continuity. B must be a clean, "
+                "lighting and material language. "
+                f"Create keyframe B in the same exact visual style: {selected_style}. "
+                "Preserve the same character identity and scene continuity. B must be a clean, "
                 "stable composition that can serve both as an ending frame and the next starting frame. "
-                "No text or watermark."
+                "Do not introduce a different rendering medium. No text or watermark."
             ),
             references=[*refs[:3], frame_a_url],
         )
@@ -59,8 +66,9 @@ class KeyframeGenerator:
                 f"{storyboard.frame_c.image_prompt}\n\n"
                 "Reference roles: the first reference image(s) define the canonical character. "
                 "The final reference image is keyframe B and defines the immediately previous scene state. "
-                "Create keyframe C as the final story state. Preserve identity, materials, accessories, "
-                "lighting logic and environment continuity exactly. No text or watermark."
+                f"Create keyframe C in the same exact visual style: {selected_style}. "
+                "Preserve identity, materials, accessories, lighting logic and environment continuity exactly. "
+                "Do not introduce a different rendering medium. No text or watermark."
             ),
             references=[*refs[:3], frame_b_url],
         )
