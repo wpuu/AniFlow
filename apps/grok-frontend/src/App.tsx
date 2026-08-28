@@ -33,6 +33,10 @@ function isPublicImageUrl(value: string): boolean {
   return /^https?:\/\//i.test(value.trim());
 }
 
+function normalizeModelKey(value: unknown): VideoModelKey {
+  return value === 'flash25' ? 'flash25' : 'v2';
+}
+
 function mergeParams(
   base: GenerationParams,
   saved: Partial<GenerationParams> | null | undefined,
@@ -45,6 +49,19 @@ function mergeParams(
   };
 }
 
+function stripEphemeralImages(params: GenerationParams): GenerationParams {
+  return {
+    ...params,
+    singleImage: params.singleImage.startsWith('data:') ? '' : params.singleImage,
+    singleImageFileName: params.singleImage.startsWith('data:') ? '' : params.singleImageFileName,
+    keyframeScenes: params.keyframeScenes.map((scene) =>
+      scene.imageUrl.startsWith('data:')
+        ? { ...scene, imageUrl: '', fileName: '' }
+        : scene,
+    ),
+  };
+}
+
 export default function App() {
   const [apiKeyCount, setApiKeyCount] = useState<number>(() => loadJSON(STORAGE_KEYS.KEY_COUNT, 1));
   const [apiKeys, setApiKeys] = useState<string[]>(() => {
@@ -54,7 +71,7 @@ export default function App() {
   });
 
   const [modelKey, setModelKey] = useState<VideoModelKey>(() =>
-    loadJSON<VideoModelKey>(STORAGE_KEYS.ACTIVE_MODEL, 'v2'),
+    normalizeModelKey(loadJSON<unknown>(STORAGE_KEYS.ACTIVE_MODEL, 'v2')),
   );
 
   const [paramsByModel, setParamsByModel] = useState<Record<VideoModelKey, GenerationParams>>(() => {
@@ -96,8 +113,12 @@ export default function App() {
 
   useEffect(() => {
     const t = window.setTimeout(() => {
-      saveJSON(STORAGE_KEYS.PARAMS_BY_MODEL, paramsByModel);
-      saveJSON(STORAGE_KEYS.LAST_PARAMS, paramsByModel.v2);
+      const persisted = {
+        v2: stripEphemeralImages(paramsByModel.v2),
+        flash25: stripEphemeralImages(paramsByModel.flash25),
+      };
+      saveJSON(STORAGE_KEYS.PARAMS_BY_MODEL, persisted);
+      saveJSON(STORAGE_KEYS.LAST_PARAMS, persisted.v2);
     }, 500);
     return () => window.clearTimeout(t);
   }, [paramsByModel]);
@@ -139,6 +160,13 @@ export default function App() {
   }
 
   function handleKeyCountChange(count: number) {
+    const hiddenBusyKey = Object.entries(tasksByKey).some(
+      ([index, task]) => Number(index) >= count && BUSY_STATUSES.has(task.status),
+    );
+    if (hiddenBusyKey) {
+      notify('不能隐藏正在运行的 Key；请先停止跟踪对应任务，再减少 Key 数量', 'error');
+      return;
+    }
     setApiKeyCount(count);
     setApiKeys((prev) => Array.from({ length: count }, (_, i) => prev[i] ?? ''));
     setSelectedKeyTab((prev) => Math.min(prev, count - 1));
@@ -380,9 +408,10 @@ export default function App() {
       STORAGE_KEYS.DEFAULT_PARAMS_BY_MODEL,
       {},
     );
-    const next = { ...defaults, [modelKey]: params };
+    const safeParams = stripEphemeralImages(params);
+    const next = { ...defaults, [modelKey]: safeParams };
     saveJSON(STORAGE_KEYS.DEFAULT_PARAMS_BY_MODEL, next);
-    if (modelKey === 'v2') saveJSON(STORAGE_KEYS.DEFAULT_PARAMS, params);
+    if (modelKey === 'v2') saveJSON(STORAGE_KEYS.DEFAULT_PARAMS, safeParams);
     notify(`已将 ${VIDEO_MODELS[modelKey].label} 当前设置保存为默认设置`);
   }
 
@@ -414,6 +443,11 @@ export default function App() {
   }
 
   function handleClearHistory() {
+    const anyBusy = Object.values(tasksByKey).some((task) => BUSY_STATUSES.has(task.status));
+    if (anyBusy) {
+      notify('有任务正在运行，暂不能清空历史；请先等待完成或停止跟踪', 'error');
+      return;
+    }
     setHistory([]);
     saveJSON(STORAGE_KEYS.HISTORY, []);
     notify('历史记录已清空');
