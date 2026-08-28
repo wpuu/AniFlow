@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { HistoryItem, TaskState } from '../lib/types';
-import { STATUS_COLORS, STATUS_LABELS } from '../lib/constants';
+import { STATUS_COLORS, STATUS_LABELS, VIDEO_MODELS } from '../lib/constants';
 import { formatTime, modeLabel } from '../lib/format';
 import { cn } from '../utils/cn';
 
@@ -19,7 +19,6 @@ export default function RightPanel({
   keyCount,
   selectedKeyTab,
   onSelectKeyTab,
-  tasksByKey,
   history,
   selectedHistoryIdByKey,
   onSelectHistory,
@@ -32,9 +31,7 @@ export default function RightPanel({
 
   const selectedId = selectedHistoryIdByKey[selectedKeyTab] ?? keyHistory[0]?.id;
   const activeItem = keyHistory.find((h) => h.id === selectedId) ?? keyHistory[0];
-  const liveTask = tasksByKey[selectedKeyTab];
 
-  // 优先展示与当前选中历史一致的实时任务信息（正在进行中的任务）
   const display = activeItem
     ? {
         status: activeItem.status,
@@ -48,6 +45,7 @@ export default function RightPanel({
         ratio: activeItem.ratio,
         resolution: activeItem.resolution,
         createdAt: activeItem.createdAt,
+        modelKey: activeItem.modelKey ?? 'v2',
       }
     : null;
 
@@ -72,8 +70,13 @@ export default function RightPanel({
       ) : null}
 
       <div className="rounded-xl border border-zinc-200 bg-white p-3">
-        <div className="mb-2 flex items-center justify-between">
-          <span className="text-sm font-semibold text-zinc-800">视频预览</span>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <div>
+            <span className="text-sm font-semibold text-zinc-800">视频预览</span>
+            {display ? (
+              <p className="mt-0.5 text-[10px] text-zinc-400">{VIDEO_MODELS[display.modelKey].label}</p>
+            ) : null}
+          </div>
           {display ? (
             <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-medium', STATUS_COLORS[display.status])}>
               {STATUS_LABELS[display.status] ?? display.status}
@@ -92,7 +95,7 @@ export default function RightPanel({
               </svg>
               <p className="text-xs leading-relaxed">
                 {display
-                  ? liveTask?.status && liveTask.status !== 'idle'
+                  ? display.status === 'creating' || display.status === 'queued' || display.status === 'in_progress'
                     ? '视频生成中，请稍候…'
                     : '暂无可播放视频'
                   : '尚无生成记录，设置参数后点击上方“生成视频”开始'}
@@ -148,48 +151,55 @@ export default function RightPanel({
           {keyHistory.length === 0 ? (
             <p className="py-6 text-center text-xs text-zinc-400">该 Key 暂无历史生成记录</p>
           ) : (
-            keyHistory.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => onSelectHistory(selectedKeyTab, item.id)}
-                className={cn(
-                  'block w-full rounded-lg border px-3 py-2 text-left transition',
-                  item.id === selectedId
-                    ? 'border-indigo-500 bg-indigo-50/60 ring-1 ring-indigo-500'
-                    : 'border-zinc-200 hover:border-zinc-300',
-                )}
-              >
-                <div className="mb-1 flex items-center justify-between gap-2">
-                  <span className="flex items-center gap-1.5 text-[11px] text-zinc-400">
-                    <span className="rounded bg-zinc-100 px-1.5 py-0.5 font-medium text-zinc-500">
-                      {modeLabel(item.mode)}
+            keyHistory.map((item) => {
+              const itemModelKey = item.modelKey ?? 'v2';
+              return (
+                <div
+                  key={item.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onSelectHistory(selectedKeyTab, item.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') onSelectHistory(selectedKeyTab, item.id);
+                  }}
+                  className={cn(
+                    'w-full cursor-pointer rounded-lg border px-3 py-2 text-left transition',
+                    item.id === selectedId
+                      ? 'border-indigo-500 bg-indigo-50/60 ring-1 ring-indigo-500'
+                      : 'border-zinc-200 hover:border-zinc-300',
+                  )}
+                >
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-zinc-400">
+                      <span className="rounded bg-zinc-100 px-1.5 py-0.5 font-medium text-zinc-500">
+                        {modeLabel(item.mode)}
+                      </span>
+                      <span className="truncate">{VIDEO_MODELS[itemModelKey].label}</span>
+                      <span>{item.ratio}</span>
                     </span>
-                    <span>{item.ratio}</span>
-                    <span>{item.resolution}</span>
-                  </span>
-                  <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium', STATUS_COLORS[item.status])}>
-                    {STATUS_LABELS[item.status] ?? item.status}
-                  </span>
+                    <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium', STATUS_COLORS[item.status])}>
+                      {STATUS_LABELS[item.status] ?? item.status}
+                    </span>
+                  </div>
+                  <p className="line-clamp-2 text-xs text-zinc-700">{item.promptPreview || '（未填写提示词）'}</p>
+                  <div className="mt-1 flex items-center justify-between">
+                    <span className="text-[10px] text-zinc-400">{formatTime(item.createdAt)}</span>
+                    {item.status === 'queued' || item.status === 'in_progress' || item.status === 'creating' ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRefreshHistory(item);
+                        }}
+                        className="text-[10px] text-indigo-500 hover:underline"
+                      >
+                        刷新状态
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
-                <p className="line-clamp-2 text-xs text-zinc-700">{item.promptPreview || '（未填写提示词）'}</p>
-                <div className="mt-1 flex items-center justify-between">
-                  <span className="text-[10px] text-zinc-400">{formatTime(item.createdAt)}</span>
-                  {item.status === 'queued' || item.status === 'in_progress' || item.status === 'creating' ? (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onRefreshHistory(item);
-                      }}
-                      className="text-[10px] text-indigo-500 hover:underline"
-                    >
-                      刷新状态
-                    </button>
-                  ) : null}
-                </div>
-              </button>
-            ))
+              );
+            })
           )}
         </div>
       </div>
