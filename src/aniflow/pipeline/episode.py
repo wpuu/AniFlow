@@ -87,6 +87,7 @@ class EpisodePipeline:
         keyframes = await self.keyframe_generator.generate_three(
             storyboard=storyboard,
             character_reference_urls=character_reference_urls,
+            style=style,
         )
 
         # Agnes image URLs may be temporary. Persist A/B/C before they are used as
