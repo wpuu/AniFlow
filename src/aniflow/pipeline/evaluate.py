@@ -34,31 +34,42 @@ class CandidateEvaluator:
         story_action: str,
     ) -> CandidateEvaluation:
         slot = await self.key_pool.next()
-        with tempfile.TemporaryDirectory(prefix="aniflow-") as tmp:
-            root = Path(tmp)
-            video_path = await download_video(candidate.video_url, root / "candidate.mp4")
-            frame_paths = await extract_sample_frames(video_path, root / "frames")
-            frame_urls = await asyncio.gather(
-                *[
-                    self.media_store.upload(
-                        path,
-                        f"aniflow/tmp/{job_id}/{candidate.candidate_id}/{path.name}",
-                    )
+        object_keys: list[str] = []
+        try:
+            with tempfile.TemporaryDirectory(prefix="aniflow-") as tmp:
+                root = Path(tmp)
+                video_path = await download_video(candidate.video_url, root / "candidate.mp4")
+                frame_paths = await extract_sample_frames(video_path, root / "frames")
+                object_keys = [
+                    f"aniflow/tmp/{job_id}/{candidate.candidate_id}/{path.name}"
                     for path in frame_paths
                 ]
+                frame_urls = await asyncio.gather(
+                    *[
+                        self.media_store.upload(path, object_key)
+                        for path, object_key in zip(frame_paths, object_keys, strict=True)
+                    ]
+                )
+                scores = await self.judge.judge_three_passes(
+                    api_key=slot.api_key,
+                    first_frame_url=first_frame_url,
+                    last_frame_url=last_frame_url,
+                    sampled_frame_urls=list(frame_urls),
+                    story_action=story_action,
+                )
+            return CandidateEvaluation(
+                candidate_id=candidate.candidate_id,
+                video_url=candidate.video_url,
+                scores=scores,
             )
-            scores = await self.judge.judge_three_passes(
-                api_key=slot.api_key,
-                first_frame_url=first_frame_url,
-                last_frame_url=last_frame_url,
-                sampled_frame_urls=list(frame_urls),
-                story_action=story_action,
-            )
-        return CandidateEvaluation(
-            candidate_id=candidate.candidate_id,
-            video_url=candidate.video_url,
-            scores=scores,
-        )
+        finally:
+            # QA samples are transient transport objects. Never let cleanup failure
+            # invalidate an otherwise valid candidate evaluation.
+            if object_keys:
+                try:
+                    await self.media_store.delete_many(object_keys)
+                except Exception:
+                    pass
 
     async def evaluate_batch(
         self,
