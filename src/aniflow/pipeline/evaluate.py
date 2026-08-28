@@ -6,10 +6,10 @@ from pathlib import Path
 
 from aniflow.agnes.key_pool import KeyPool
 from aniflow.agnes.vision import AgnesVisionJudge
-from aniflow.models import CandidateEvaluation
-from aniflow.pipeline.candidates import GeneratedCandidate
 from aniflow.media.ffmpeg import download_video, extract_sample_frames
 from aniflow.media.store import PublicMediaStore
+from aniflow.models import CandidateEvaluation
+from aniflow.pipeline.candidates import GeneratedCandidate
 
 
 class CandidateEvaluator:
@@ -42,7 +42,7 @@ class CandidateEvaluator:
                 *[
                     self.media_store.upload(
                         path,
-                        f"aniflow/{job_id}/{candidate.candidate_id}/{path.name}",
+                        f"aniflow/tmp/{job_id}/{candidate.candidate_id}/{path.name}",
                     )
                     for path in frame_paths
                 ]
