@@ -35,6 +35,7 @@ class BenchmarkRow(BaseModel):
     final_qa_total: float | None = None
     final_qa_advisory_pass: bool | None = None
     final_qa_error: str | None = None
+    run_error: str | None = None
 
 
 class StyleSummary(BaseModel):
@@ -42,6 +43,7 @@ class StyleSummary(BaseModel):
     attempted: int
     completed: int
     completion_rate: float
+    failed_with_error: int = 0
     mean_ab_score: float | None = None
     mean_bc_score: float | None = None
     mean_rounds: float | None = None
@@ -69,6 +71,7 @@ class HumanCalibrationRow(BaseModel):
     machine_bc_score: float | None = None
     machine_final_qa_score: float | None = None
     machine_final_qa_pass: bool | None = None
+    run_error: str | None = None
     human_usable: bool | None = None
     issue_identity: bool = False
     issue_anatomy: bool = False
@@ -84,7 +87,7 @@ class HumanCalibrationSheet(BaseModel):
     run_id: str
     instructions: str = (
         "Review every final_public_url. Set human_usable true/false and mark only visible issue flags. "
-        "Do not change machine scores. This first sheet calibrates AniFlow QA thresholds."
+        "Rows with run_error have no completed video and should be treated as pipeline failures."
     )
     rows: list[HumanCalibrationRow] = Field(default_factory=list)
 
@@ -156,45 +159,57 @@ class BenchmarkRunner:
             profile = profiles[style_key]
 
             async def run_one(index: int, idea: StoryIdea) -> BenchmarkRow:
+                episode_id = (
+                    f"{self._slug(character_id)}-{self._slug(style_key)}-"
+                    f"{run_id}-{index + 1:02d}"
+                )
                 async with semaphore:
-                    episode_id = (
-                        f"{self._slug(character_id)}-{self._slug(style_key)}-"
-                        f"{run_id}-{index + 1:02d}"
-                    )
-                    result = await self.episode_pipeline.run(
-                        episode_id=episode_id,
-                        idea=f"{idea.premise} Visual hook: {idea.visual_hook}",
-                        character_description=profile.bible.identity_prompt(),
-                        character_reference_urls=profile.urls,
-                        output_dir=output_root / run_id / style_key,
-                        style=profile.style_description,
-                    )
-                    return BenchmarkRow(
-                        style_key=style_key,
-                        idea_index=index + 1,
-                        episode_id=episode_id,
-                        title=idea.title,
-                        premise=idea.premise,
-                        completed=result.completed,
-                        final_public_url=result.final_public_url,
-                        ab_score=(
-                            result.segment_ab.selected.total
-                            if result.segment_ab.selected is not None
-                            else None
-                        ),
-                        bc_score=(
-                            result.segment_bc.selected.total
-                            if result.segment_bc.selected is not None
-                            else None
-                        ),
-                        ab_rounds=len(result.segment_ab.rounds),
-                        bc_rounds=len(result.segment_bc.rounds),
-                        final_qa_total=(result.final_qa.total if result.final_qa is not None else None),
-                        final_qa_advisory_pass=(
-                            result.final_qa.advisory_pass if result.final_qa is not None else None
-                        ),
-                        final_qa_error=result.final_qa_error,
-                    )
+                    try:
+                        result = await self.episode_pipeline.run(
+                            episode_id=episode_id,
+                            idea=f"{idea.premise} Visual hook: {idea.visual_hook}",
+                            character_description=profile.bible.identity_prompt(),
+                            character_reference_urls=profile.urls,
+                            output_dir=output_root / run_id / style_key,
+                            style=profile.style_description,
+                        )
+                    except Exception as exc:  # noqa: BLE001 - isolate one failed experiment row
+                        return BenchmarkRow(
+                            style_key=style_key,
+                            idea_index=index + 1,
+                            episode_id=episode_id,
+                            title=idea.title,
+                            premise=idea.premise,
+                            completed=False,
+                            run_error=f"{type(exc).__name__}: {exc}",
+                        )
+
+                return BenchmarkRow(
+                    style_key=style_key,
+                    idea_index=index + 1,
+                    episode_id=episode_id,
+                    title=idea.title,
+                    premise=idea.premise,
+                    completed=result.completed,
+                    final_public_url=result.final_public_url,
+                    ab_score=(
+                        result.segment_ab.selected.total
+                        if result.segment_ab.selected is not None
+                        else None
+                    ),
+                    bc_score=(
+                        result.segment_bc.selected.total
+                        if result.segment_bc.selected is not None
+                        else None
+                    ),
+                    ab_rounds=len(result.segment_ab.rounds),
+                    bc_rounds=len(result.segment_bc.rounds),
+                    final_qa_total=(result.final_qa.total if result.final_qa is not None else None),
+                    final_qa_advisory_pass=(
+                        result.final_qa.advisory_pass if result.final_qa is not None else None
+                    ),
+                    final_qa_error=result.final_qa_error,
+                )
 
             style_rows = await asyncio.gather(
                 *[run_one(index, idea) for index, idea in enumerate(batch.ideas)]
@@ -265,6 +280,7 @@ class BenchmarkRunner:
                     attempted=len(subset),
                     completed=len(completed),
                     completion_rate=round(len(completed) / len(subset), 4) if subset else 0.0,
+                    failed_with_error=sum(1 for row in subset if row.run_error is not None),
                     mean_ab_score=BenchmarkRunner._mean(ab_scores),
                     mean_bc_score=BenchmarkRunner._mean(bc_scores),
                     mean_rounds=BenchmarkRunner._mean(round_values),
@@ -290,6 +306,7 @@ class BenchmarkRunner:
                 machine_bc_score=row.bc_score,
                 machine_final_qa_score=row.final_qa_total,
                 machine_final_qa_pass=row.final_qa_advisory_pass,
+                run_error=row.run_error,
             )
             for row in rows
         ]
