@@ -40,10 +40,36 @@ def doctor() -> None:
         "aspect_ratio": settings.aniflow_aspect_ratio,
         "video_seconds": settings.aniflow_video_seconds,
         "s3_media_ready": settings.s3_ready,
+        "capcut_ready": settings.capcut_ready,
+        "capcut_seedream_model": settings.capcut_seedream_model or None,
+        "bridge_url": f"http://{settings.aniflow_bridge_host}:{settings.aniflow_bridge_port}",
         "ffmpeg": bool(shutil.which("ffmpeg")),
         "ffprobe": bool(shutil.which("ffprobe")),
     }
     typer.echo(json.dumps(report, ensure_ascii=False, indent=2))
+
+
+@app.command("bridge")
+def run_bridge(
+    host: str | None = typer.Option(None, help="Loopback host; defaults to ANIFLOW_BRIDGE_HOST"),
+    port: int | None = typer.Option(None, min=1, max=65535, help="Loopback port"),
+) -> None:
+    """Start the private loopback API used by the AniFlow browser frontend."""
+    settings = get_settings()
+    bind_host = (host or settings.aniflow_bridge_host).strip()
+    if bind_host not in {"127.0.0.1", "localhost", "::1"}:
+        raise typer.BadParameter("AniFlow Bridge may only bind to loopback (127.0.0.1/localhost/::1)")
+    bind_port = port or settings.aniflow_bridge_port
+
+    import uvicorn
+
+    uvicorn.run(
+        "aniflow.bridge.app:app",
+        host=bind_host,
+        port=bind_port,
+        reload=False,
+        access_log=False,
+    )
 
 
 @app.command("preflight")
