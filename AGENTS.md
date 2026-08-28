@@ -44,6 +44,19 @@ Source of truth: https://wiki.agnes-ai.com/en/docs/agnes-video-25-flash
   - 3:4 = 720x960
   - 9:16 = 720x1280
 
+## Character identity policy
+
+A style benchmark must compare rendering/video behavior, not three independently randomized character designs.
+
+Character bootstrap therefore uses this fixed chain:
+
+1. `agnes-2.5-flash` creates one semantic Character Bible.
+2. `agnes-image-2.1-flash` creates one persistent, style-neutral `identity-anchor` that locks silhouette, proportions, face placement, colors, accessory geometry and distinguishing feature.
+3. felt / clay / toy front references all use that same anchor as their source and may change material/rendering only.
+4. Each style's three-quarter and side references use the shared anchor plus the already-generated style references.
+
+Do not revert to generating each style's canonical front independently from text only.
+
 ## Quality policy
 
 Each generated candidate is sampled at 0/20/40/60/80/100% and judged by Agnes 2.5 Flash using three independent judging focuses. Numeric scores are median-aggregated.
@@ -61,7 +74,7 @@ If every candidate fails, use the best failed candidate's diagnosis to rewrite t
 
 ## Multi-account policy
 
-`AGNES_API_KEYS` is a comma-separated list of API keys from independently owned Agnes accounts. The default candidate draw must use at least one candidate from every configured account. Explicit CLI candidate counts may override that behavior.
+`AGNES_API_KEYS` is a comma-separated list of API keys from independently owned Agnes accounts. Each default segment batch independently includes at least one draw from every configured account, even when AB and BC run concurrently. If the configured/default candidate target exceeds account count, continue through accounts in deterministic round-robin order. An explicit CLI candidate count may override the all-account default.
 
 Never commit real keys.
 
@@ -73,16 +86,32 @@ Only media objects need public reachability. The repository, frontend, admin UI,
 
 Persistent paths:
 
-- `aniflow/characters/` — canonical character references
+- `aniflow/characters/<id>/identity-anchor.*` — shared cross-style geometry/identity anchor
+- `aniflow/characters/` — style-specific canonical character references
 - `aniflow/episodes/<episode-id>/keyframes/` — persistent A/B/C episode keyframes
 - `aniflow/final/` — final videos
-- `aniflow/tmp/` — visual-QA sampled frames; configure lifecycle deletion, suggested 7 days
+
+Transient paths:
+
+- `aniflow/preflight/` — connectivity probe; delete immediately after read verification
+- `aniflow/tmp/` — visual-QA sampled frames; delete immediately after judging. Configure a short storage lifecycle as crash/interruption fallback.
+
+## Preflight policy
+
+Before Character, Benchmark, or Daily generation, run live preflight:
+
+- every configured Agnes account must successfully answer a minimal `agnes-2.5-flash` request;
+- media store must accept a tiny upload;
+- the resulting `S3_PUBLIC_BASE_URL` URL must be readable without authentication and return exact bytes;
+- the probe must be deletable.
+
+A failed preflight must stop generation before image/video work starts. `Setup Preflight` provides a standalone one-click GitHub Actions check.
 
 ## Current implementation status
 
 Implemented in V0.1 code:
 
-- multi-account Agnes key pool
+- multi-account Agnes key pool and per-segment all-account candidate coverage
 - Agnes Image 2.1 Flash client
 - Agnes Video 2.5 Flash keyframe task client and polling
 - Agnes 2.5 Flash multimodal visual judge
@@ -90,23 +119,26 @@ Implemented in V0.1 code:
 - candidate hard gates and weighted ranking
 - automatic video-prompt repair
 - six-frame video sampling with ffmpeg
-- S3-compatible public media upload
+- S3-compatible public media upload/delete
+- automatic cleanup of transient visual-QA frames
+- live multi-account Agnes + public-media preflight
 - 3-frame storyboard planner
-- continuity-aware A/B/C keyframe generation
+- continuity-aware and selected-style-locked A/B/C keyframe generation
 - persistent A/B/C episode keyframes before video generation
 - parallel A->B and B->C candidate pipelines
 - final 720x1280 two-segment assembly
-- reusable character bible plus felt/clay/toy reference generation
+- reusable Character Bible, shared identity anchor, plus felt/clay/toy style reference generation
 - shared-story style benchmark: default 10 identical stories x 3 styles = 30 videos
 - history-aware daily content runner
-- `aniflow doctor`, `character`, `segment`, `episode`, `benchmark`, and `daily` CLI commands
-- GitHub workflows: CI, character bootstrap, style benchmark, daily generation
+- `aniflow doctor`, `preflight`, `character`, `segment`, `episode`, `benchmark`, and `daily` CLI commands
+- GitHub workflows: CI, Setup Preflight, character bootstrap, style benchmark, daily generation
 - unit/import tests for core control logic
 
 Implemented but not yet proven with a real production run:
 
 - live Agnes API calls using the owner's real multi-account keys
 - live R2/S3 upload configuration and Agnes access to those URLs
+- Setup Preflight workflow with real secrets
 - Build Character References workflow with real secrets
 - 30-video Style Benchmark with real generation
 - scheduled Daily Animation Factory with real generation
