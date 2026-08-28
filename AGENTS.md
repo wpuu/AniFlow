@@ -21,6 +21,7 @@ AniFlow is a private automated animation-content pipeline. It is not a public Ag
 - First content styles to validate: needle-felt, clay, miniature toy-world.
 - Default production timezone: `Asia/Shanghai`.
 - The owner's existing multi-key frontend is private and project-specific; do not redesign AniFlow as a public Agnes proxy.
+- The existing Grok-generated frontend, when imported, belongs under `apps/grok-frontend/` and must initially be preserved as-is for audit. Frontend integration is deferred until after V0.1 backend validation.
 
 ## Official Agnes Video 2.5 Flash constraints
 
@@ -72,6 +73,14 @@ Hard minimums:
 
 If every candidate fails, use the best failed candidate's diagnosis to rewrite the video prompt and retry. Default maximum repair rounds is 2 after the initial round.
 
+After AB and BC pass and are assembled, V0.1 also runs an advisory whole-episode Final QA. It samples the final video with points bracketing the middle join at 49%/51% and evaluates whole-episode character identity, style consistency, seam continuity, temporal integrity, story clarity, pacing and visual appeal. During the first benchmark this Final QA must not discard an otherwise viewable video; its scores are calibration telemetry until compared with human ratings.
+
+## Human calibration policy
+
+The first real 30-video benchmark must generate a calibration sheet in `data/calibration/<run_id>.json`. Each episode stores machine segment/final scores plus empty human fields such as `human_usable`, identity/anatomy/background/seam/motion/story/visual-appeal issue flags, and notes.
+
+Do not make Final QA a hard production gate until the first human review is complete and false-positive/false-negative behavior has been measured.
+
 ## Multi-account policy
 
 `AGNES_API_KEYS` is a comma-separated list of API keys from independently owned Agnes accounts. Each default segment batch independently includes at least one draw from every configured account, even when AB and BC run concurrently. If the configured/default candidate target exceeds account count, continue through accounts in deterministic round-robin order. An explicit CLI candidate count may override the all-account default.
@@ -94,7 +103,7 @@ Persistent paths:
 Transient paths:
 
 - `aniflow/preflight/` — connectivity probe; delete immediately after read verification
-- `aniflow/tmp/` — visual-QA sampled frames; delete immediately after judging. Configure a short storage lifecycle as crash/interruption fallback.
+- `aniflow/tmp/` — segment and whole-episode visual-QA sampled frames; delete immediately after judging. Configure a short storage lifecycle as crash/interruption fallback.
 
 ## Preflight policy
 
@@ -115,12 +124,13 @@ Implemented in V0.1 code:
 - Agnes Image 2.1 Flash client
 - Agnes Video 2.5 Flash keyframe task client and polling
 - Agnes 2.5 Flash multimodal visual judge
-- three-pass judging with median score aggregation
+- three-pass segment judging with median score aggregation
 - candidate hard gates and weighted ranking
 - automatic video-prompt repair
-- six-frame video sampling with ffmpeg
+- six-frame segment video sampling with ffmpeg
+- advisory whole-episode Final QA with middle-seam-focused sampling
 - S3-compatible public media upload/delete
-- automatic cleanup of transient visual-QA frames
+- automatic cleanup of transient segment/final visual-QA frames
 - live multi-account Agnes + public-media preflight
 - 3-frame storyboard planner
 - continuity-aware and selected-style-locked A/B/C keyframe generation
@@ -129,7 +139,9 @@ Implemented in V0.1 code:
 - final 720x1280 two-segment assembly
 - reusable Character Bible, shared identity anchor, plus felt/clay/toy style reference generation
 - shared-story style benchmark: default 10 identical stories x 3 styles = 30 videos
+- benchmark human-calibration JSON template
 - history-aware daily content runner
+- reserved `apps/grok-frontend/` import area for the owner's existing private frontend
 - `aniflow doctor`, `preflight`, `character`, `segment`, `episode`, `benchmark`, and `daily` CLI commands
 - GitHub workflows: CI, Setup Preflight, character bootstrap, style benchmark, daily generation
 - unit/import tests for core control logic
@@ -140,15 +152,16 @@ Implemented but not yet proven with a real production run:
 - live R2/S3 upload configuration and Agnes access to those URLs
 - Setup Preflight workflow with real secrets
 - Build Character References workflow with real secrets
+- advisory Final QA behavior on real Agnes-generated assembled videos
 - 30-video Style Benchmark with real generation
 - scheduled Daily Animation Factory with real generation
 
 Still pending after first real validation:
 
-- visual-score calibration against human ratings
+- visual-score and Final-QA calibration against human ratings
 - integration of the owner's existing private multi-key frontend
 - final-publish approval UX
 - publishing integrations to external platforms
-- optional final whole-episode QA / audio / music / subtitles
+- optional audio / music / subtitles
 
 Do not describe any unverified item above as completed or production-ready.
