@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from pydantic import Field, field_validator
@@ -32,6 +33,7 @@ class Settings(BaseSettings):
     # Loopback bridge used by the private browser frontend.
     aniflow_bridge_host: str = "127.0.0.1"
     aniflow_bridge_port: int = 8765
+    aniflow_frontend_index: str = "apps/grok-frontend/dist/index.html"
 
     # Optional CapCut/Seedream browser-automation adapter. The model label is
     # intentionally configurable because CapCut rotates available models.
@@ -105,6 +107,14 @@ class Settings(BaseSettings):
     @property
     def capcut_ready(self) -> bool:
         return bool(self.capcut_seedream_model.strip() and self.capcut_runner_command.strip())
+
+    @property
+    def frontend_index_path(self) -> Path:
+        return Path(self.aniflow_frontend_index).expanduser().resolve()
+
+    @property
+    def frontend_ready(self) -> bool:
+        return self.frontend_index_path.is_file()
 
 
 @lru_cache(maxsize=1)
