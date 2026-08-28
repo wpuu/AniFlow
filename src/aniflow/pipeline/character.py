@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import re
 import tempfile
-from dataclasses import dataclass
 from pathlib import Path
 
 from pydantic import BaseModel, Field
@@ -205,13 +204,28 @@ Return JSON only:
         with tempfile.TemporaryDirectory(prefix="aniflow-character-") as tmp:
             root = Path(tmp)
             for name, url in zip(names, urls, strict=True):
-                local = await download_file(url, root / f"{name}.png", timeout_seconds=360.0)
-                public = await self.media_store.upload(
-                    local,
-                    f"aniflow/characters/{self._slug(character_id)}/{self._slug(style_key)}/{name}.png",
+                raw = await download_file(url, root / f"{name}.bin", timeout_seconds=360.0)
+                suffix = self._image_suffix(raw)
+                local = raw.with_suffix(suffix)
+                raw.replace(local)
+                object_key = (
+                    f"aniflow/characters/{self._slug(character_id)}/"
+                    f"{self._slug(style_key)}/{name}{suffix}"
                 )
+                public = await self.media_store.upload(local, object_key)
                 saved.append(public)
         return saved
+
+    @staticmethod
+    def _image_suffix(path: Path) -> str:
+        header = path.read_bytes()[:16]
+        if header.startswith(b"\x89PNG\r\n\x1a\n"):
+            return ".png"
+        if header.startswith(b"\xff\xd8\xff"):
+            return ".jpg"
+        if header.startswith(b"RIFF") and header[8:12] == b"WEBP":
+            return ".webp"
+        return ".bin"
 
     @staticmethod
     def _parse_json(text: str) -> dict:
