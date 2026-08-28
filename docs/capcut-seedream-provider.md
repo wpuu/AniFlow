@@ -202,6 +202,19 @@ CapCut/Seedream can receive these references through its normal upload UI. No Ca
 - Browser session state is local-only and gitignored.
 - When login expires, stop and use normal user sign-in instead of attempting bypasses.
 
+## Local protocol spot-checks
+
+Because GitHub Actions are currently blocked by the owner's account billing/spending state, two isolated core checks were executed in the ChatGPT local execution environment after the current architecture was written:
+
+- CapCut Runner Windows command parsing + JSON subprocess request/response + PNG result copying: `CAPCUT_RUNNER_PROTOCOL_OK`.
+- Bridge health + frontend serving + media upload validation + page-supplied CapCut model override: `BRIDGE_CORE_PROTOCOL_OK`.
+
+These are targeted protocol checks, **not** a substitute for running the real repository's full tests/build. The owner-side Windows source of truth is:
+
+```text
+scripts/verify_aniflow_windows.ps1
+```
+
 ## Current status
 
 Implemented:
@@ -212,15 +225,21 @@ Implemented:
 - Windows-safe Runner command parsing;
 - reference download with valid image extensions;
 - local Bridge media upload and provider generation endpoints;
+- Bridge-served same-origin frontend;
 - frontend Agnes/CapCut provider selector;
 - page-saved CapCut model label;
 - up to three reference images in the private frontend;
 - generated-image handoff to video first/last-frame inputs;
 - logged-in CapCut UI discovery probe;
+- Windows setup/start/verify helper scripts;
 - tests for Bridge and subprocess contract committed to the repository.
 
 Not yet proven/completed:
 
+- full repository pytest on the owner's real Windows checkout after the latest changes;
+- full frontend strict TypeScript/Vite build on the owner's real checkout after the latest changes;
+- real R2 public-media path through Bridge;
+- real Agnes Image generation through the new Bridge panel;
 - real logged-in CapCut UI snapshot from the owner's machine;
 - final UI control adapter;
 - real CapCut generation through AniFlow;
