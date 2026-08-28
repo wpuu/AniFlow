@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Private AI animation production pipeline powered by Agnes models"
 requires-python = ">=3.11"
 dependencies = [
+  "boto3>=1.35,<2",
   "httpx>=0.28.1,<1",
   "pydantic>=2.10,<3",
   "pydantic-settings>=2.7,<3",
