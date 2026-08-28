@@ -44,7 +44,12 @@ class CandidateGenerator:
         count: int | None = None,
         base_seed: int | None = None,
     ) -> CandidateBatch:
-        target_count = count or self.settings.aniflow_candidates_per_segment
+        # Default policy: use at least one candidate from every configured Agnes account.
+        # If ANIFLOW_CANDIDATES_PER_SEGMENT is larger, continue round-robin for more draws.
+        target_count = count or max(
+            self.settings.aniflow_candidates_per_segment,
+            len(self.key_pool),
+        )
 
         async def generate_one(index: int):
             slot = await self.key_pool.next()
