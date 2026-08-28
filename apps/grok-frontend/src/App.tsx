@@ -4,6 +4,7 @@ import GenerateBar from './components/GenerateBar';
 import SettingsForm from './components/SettingsForm';
 import RightPanel from './components/RightPanel';
 import CollapsibleSection from './components/CollapsibleSection';
+import ImageGeneratorPanel from './components/ImageGeneratorPanel';
 import { STORAGE_KEYS, loadJSON, saveJSON } from './lib/storage';
 import { DEFAULT_PARAMS_BY_MODEL, VIDEO_MODELS } from './lib/constants';
 import { createVideoTask, getVideoResult } from './lib/api';
@@ -159,6 +160,41 @@ export default function App() {
   function handleModelChange(nextModel: VideoModelKey) {
     setModelKey(nextModel);
     notify(`已切换到 ${VIDEO_MODELS[nextModel].label}，该模型上次设置已恢复`);
+  }
+
+  function handleUseGeneratedImage(url: string, target: 'single' | 'first' | 'last') {
+    if (target === 'single') {
+      setParamsByModel((prev) => ({
+        ...prev,
+        [modelKey]: {
+          ...prev[modelKey],
+          mode: 'i2v',
+          singleImage: url,
+          singleImageFileName: '',
+        },
+      }));
+      notify(`已把生图结果设为 ${VIDEO_MODELS[modelKey].label} 的单图首帧`);
+      return;
+    }
+
+    const sceneIndex = target === 'first' ? 0 : 1;
+    setParamsByModel((prev) => {
+      const scenes = prev.flash25.keyframeScenes.map((scene) => ({ ...scene }));
+      while (scenes.length < 2) {
+        scenes.push({ id: genId('flash-frame'), imageUrl: '', fileName: '' });
+      }
+      scenes[sceneIndex] = { ...scenes[sceneIndex], imageUrl: url, fileName: '' };
+      return {
+        ...prev,
+        flash25: {
+          ...prev.flash25,
+          mode: 'keyframes',
+          keyframeScenes: scenes,
+        },
+      };
+    });
+    setModelKey('flash25');
+    notify(`已设为 Agnes Video 2.5 Flash ${target === 'first' ? '首帧' : '尾帧'}`);
   }
 
   function handleKeyCountChange(count: number) {
@@ -525,10 +561,10 @@ export default function App() {
               </div>
               <div>
                 <h1 className="text-base font-bold leading-tight text-zinc-900 sm:text-lg">
-                  Agnes 视频生成工作台
+                  AniFlow 动画工厂
                 </h1>
                 <p className="text-xs text-zinc-400">
-                  当前：{VIDEO_MODELS[modelKey].label} · 多 Key 并行 · 模型参数独立保存
+                  当前视频：{VIDEO_MODELS[modelKey].label} · 多 Key 并行 · 生图 Provider 可切换
                 </p>
               </div>
             </div>
@@ -603,6 +639,16 @@ export default function App() {
             />
           </CollapsibleSection>
 
+          <CollapsibleSection
+            title="AI 生图 / 参考图"
+            subtitle="Agnes Image 与 CapCut / Seedream 可切换，结果可直接送入视频首尾帧"
+          >
+            <ImageGeneratorPanel
+              apiKeys={apiKeys.slice(0, apiKeyCount)}
+              onUseResult={handleUseGeneratedImage}
+            />
+          </CollapsibleSection>
+
           <SettingsForm
             modelKey={modelKey}
             onModelChange={handleModelChange}
@@ -628,7 +674,7 @@ export default function App() {
       </main>
 
       <footer className="mx-auto max-w-7xl px-4 pb-8 pt-2 text-center text-[11px] text-zinc-400 sm:px-6">
-        当前模型：{VIDEO_MODELS[modelKey].label}。API Key 仅保存在本浏览器 localStorage；2.5 Flash 本地图片会自动经 {DEFAULT_BRIDGE_URL} 上传为公网 URL。
+        当前视频模型：{VIDEO_MODELS[modelKey].label}。API Key 仅保存在本浏览器 localStorage；2.5 Flash 本地图片会自动经 {DEFAULT_BRIDGE_URL} 上传为公网 URL。
       </footer>
     </div>
   );
