@@ -3,19 +3,23 @@ from __future__ import annotations
 import asyncio
 import json
 import shutil
+from pathlib import Path
 
 import typer
 
 from aniflow.agnes.http import AgnesHttpClient
+from aniflow.agnes.image import AgnesImageClient
 from aniflow.agnes.key_pool import KeyPool
 from aniflow.agnes.video import AgnesVideoClient
 from aniflow.agnes.vision import AgnesVisionJudge
 from aniflow.config import get_settings
 from aniflow.media.store import PublicMediaStore
 from aniflow.pipeline.candidates import CandidateGenerator
+from aniflow.pipeline.episode import EpisodePipeline
 from aniflow.pipeline.evaluate import CandidateEvaluator
 from aniflow.pipeline.repair import PromptRepairer
 from aniflow.pipeline.segment import SegmentPipeline
+from aniflow.pipeline.storyboard import StoryboardPlanner
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -38,6 +42,21 @@ def doctor() -> None:
     typer.echo(json.dumps(report, ensure_ascii=False, indent=2))
 
 
+def _build_segment_pipeline(settings, key_pool, http, store) -> SegmentPipeline:
+    video = AgnesVideoClient(settings, http)
+    judge = AgnesVisionJudge(settings, http)
+    generator = CandidateGenerator(settings, key_pool, video)
+    evaluator = CandidateEvaluator(key_pool=key_pool, judge=judge, media_store=store)
+    repairer = PromptRepairer(settings, http)
+    return SegmentPipeline(
+        settings=settings,
+        key_pool=key_pool,
+        generator=generator,
+        evaluator=evaluator,
+        repairer=repairer,
+    )
+
+
 @app.command("segment")
 def run_segment(
     segment_id: str = typer.Option(..., help="Stable ID, e.g. ep001-ab"),
@@ -56,25 +75,65 @@ def run_segment(
         key_pool = KeyPool(settings.api_keys)
         http = AgnesHttpClient()
         try:
-            video = AgnesVideoClient(settings, http)
-            judge = AgnesVisionJudge(settings, http)
             store = PublicMediaStore(settings)
-            generator = CandidateGenerator(settings, key_pool, video)
-            evaluator = CandidateEvaluator(key_pool=key_pool, judge=judge, media_store=store)
-            repairer = PromptRepairer(settings, http)
-            pipeline = SegmentPipeline(
-                settings=settings,
-                key_pool=key_pool,
-                generator=generator,
-                evaluator=evaluator,
-                repairer=repairer,
-            )
+            pipeline = _build_segment_pipeline(settings, key_pool, http, store)
             result = await pipeline.run(
                 segment_id=segment_id,
                 prompt=prompt,
                 story_action=story_action,
                 first_frame_url=first_frame_url,
                 last_frame_url=last_frame_url,
+                candidates_per_round=candidates,
+            )
+            return result.as_dict()
+        finally:
+            await http.aclose()
+
+    typer.echo(json.dumps(asyncio.run(_run()), ensure_ascii=False, indent=2))
+
+
+@app.command("episode")
+def run_episode(
+    episode_id: str = typer.Option(..., help="Stable ID, e.g. felt-0001"),
+    idea: str = typer.Option(..., help="One-sentence story idea"),
+    character_description: str = typer.Option(..., help="Fixed character bible summary"),
+    character_ref: list[str] = typer.Option(
+        ...,
+        "--character-ref",
+        help="Public character reference URL; repeat this option for multiple references",
+    ),
+    style: str = typer.Option("handmade needle-felt miniature animation"),
+    candidates: int | None = typer.Option(None, min=1),
+    output_dir: Path = typer.Option(Path("output")),
+) -> None:
+    """Create a complete 10-second A->B->C vertical episode."""
+
+    async def _run() -> dict:
+        settings = get_settings()
+        if not settings.api_keys:
+            raise RuntimeError("AGNES_API_KEYS is empty")
+        if not character_ref:
+            raise RuntimeError("At least one --character-ref URL is required")
+        key_pool = KeyPool(settings.api_keys)
+        http = AgnesHttpClient()
+        try:
+            store = PublicMediaStore(settings)
+            segment_pipeline = _build_segment_pipeline(settings, key_pool, http, store)
+            episode_pipeline = EpisodePipeline(
+                settings=settings,
+                key_pool=key_pool,
+                storyboard_planner=StoryboardPlanner(settings, http),
+                image_client=AgnesImageClient(settings, http),
+                segment_pipeline=segment_pipeline,
+                media_store=store,
+            )
+            result = await episode_pipeline.run(
+                episode_id=episode_id,
+                idea=idea,
+                character_description=character_description,
+                character_reference_urls=character_ref,
+                output_dir=output_dir,
+                style=style,
                 candidates_per_round=candidates,
             )
             return result.as_dict()
