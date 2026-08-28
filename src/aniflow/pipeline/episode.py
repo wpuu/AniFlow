@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from dataclasses import dataclass
 from pathlib import Path
 
 from aniflow.agnes.image import AgnesImageClient
 from aniflow.agnes.key_pool import KeyPool
-from aniflow.agnes.storyboard import StoryboardPlanner
 from aniflow.config import Settings
 from aniflow.media.assemble import assemble_vertical_two_segments
 from aniflow.media.store import PublicMediaStore
@@ -88,21 +88,23 @@ class EpisodePipeline:
             character_reference_urls=character_reference_urls,
         )
 
-        segment_ab = await self.segment_pipeline.run(
-            segment_id=f"{episode_id}-ab",
-            prompt=storyboard.video_prompt_ab,
-            story_action=storyboard.action_ab,
-            first_frame_url=keyframes.frame_a_url,
-            last_frame_url=keyframes.frame_b_url,
-            candidates_per_round=candidates_per_round,
-        )
-        segment_bc = await self.segment_pipeline.run(
-            segment_id=f"{episode_id}-bc",
-            prompt=storyboard.video_prompt_bc,
-            story_action=storyboard.action_bc,
-            first_frame_url=keyframes.frame_b_url,
-            last_frame_url=keyframes.frame_c_url,
-            candidates_per_round=candidates_per_round,
+        segment_ab, segment_bc = await asyncio.gather(
+            self.segment_pipeline.run(
+                segment_id=f"{episode_id}-ab",
+                prompt=storyboard.video_prompt_ab,
+                story_action=storyboard.action_ab,
+                first_frame_url=keyframes.frame_a_url,
+                last_frame_url=keyframes.frame_b_url,
+                candidates_per_round=candidates_per_round,
+            ),
+            self.segment_pipeline.run(
+                segment_id=f"{episode_id}-bc",
+                prompt=storyboard.video_prompt_bc,
+                story_action=storyboard.action_bc,
+                first_frame_url=keyframes.frame_b_url,
+                last_frame_url=keyframes.frame_c_url,
+                candidates_per_round=candidates_per_round,
+            ),
         )
 
         result = EpisodeRunResult(
