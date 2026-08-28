@@ -29,6 +29,16 @@ class Settings(BaseSettings):
     aniflow_pass_score: float = 82.0
     aniflow_timezone: str = "Asia/Shanghai"
 
+    # Loopback bridge used by the private browser frontend.
+    aniflow_bridge_host: str = "127.0.0.1"
+    aniflow_bridge_port: int = 8765
+
+    # Optional CapCut/Seedream browser-automation adapter. The model label is
+    # intentionally configurable because CapCut rotates available models.
+    capcut_seedream_model: str = ""
+    capcut_runner_command: str = ""
+    capcut_runner_timeout_seconds: float = 300.0
+
     # S3-compatible temporary/public media storage (Cloudflare R2 recommended).
     s3_endpoint_url: str = ""
     s3_access_key_id: str = ""
@@ -58,6 +68,20 @@ class Settings(BaseSettings):
         ZoneInfo(value)
         return value
 
+    @field_validator("aniflow_bridge_port")
+    @classmethod
+    def validate_bridge_port(cls, value: int) -> int:
+        if value < 1 or value > 65535:
+            raise ValueError("ANIFLOW_BRIDGE_PORT must be between 1 and 65535")
+        return value
+
+    @field_validator("capcut_runner_timeout_seconds")
+    @classmethod
+    def validate_capcut_timeout(cls, value: float) -> float:
+        if value <= 0:
+            raise ValueError("CAPCUT_RUNNER_TIMEOUT_SECONDS must be greater than 0")
+        return value
+
     @property
     def api_keys(self) -> list[str]:
         return [item.strip() for item in self.agnes_api_keys.split(",") if item.strip()]
@@ -77,6 +101,10 @@ class Settings(BaseSettings):
                 self.s3_public_base_url,
             ]
         )
+
+    @property
+    def capcut_ready(self) -> bool:
+        return bool(self.capcut_seedream_model.strip() and self.capcut_runner_command.strip())
 
 
 @lru_cache(maxsize=1)
