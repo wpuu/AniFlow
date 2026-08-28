@@ -17,6 +17,7 @@ from aniflow.media.store import PublicMediaStore
 from aniflow.pipeline.benchmark import BenchmarkRunner
 from aniflow.pipeline.candidates import CandidateGenerator
 from aniflow.pipeline.character import CharacterBuilder
+from aniflow.pipeline.daily import DailyRunner
 from aniflow.pipeline.episode import EpisodePipeline
 from aniflow.pipeline.evaluate import CandidateEvaluator
 from aniflow.pipeline.repair import PromptRepairer
@@ -231,6 +232,46 @@ def run_benchmark(
                 character_id=character_id,
                 style_keys=style or ["felt", "clay", "toy"],
                 per_style=per_style,
+                concurrency=concurrency,
+            )
+            return report.model_dump()
+        finally:
+            await http.aclose()
+
+    typer.echo(json.dumps(asyncio.run(_run()), ensure_ascii=False, indent=2))
+
+
+@app.command("daily")
+def run_daily(
+    character_id: str = typer.Option(..., help="Character ID previously created by `aniflow character`"),
+    style: str = typer.Option(..., help="Chosen production style, e.g. felt"),
+    count: int = typer.Option(3, min=1, max=20),
+    concurrency: int = typer.Option(2, min=1, max=8),
+) -> None:
+    """Generate today's non-repeating episode batch and persist private history."""
+
+    async def _run() -> dict:
+        settings = get_settings()
+        if not settings.api_keys:
+            raise RuntimeError("AGNES_API_KEYS is empty")
+        key_pool = KeyPool(settings.api_keys)
+        http = AgnesHttpClient()
+        try:
+            store = PublicMediaStore(settings)
+            image_client = AgnesImageClient(settings, http)
+            segment_pipeline = _build_segment_pipeline(settings, key_pool, http, store)
+            runner = DailyRunner(
+                settings=settings,
+                key_pool=key_pool,
+                http=http,
+                image_client=image_client,
+                segment_pipeline=segment_pipeline,
+                media_store=store,
+            )
+            report = await runner.run(
+                character_id=character_id,
+                style_key=style,
+                count=count,
                 concurrency=concurrency,
             )
             return report.model_dump()
