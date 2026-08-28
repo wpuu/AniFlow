@@ -3,8 +3,9 @@ from __future__ import annotations
 import asyncio
 import json
 import re
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, Field
 
@@ -101,8 +102,9 @@ class DailyRunner:
             previous_titles=previous_titles,
         )
 
-        now = datetime.now(timezone.utc)
-        run_id = now.strftime("%Y%m%dT%H%M%SZ")
+        local_tz = ZoneInfo(self.settings.aniflow_timezone)
+        now = datetime.now(local_tz)
+        run_id = now.strftime("%Y%m%dT%H%M%S%z")
         semaphore = asyncio.Semaphore(concurrency)
 
         async def run_one(index: int, idea: StoryIdea) -> DailyHistoryItem:
@@ -121,7 +123,7 @@ class DailyRunner:
                 )
                 return DailyHistoryItem(
                     episode_id=episode_id,
-                    created_at=datetime.now(timezone.utc).isoformat(),
+                    created_at=datetime.now(local_tz).isoformat(),
                     character_id=character_id,
                     style_key=style_key,
                     title=idea.title,
