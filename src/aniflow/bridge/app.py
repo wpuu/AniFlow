@@ -31,6 +31,7 @@ DEV_FRONTEND_ORIGINS = [
 class HealthResponse(BaseModel):
     ok: bool = True
     media_ready: bool
+    capcut_runner_ready: bool
     capcut_ready: bool
     frontend_ready: bool
     capcut_model: str | None = None
@@ -114,6 +115,7 @@ def create_bridge_app(
     async def health() -> HealthResponse:
         return HealthResponse(
             media_ready=bool(media_store is not None or cfg.s3_ready),
+            capcut_runner_ready=cfg.capcut_runner_ready,
             capcut_ready=cfg.capcut_ready,
             frontend_ready=cfg.frontend_ready,
             capcut_model=cfg.capcut_seedream_model or None,
@@ -143,10 +145,13 @@ def create_bridge_app(
 
         if request.provider == "capcut":
             model = (request.model or cfg.capcut_seedream_model).strip()
-            if not cfg.capcut_runner_command.strip() or not model:
+            if not cfg.capcut_runner_ready or not model:
                 raise HTTPException(
                     status_code=503,
-                    detail="CapCut provider is not configured; set CAPCUT_RUNNER_COMMAND and a model name",
+                    detail=(
+                        "CapCut provider needs CAPCUT_RUNNER_COMMAND and a model name. "
+                        "The model may be entered directly in the AniFlow page."
+                    ),
                 )
             runner = SubprocessCapCutRunner(
                 cfg.capcut_runner_command,
