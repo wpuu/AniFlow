@@ -37,6 +37,8 @@ class Settings(BaseSettings):
 
     # Optional CapCut/Seedream browser-automation adapter. The model label is
     # intentionally configurable because CapCut rotates available models.
+    # `capcut_seedream_model` is only a default; the frontend may send another
+    # exact model label per request without changing .env.
     capcut_seedream_model: str = ""
     capcut_runner_command: str = ""
     capcut_runner_timeout_seconds: float = 300.0
@@ -105,8 +107,13 @@ class Settings(BaseSettings):
         )
 
     @property
+    def capcut_runner_ready(self) -> bool:
+        return bool(self.capcut_runner_command.strip())
+
+    @property
     def capcut_ready(self) -> bool:
-        return bool(self.capcut_seedream_model.strip() and self.capcut_runner_command.strip())
+        """Whether CapCut can run without a per-request model override."""
+        return bool(self.capcut_runner_ready and self.capcut_seedream_model.strip())
 
     @property
     def frontend_index_path(self) -> Path:
