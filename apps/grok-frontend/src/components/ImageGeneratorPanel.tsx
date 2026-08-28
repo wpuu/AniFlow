@@ -50,9 +50,17 @@ export default function ImageGeneratorPanel({ apiKeys, onUseResult }: Props) {
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => saveJSON(STORAGE_KEYS.IMAGE_PROVIDER, provider), [provider]);
-  useEffect(() => saveJSON(STORAGE_KEYS.CAPCUT_IMAGE_MODEL, capcutModel), [capcutModel]);
-  useEffect(() => saveJSON(STORAGE_KEYS.IMAGE_PROMPT, prompt), [prompt]);
+  useEffect(() => {
+    saveJSON(STORAGE_KEYS.IMAGE_PROVIDER, provider);
+  }, [provider]);
+
+  useEffect(() => {
+    saveJSON(STORAGE_KEYS.CAPCUT_IMAGE_MODEL, capcutModel);
+  }, [capcutModel]);
+
+  useEffect(() => {
+    saveJSON(STORAGE_KEYS.IMAGE_PROMPT, prompt);
+  }, [prompt]);
 
   useEffect(() => {
     void refreshHealth();
