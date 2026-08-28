@@ -5,11 +5,14 @@ description = "Private AI animation production pipeline powered by Agnes models"
 requires-python = ">=3.11"
 dependencies = [
   "boto3>=1.35,<2",
+  "fastapi>=0.116,<1",
   "httpx>=0.28.1,<1",
   "pydantic>=2.10,<3",
   "pydantic-settings>=2.7,<3",
   "python-dotenv>=1.0,<2",
+  "python-multipart>=0.0.20,<1",
   "typer>=0.15,<1",
+  "uvicorn>=0.35,<1",
 ]
 
 [project.optional-dependencies]
