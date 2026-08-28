@@ -15,9 +15,11 @@ class AgnesHttpClient:
 
     API keys are passed per request so one AniFlow process can use multiple
     independently owned Agnes accounts without exposing credentials in logs.
+    The 360-second default follows Agnes Image 2.1 Flash guidance for complex
+    image generation/editing requests; video generation itself is asynchronous.
     """
 
-    def __init__(self, timeout: float = 120.0, max_attempts: int = 4) -> None:
+    def __init__(self, timeout: float = 360.0, max_attempts: int = 4) -> None:
         self._client = httpx.AsyncClient(timeout=httpx.Timeout(timeout))
         self._max_attempts = max_attempts
 
