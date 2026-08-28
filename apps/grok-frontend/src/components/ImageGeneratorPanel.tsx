@@ -23,11 +23,9 @@ interface Props {
   onUseResult: (url: string, target: FrameTarget) => void;
 }
 
-const EMPTY_REFERENCES: ReferenceImage[] = [
-  { imageUrl: '', fileName: '' },
-  { imageUrl: '', fileName: '' },
-  { imageUrl: '', fileName: '' },
-];
+function createEmptyReferences(): ReferenceImage[] {
+  return Array.from({ length: 3 }, () => ({ imageUrl: '', fileName: '' }));
+}
 
 function isPublicUrl(value: string): boolean {
   return /^https?:\/\//i.test(value.trim());
@@ -43,7 +41,7 @@ export default function ImageGeneratorPanel({ apiKeys, onUseResult }: Props) {
   const [prompt, setPrompt] = useState(() => loadJSON<string>(STORAGE_KEYS.IMAGE_PROMPT, ''));
   const [ratio, setRatio] = useState('9:16');
   const [keyIndex, setKeyIndex] = useState(0);
-  const [references, setReferences] = useState<ReferenceImage[]>(EMPTY_REFERENCES);
+  const [references, setReferences] = useState<ReferenceImage[]>(createEmptyReferences);
   const [health, setHealth] = useState<BridgeHealth | null>(null);
   const [healthError, setHealthError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
