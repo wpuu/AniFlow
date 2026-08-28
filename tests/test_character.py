@@ -23,6 +23,15 @@ def _bible() -> CharacterBible:
     )
 
 
+class FakeImageProvider:
+    def __init__(self) -> None:
+        self.calls: list[dict] = []
+
+    async def generate(self, **kwargs) -> str:
+        self.calls.append(kwargs)
+        return f"https://provider.test/character-{len(self.calls)}.png"
+
+
 def test_character_identity_prompt_contains_locked_traits():
     prompt = _bible().identity_prompt()
     assert "green scarf" in prompt
@@ -42,6 +51,34 @@ def test_image_suffix_detection(tmp_path: Path):
     webp = tmp_path / "c.bin"
     webp.write_bytes(b"RIFF1234WEBP" + b"x" * 16)
     assert CharacterBuilder._image_suffix(webp) == ".webp"
+
+
+@pytest.mark.asyncio
+async def test_character_builder_accepts_custom_image_provider():
+    provider = FakeImageProvider()
+    builder = CharacterBuilder(
+        settings=Settings(),
+        key_pool=KeyPool(["key-1"]),
+        http=object(),
+        image_client=None,
+        media_store=object(),
+        image_provider=provider,
+    )
+
+    result = await builder._generate_image(
+        prompt="canonical fox identity anchor",
+        references=["https://example.test/ref.png"],
+    )
+
+    assert result.endswith("character-1.png")
+    assert provider.calls == [
+        {
+            "prompt": "canonical fox identity anchor",
+            "references": ["https://example.test/ref.png"],
+            "size": "1K",
+            "ratio": "9:16",
+        }
+    ]
 
 
 @pytest.mark.asyncio
