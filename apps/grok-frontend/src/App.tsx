@@ -535,6 +535,11 @@ export default function App() {
             <KeySettings
               keyCount={apiKeyCount}
               apiKeys={apiKeys}
+              busyKeyIndexes={new Set(
+                Object.entries(tasksByKey)
+                  .filter(([, task]) => BUSY_STATUSES.has(task.status))
+                  .map(([index]) => Number(index)),
+              )}
               onKeyCountChange={handleKeyCountChange}
               onKeyChange={handleKeyChange}
             />
