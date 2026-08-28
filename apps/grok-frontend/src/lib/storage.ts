@@ -4,6 +4,9 @@ export const STORAGE_KEYS = {
   API_KEYS: 'agnes_video_api_keys_v1',
   KEY_COUNT: 'agnes_video_key_count_v1',
   HISTORY: 'agnes_video_history_v1',
+  ACTIVE_MODEL: 'agnes_video_active_model_v1',
+  PARAMS_BY_MODEL: 'agnes_video_params_by_model_v1',
+  DEFAULT_PARAMS_BY_MODEL: 'agnes_video_default_params_by_model_v1',
 };
 
 export function loadJSON<T>(key: string, fallback: T): T {
