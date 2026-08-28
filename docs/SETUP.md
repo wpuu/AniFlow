@@ -27,6 +27,7 @@ AniFlow 的代码、前端和 GitHub 仓库都可以保持 Private。只有需�
 | `ANIFLOW_CANDIDATES_PER_SEGMENT` | `5` | 最少候选数；实际默认仍会保证每个 Agnes 账户至少参与一次 |
 | `ANIFLOW_MAX_REPAIR_ROUNDS` | `2` | 首轮全部失败后最多再修复/重抽 2 轮 |
 | `ANIFLOW_PASS_SCORE` | `82` | 综合合格线 |
+| `ANIFLOW_TIMEZONE` | `Asia/Shanghai` | Daily 日期、episode ID 和目录归档时区 |
 | `ANIFLOW_CHARACTER_ID` | Benchmark 后确定 | Daily workflow 使用的角色 |
 | `ANIFLOW_STYLE` | Benchmark 后确定 | Daily workflow 使用的胜出风格，如 `felt` |
 | `ANIFLOW_DAILY_COUNT` | `3` | 每天计划生成条数 |
@@ -41,16 +42,17 @@ AniFlow 需要一个 S3-compatible Bucket；Cloudflare R2 是推荐实现，但�
 1. 程序可以通过 S3 API 上传对象；
 2. `S3_PUBLIC_BASE_URL/<object-key>` 可以在不登录、不带 Cookie、不带私有请求头的情况下由 Agnes 直接读取；
 3. HTTPS 正常；
-4. Character References 和 `aniflow/final/` 应长期保存；
+4. Character References、Episode Keyframes 和 `aniflow/final/` 应长期保存；
 5. `aniflow/tmp/` 只是视觉质检抽帧，建议对象存储配置生命周期规则：7 天后自动删除该前缀下对象。
 
 对象路径约定：
 
 ```text
 aniflow/
-├─ characters/       # 长期角色母版
-├─ final/            # 最终成片
-└─ tmp/              # QA 抽帧，建议 7 天生命周期删除
+├─ characters/                         # 长期角色母版
+├─ episodes/<episode-id>/keyframes/   # 每集长期 A/B/C 关键帧
+├─ final/                              # 最终成片
+└─ tmp/                                # QA 抽帧，建议 7 天生命周期删除
 ```
 
 ## 4. 第一次正确执行顺序
@@ -81,7 +83,7 @@ data/characters/
 └─ filo-toy.json
 ```
 
-三个 JSON 保存的是长期 R2 公网图片 URL，不保存 API Key。
+三个 JSON 保存的是长期对象存储公网图片 URL，不保存 API Key。
 
 ### Step C — 三风格公平 Benchmark
 
@@ -123,6 +125,7 @@ AI 分数只负责第一轮机器筛选。首个 30 条 Benchmark 最终仍建�
 在 GitHub Variables 设置：
 
 ```text
+ANIFLOW_TIMEZONE=Asia/Shanghai
 ANIFLOW_CHARACTER_ID=filo
 ANIFLOW_STYLE=<benchmark 胜出风格>
 ANIFLOW_DAILY_COUNT=3
@@ -136,6 +139,12 @@ ANIFLOW_DAILY_CONCURRENCY=2
 ```text
 data/daily/history.json
 data/daily/runs/<run_id>.json
+```
+
+每集持久关键帧写入：
+
+```text
+aniflow/episodes/<episode-id>/keyframes/
 ```
 
 最终 MP4 写入：
@@ -156,4 +165,4 @@ V0.1 不自动发布 TikTok / YouTube / Instagram，也不自动把所有 AI 通
 4. 确认严重缺陷漏检率足够低；
 5. 再接现有私有前端和外部发布。
 
-这样可以把 Agnes 的免费生成能力大量用于实验，但不把低质量自动内容直接发布出去。
+这样可以大量利用 Agnes 生成能力做实验，但不会把低质量自动内容直接发布出去。
