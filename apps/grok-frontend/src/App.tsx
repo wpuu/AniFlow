@@ -7,6 +7,7 @@ import CollapsibleSection from './components/CollapsibleSection';
 import { STORAGE_KEYS, loadJSON, saveJSON } from './lib/storage';
 import { DEFAULT_PARAMS_BY_MODEL, VIDEO_MODELS } from './lib/constants';
 import { createVideoTask, getVideoResult } from './lib/api';
+import { DEFAULT_BRIDGE_URL, uploadDataUrlToBridge } from './lib/bridge';
 import { genId } from './lib/imageUtils';
 import type {
   GenerationParams,
@@ -94,6 +95,7 @@ export default function App() {
   const pollTimers = useRef<Record<number, number>>({});
   const stopFlags = useRef<Record<number, boolean>>({});
   const activeHistoryIdByKey = useRef<Record<number, string>>({});
+  const mediaUploadCache = useRef<Map<string, Promise<string>>>(new Map());
 
   useEffect(() => {
     saveJSON(STORAGE_KEYS.API_KEYS, apiKeys);
@@ -180,6 +182,70 @@ export default function App() {
     });
   }
 
+  function uploadLocalImage(dataUrl: string): Promise<string> {
+    const cached = mediaUploadCache.current.get(dataUrl);
+    if (cached) return cached;
+
+    const upload = uploadDataUrlToBridge(dataUrl, DEFAULT_BRIDGE_URL)
+      .then((result) => result.url)
+      .catch((error) => {
+        mediaUploadCache.current.delete(dataUrl);
+        throw error;
+      });
+    mediaUploadCache.current.set(dataUrl, upload);
+    return upload;
+  }
+
+  async function prepareFlashParams(source: GenerationParams): Promise<GenerationParams> {
+    const next: GenerationParams = {
+      ...source,
+      keyframeScenes: source.keyframeScenes.map((scene) => ({ ...scene })),
+    };
+
+    async function resolveImage(value: string): Promise<string> {
+      const trimmed = value.trim();
+      if (isPublicImageUrl(trimmed)) return trimmed;
+      if (trimmed.startsWith('data:image/')) {
+        notify('正在通过 AniFlow 本机 Bridge 上传本地图片…');
+        return uploadLocalImage(trimmed);
+      }
+      throw new Error('2.5 Flash 的参考帧必须是本地上传图片或可公开访问的 http(s) 图片 URL');
+    }
+
+    if (next.mode === 'i2v') {
+      if (!next.singleImage) throw new Error('图生视频模式需要首帧图片');
+      next.singleImage = await resolveImage(next.singleImage);
+      next.singleImageFileName = undefined;
+      return next;
+    }
+
+    if (next.mode === 'keyframes') {
+      const indexes = next.keyframeScenes
+        .map((scene, index) => (scene.imageUrl.trim() ? index : -1))
+        .filter((index) => index >= 0);
+      if (indexes.length < 2) throw new Error('2.5 Flash 首尾帧模式需要首帧和尾帧两张图片');
+
+      const firstIndex = indexes[0];
+      const lastIndex = indexes[1];
+      const [firstUrl, lastUrl] = await Promise.all([
+        resolveImage(next.keyframeScenes[firstIndex].imageUrl),
+        resolveImage(next.keyframeScenes[lastIndex].imageUrl),
+      ]);
+      next.keyframeScenes[firstIndex] = {
+        ...next.keyframeScenes[firstIndex],
+        imageUrl: firstUrl,
+        fileName: undefined,
+      };
+      next.keyframeScenes[lastIndex] = {
+        ...next.keyframeScenes[lastIndex],
+        imageUrl: lastUrl,
+        fileName: undefined,
+      };
+    }
+
+    return next;
+  }
+
   const poll = useCallback(
     (
       keyIndex: number,
@@ -258,21 +324,13 @@ export default function App() {
         return;
       }
 
+      let requestParams = params;
       if (modelKey === 'flash25') {
-        if (params.mode === 'i2v' && !isPublicImageUrl(params.singleImage)) {
-          notify('2.5 Flash 当前首帧需要可公开访问的 http(s) 图片 URL；本地图片需先上传到媒体存储', 'error');
+        try {
+          requestParams = await prepareFlashParams(params);
+        } catch (err) {
+          notify(err instanceof Error ? err.message : '本地图片上传失败', 'error');
           return;
-        }
-        if (params.mode === 'keyframes') {
-          const images = params.keyframeScenes.map((s) => s.imageUrl.trim()).filter(Boolean);
-          if (images.length < 2) {
-            notify('2.5 Flash 首尾帧模式需要首帧和尾帧两张图片', 'error');
-            return;
-          }
-          if (!images.slice(0, 2).every(isPublicImageUrl)) {
-            notify('2.5 Flash 首尾帧需要可公开访问的 http(s) 图片 URL', 'error');
-            return;
-          }
         }
       } else if (params.mode === 'keyframes') {
         const valid = params.keyframeScenes.filter((s) => s.imageUrl.trim());
@@ -293,12 +351,12 @@ export default function App() {
         id: historyId,
         keyIndex,
         createdAt: Date.now(),
-        promptPreview: params.prompt.trim().slice(0, 100),
+        promptPreview: requestParams.prompt.trim().slice(0, 100),
         modelKey,
         modelName,
-        mode: params.mode,
-        ratio: params.ratio,
-        resolution: params.resolution,
+        mode: requestParams.mode,
+        ratio: requestParams.ratio,
+        resolution: requestParams.resolution,
         status: 'creating',
         progress: 0,
         videoUrl: null,
@@ -318,7 +376,7 @@ export default function App() {
       });
 
       try {
-        const created = await createVideoTask(apiKey, modelKey, params);
+        const created = await createVideoTask(apiKey, modelKey, requestParams);
         const videoId = created.video_id || created.id || created.task_id || '';
         const taskId = created.task_id || created.id || '';
         if (!videoId) throw new Error('未获取到有效的视频任务 ID，请检查返回结果');
@@ -570,7 +628,7 @@ export default function App() {
       </main>
 
       <footer className="mx-auto max-w-7xl px-4 pb-8 pt-2 text-center text-[11px] text-zinc-400 sm:px-6">
-        当前模型：{VIDEO_MODELS[modelKey].label}。API Key 仅保存在本浏览器 localStorage；请勿在公共电脑使用。
+        当前模型：{VIDEO_MODELS[modelKey].label}。API Key 仅保存在本浏览器 localStorage；2.5 Flash 本地图片会自动经 {DEFAULT_BRIDGE_URL} 上传为公网 URL。
       </footer>
     </div>
   );
