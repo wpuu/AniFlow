@@ -14,6 +14,7 @@ from aniflow.agnes.video import AgnesVideoClient
 from aniflow.agnes.vision import AgnesVisionJudge
 from aniflow.config import get_settings
 from aniflow.media.store import PublicMediaStore
+from aniflow.pipeline.benchmark import BenchmarkRunner
 from aniflow.pipeline.candidates import CandidateGenerator
 from aniflow.pipeline.character import CharacterBuilder
 from aniflow.pipeline.episode import EpisodePipeline
@@ -189,6 +190,50 @@ def run_episode(
                 candidates_per_round=candidates,
             )
             return result.as_dict()
+        finally:
+            await http.aclose()
+
+    typer.echo(json.dumps(asyncio.run(_run()), ensure_ascii=False, indent=2))
+
+
+@app.command("benchmark")
+def run_benchmark(
+    character_id: str = typer.Option(..., help="Character ID previously created by `aniflow character`"),
+    style: list[str] | None = typer.Option(
+        None,
+        "--style",
+        help="Styles to compare; repeat this option. Defaults to felt, clay, toy.",
+    ),
+    per_style: int = typer.Option(10, min=1, help="Shared story count per style"),
+    concurrency: int = typer.Option(2, min=1, max=8),
+) -> None:
+    """Run the same story set across multiple visual styles for fair comparison."""
+
+    async def _run() -> dict:
+        settings = get_settings()
+        if not settings.api_keys:
+            raise RuntimeError("AGNES_API_KEYS is empty")
+        key_pool = KeyPool(settings.api_keys)
+        http = AgnesHttpClient()
+        try:
+            store = PublicMediaStore(settings)
+            image_client = AgnesImageClient(settings, http)
+            segment_pipeline = _build_segment_pipeline(settings, key_pool, http, store)
+            runner = BenchmarkRunner(
+                settings=settings,
+                key_pool=key_pool,
+                http=http,
+                image_client=image_client,
+                segment_pipeline=segment_pipeline,
+                media_store=store,
+            )
+            report = await runner.run(
+                character_id=character_id,
+                style_keys=style or ["felt", "clay", "toy"],
+                per_style=per_style,
+                concurrency=concurrency,
+            )
+            return report.model_dump()
         finally:
             await http.aclose()
 
