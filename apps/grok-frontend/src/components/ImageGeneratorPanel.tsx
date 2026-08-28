@@ -108,6 +108,10 @@ export default function ImageGeneratorPanel({ apiKeys, onUseResult }: Props) {
       setError(`Agnes Image 需要先填写 Key ${keyIndex + 1}`);
       return;
     }
+    if (provider === 'capcut' && !capcutModel.trim()) {
+      setError('请填写当前 CapCut 页面实际使用的 Seedream 模型名称');
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -126,7 +130,7 @@ export default function ImageGeneratorPanel({ apiKeys, onUseResult }: Props) {
           ratio,
           size: '1K',
           api_key: provider === 'agnes' ? apiKey : undefined,
-          model: provider === 'capcut' ? capcutModel.trim() || undefined : undefined,
+          model: provider === 'capcut' ? capcutModel.trim() : undefined,
         },
         DEFAULT_BRIDGE_URL,
       );
@@ -139,7 +143,8 @@ export default function ImageGeneratorPanel({ apiKeys, onUseResult }: Props) {
     }
   }
 
-  const capcutUnavailable = provider === 'capcut' && health !== null && !health.capcut_ready;
+  const capcutRunnerUnavailable =
+    provider === 'capcut' && health !== null && !health.capcut_runner_ready;
 
   return (
     <div className="space-y-4">
@@ -181,8 +186,8 @@ export default function ImageGeneratorPanel({ apiKeys, onUseResult }: Props) {
         >
           <div className="flex items-center justify-between gap-2">
             <span className="text-sm font-semibold text-zinc-800">CapCut / Seedream</span>
-            {health?.capcut_ready ? (
-              <span className="text-[10px] font-medium text-emerald-600">Agent 已配置</span>
+            {health?.capcut_runner_ready ? (
+              <span className="text-[10px] font-medium text-emerald-600">Agent Runner 已配置</span>
             ) : null}
           </div>
           <p className="mt-1 text-[11px] text-zinc-400">浏览器 Agent 控制 CapCut 正常页面，支持参考图</p>
@@ -205,7 +210,7 @@ export default function ImageGeneratorPanel({ apiKeys, onUseResult }: Props) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {provider === 'capcut' ? (
           <label className="text-xs text-zinc-500">
-            CapCut 模型名称
+            CapCut 模型名称（页面填写并自动保存）
             <input
               value={capcutModel}
               onChange={(event) => setCapcutModel(event.target.value)}
@@ -273,9 +278,9 @@ export default function ImageGeneratorPanel({ apiKeys, onUseResult }: Props) {
         </div>
       </div>
 
-      {capcutUnavailable ? (
+      {capcutRunnerUnavailable ? (
         <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700">
-          CapCut Agent 尚未配置。Bridge 已经支持该 Provider，但需要本机登录后的 CapCut 浏览器适配器才能真正生成。
+          CapCut Agent Runner 尚未配置。模型名可以直接在本页面填写，不需要写进 .env；但本机仍需要配置浏览器 Agent Runner。
         </p>
       ) : null}
 
@@ -284,7 +289,7 @@ export default function ImageGeneratorPanel({ apiKeys, onUseResult }: Props) {
       <button
         type="button"
         onClick={() => void generate()}
-        disabled={loading || !prompt.trim() || capcutUnavailable}
+        disabled={loading || !prompt.trim() || capcutRunnerUnavailable}
         className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40"
       >
         {loading ? '正在生成…' : `使用 ${provider === 'capcut' ? 'CapCut / Seedream' : 'Agnes Image'} 生图`}
