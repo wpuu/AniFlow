@@ -11,6 +11,7 @@ from aniflow.agnes.http import AgnesApiError, AgnesHttpClient
 from aniflow.agnes.image import AgnesImageClient
 from aniflow.agnes.key_pool import KeyPool
 from aniflow.config import Settings
+from aniflow.image_provider import AgnesImageProvider, ImageProvider
 from aniflow.media.download import download_file
 from aniflow.media.images import persist_remote_image
 from aniflow.media.store import PublicMediaStore
@@ -64,14 +65,20 @@ class CharacterBuilder:
         settings: Settings,
         key_pool: KeyPool,
         http: AgnesHttpClient,
-        image_client: AgnesImageClient,
+        image_client: AgnesImageClient | None,
         media_store: PublicMediaStore,
+        image_provider: ImageProvider | None = None,
     ) -> None:
         self.settings = settings
         self.key_pool = key_pool
         self.http = http
-        self.image_client = image_client
         self.media_store = media_store
+        if image_provider is not None:
+            self.image_provider = image_provider
+        elif image_client is not None:
+            self.image_provider = AgnesImageProvider(key_pool, image_client)
+        else:
+            raise ValueError("image_client is required when image_provider is not supplied")
 
     async def create_bible(
         self,
@@ -215,17 +222,12 @@ Return JSON only:
         return result
 
     async def _generate_image(self, *, prompt: str, references: list[str]) -> str:
-        slot = await self.key_pool.next()
-        image = await self.image_client.generate(
-            api_key=slot.api_key,
+        return await self.image_provider.generate(
             prompt=prompt,
+            references=references,
             size="1K",
             ratio="9:16",
-            reference_images=references or None,
         )
-        if not image.url:
-            raise AgnesApiError("Character reference generation returned no image URL")
-        return image.url
 
     async def _persist_reference_urls(
         self,
