@@ -97,7 +97,7 @@ def build_character(
         help="Style preset; repeat for multiple. Defaults to felt, clay, toy.",
     ),
 ) -> None:
-    """Create one character bible and persistent style-specific reference sets."""
+    """Create one shared identity anchor and persistent style-specific reference sets."""
 
     async def _run() -> dict:
         settings = get_settings()
@@ -120,15 +120,21 @@ def build_character(
                 display_name=name,
                 description=description,
             )
+            identity_anchor_url = await builder.build_identity_anchor(bible=bible)
             style_keys = style or ["felt", "clay", "toy"]
             reference_sets = await asyncio.gather(
                 *[
-                    builder.build_reference_set(bible=bible, style_key=style_key)
+                    builder.build_reference_set(
+                        bible=bible,
+                        style_key=style_key,
+                        identity_anchor_url=identity_anchor_url,
+                    )
                     for style_key in style_keys
                 ]
             )
             return {
                 "bible": bible.model_dump(),
+                "identity_anchor_url": identity_anchor_url,
                 "reference_sets": [item.model_dump() for item in reference_sets],
             }
         finally:
