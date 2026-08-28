@@ -63,7 +63,7 @@ Optimize for AI keyframe animation reliability:
 - each frame must have a strong, readable composition in 9:16
 - B must work simultaneously as the ending composition of A→B and the starting composition of B→C
 
-For image_prompt, describe subject, scene, felt/material details, lighting, camera/composition, and exactly what must stay unchanged.
+For image_prompt, describe subject, scene, style-specific material details, lighting, camera/composition, and exactly what must stay unchanged. Follow the requested visual style exactly; do not introduce a different rendering medium.
 For video_prompt_ab/video_prompt_bc, describe only the controlled motion between the already-fixed keyframes, camera behavior, and consistency locks.
 
 Return JSON only with exactly this structure:
