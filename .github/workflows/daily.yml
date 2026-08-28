@@ -87,6 +87,9 @@ jobs:
           test -n "$ANIFLOW_STYLE" || { echo 'Missing repository variable ANIFLOW_STYLE'; exit 1; }
           aniflow doctor
 
+      - name: Live Agnes and media preflight
+        run: aniflow preflight
+
       - name: Generate daily batch
         shell: bash
         run: |
