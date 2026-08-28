@@ -16,6 +16,15 @@ class FakeImageClient:
         return SimpleNamespace(url=f"https://example.test/frame-{len(self.calls)}.png")
 
 
+class FakeImageProvider:
+    def __init__(self) -> None:
+        self.calls: list[dict] = []
+
+    async def generate(self, **kwargs) -> str:
+        self.calls.append(kwargs)
+        return f"https://provider.test/frame-{len(self.calls)}.png"
+
+
 def _storyboard() -> Storyboard3:
     return Storyboard3(
         title="Tiny test",
@@ -67,6 +76,26 @@ async def test_selected_style_is_locked_into_all_keyframe_prompts():
         assert "needle-felt" not in prompt
         assert call["ratio"] == "9:16"
         assert call["size"] == "1K"
+
+
+@pytest.mark.asyncio
+async def test_keyframes_accept_provider_without_agnes_key_pool():
+    provider = FakeImageProvider()
+    generator = KeyframeGenerator(image_provider=provider)
+
+    result = await generator.generate_three(
+        storyboard=_storyboard(),
+        character_reference_urls=["https://example.test/character.png"],
+        style="miniature toy-world animation",
+    )
+
+    assert result.frame_a_url.endswith("frame-1.png")
+    assert result.frame_b_url.endswith("frame-2.png")
+    assert result.frame_c_url.endswith("frame-3.png")
+    assert len(provider.calls) == 3
+    assert provider.calls[0]["references"] == ["https://example.test/character.png"]
+    assert provider.calls[1]["references"][-1].endswith("frame-1.png")
+    assert provider.calls[2]["references"][-1].endswith("frame-2.png")
 
 
 def test_empty_style_is_rejected_before_generation():
