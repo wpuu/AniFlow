@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from zoneinfo import ZoneInfo
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -26,6 +27,7 @@ class Settings(BaseSettings):
     aniflow_candidates_per_segment: int = 5
     aniflow_max_repair_rounds: int = 2
     aniflow_pass_score: float = 82.0
+    aniflow_timezone: str = "Asia/Shanghai"
 
     # S3-compatible temporary/public media storage (Cloudflare R2 recommended).
     s3_endpoint_url: str = ""
@@ -48,6 +50,12 @@ class Settings(BaseSettings):
         allowed = {"21:9", "16:9", "4:3", "1:1", "3:4", "9:16"}
         if value not in allowed:
             raise ValueError(f"Unsupported aspect ratio: {value}")
+        return value
+
+    @field_validator("aniflow_timezone")
+    @classmethod
+    def validate_timezone(cls, value: str) -> str:
+        ZoneInfo(value)
         return value
 
     @property
