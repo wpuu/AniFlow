@@ -1,0 +1,129 @@
+name: Style Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      character_id:
+        description: 'Character ID previously built by Build Character References'
+        required: true
+        type: string
+      per_style:
+        description: 'Shared story count per style; 10 = 30 total videos'
+        required: false
+        default: '10'
+        type: string
+      styles:
+        description: 'Comma-separated styles. Empty = felt,clay,toy'
+        required: false
+        type: string
+      concurrency:
+        description: 'Parallel episode count'
+        required: false
+        default: '2'
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aniflow-benchmark-${{ inputs.character_id }}
+  cancel-in-progress: false
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      AGNES_API_ROOT: https://apihub.agnes-ai.com
+      AGNES_API_KEYS: ${{ secrets.AGNES_API_KEYS }}
+      AGNES_TEXT_MODEL: agnes-2.5-flash
+      AGNES_IMAGE_MODEL: agnes-image-2.1-flash
+      AGNES_VIDEO_MODEL: agnes-video-2.5-flash
+      ANIFLOW_ASPECT_RATIO: 9:16
+      ANIFLOW_IMAGE_SIZE: 1K
+      ANIFLOW_VIDEO_SECONDS: 5
+      ANIFLOW_CANDIDATES_PER_SEGMENT: ${{ vars.ANIFLOW_CANDIDATES_PER_SEGMENT || '5' }}
+      ANIFLOW_MAX_REPAIR_ROUNDS: ${{ vars.ANIFLOW_MAX_REPAIR_ROUNDS || '2' }}
+      ANIFLOW_PASS_SCORE: ${{ vars.ANIFLOW_PASS_SCORE || '82' }}
+      S3_ENDPOINT_URL: ${{ secrets.S3_ENDPOINT_URL }}
+      S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+      S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+      S3_BUCKET: ${{ secrets.S3_BUCKET }}
+      S3_PUBLIC_BASE_URL: ${{ secrets.S3_PUBLIC_BASE_URL }}
+      S3_REGION: ${{ vars.S3_REGION || 'auto' }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install AniFlow
+        run: pip install -e '.[dev]'
+
+      - name: Validate secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$AGNES_API_KEYS" || { echo 'Missing secret AGNES_API_KEYS'; exit 1; }
+          test -n "$S3_ENDPOINT_URL" || { echo 'Missing secret S3_ENDPOINT_URL'; exit 1; }
+          test -n "$S3_ACCESS_KEY_ID" || { echo 'Missing secret S3_ACCESS_KEY_ID'; exit 1; }
+          test -n "$S3_SECRET_ACCESS_KEY" || { echo 'Missing secret S3_SECRET_ACCESS_KEY'; exit 1; }
+          test -n "$S3_BUCKET" || { echo 'Missing secret S3_BUCKET'; exit 1; }
+          test -n "$S3_PUBLIC_BASE_URL" || { echo 'Missing secret S3_PUBLIC_BASE_URL'; exit 1; }
+          aniflow doctor
+
+      - name: Run fair style benchmark
+        shell: bash
+        env:
+          INPUT_CHARACTER_ID: ${{ inputs.character_id }}
+          INPUT_PER_STYLE: ${{ inputs.per_style }}
+          INPUT_STYLES: ${{ inputs.styles }}
+          INPUT_CONCURRENCY: ${{ inputs.concurrency }}
+        run: |
+          set -euo pipefail
+          style_args=()
+          if [ -n "$INPUT_STYLES" ]; then
+            IFS=',' read -ra styles <<< "$INPUT_STYLES"
+            for style in "${styles[@]}"; do
+              style="$(echo "$style" | xargs)"
+              if [ -n "$style" ]; then
+                style_args+=(--style "$style")
+              fi
+            done
+          fi
+          aniflow benchmark \
+            --character-id "$INPUT_CHARACTER_ID" \
+            --per-style "$INPUT_PER_STYLE" \
+            --concurrency "$INPUT_CONCURRENCY" \
+            "${style_args[@]}" \
+            | tee benchmark-result.json
+
+      - name: Save benchmark report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/benchmarks
+          if git diff --cached --quiet; then
+            echo 'No benchmark report changes to commit.'
+          else
+            git commit -m 'chore: record AniFlow style benchmark'
+            git push
+          fi
+
+      - name: Upload benchmark manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: aniflow-benchmark-${{ inputs.character_id }}-${{ github.run_id }}
+          path: |
+            benchmark-result.json
+            data/benchmarks/*.json
+          retention-days: 30
