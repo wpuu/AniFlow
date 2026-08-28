@@ -26,7 +26,14 @@ class Settings(BaseSettings):
     aniflow_candidates_per_segment: int = 5
     aniflow_max_repair_rounds: int = 2
     aniflow_pass_score: float = 82.0
-    aniflow_public_media_base_url: str = ""
+
+    # S3-compatible temporary/public media storage (Cloudflare R2 recommended).
+    s3_endpoint_url: str = ""
+    s3_access_key_id: str = ""
+    s3_secret_access_key: str = ""
+    s3_bucket: str = ""
+    s3_public_base_url: str = ""
+    s3_region: str = "auto"
 
     @field_validator("aniflow_video_seconds")
     @classmethod
@@ -50,6 +57,18 @@ class Settings(BaseSettings):
     @property
     def agnes_v1_url(self) -> str:
         return f"{self.agnes_api_root.rstrip('/')}/v1"
+
+    @property
+    def s3_ready(self) -> bool:
+        return all(
+            [
+                self.s3_endpoint_url,
+                self.s3_access_key_id,
+                self.s3_secret_access_key,
+                self.s3_bucket,
+                self.s3_public_base_url,
+            ]
+        )
 
 
 @lru_cache(maxsize=1)
