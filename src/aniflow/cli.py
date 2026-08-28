@@ -15,6 +15,7 @@ from aniflow.agnes.vision import AgnesVisionJudge
 from aniflow.config import get_settings
 from aniflow.media.store import PublicMediaStore
 from aniflow.pipeline.candidates import CandidateGenerator
+from aniflow.pipeline.character import CharacterBuilder
 from aniflow.pipeline.episode import EpisodePipeline
 from aniflow.pipeline.evaluate import CandidateEvaluator
 from aniflow.pipeline.repair import PromptRepairer
@@ -55,6 +56,57 @@ def _build_segment_pipeline(settings, key_pool, http, store) -> SegmentPipeline:
         evaluator=evaluator,
         repairer=repairer,
     )
+
+
+@app.command("character")
+def build_character(
+    character_id: str = typer.Option(..., help="Stable ID, e.g. filo"),
+    name: str = typer.Option(..., help="Display name"),
+    description: str = typer.Option(..., help="Core semantic character description"),
+    style: list[str] | None = typer.Option(
+        None,
+        "--style",
+        help="Style preset; repeat for multiple. Defaults to felt, clay, toy.",
+    ),
+) -> None:
+    """Create one character bible and persistent style-specific reference sets."""
+
+    async def _run() -> dict:
+        settings = get_settings()
+        if not settings.api_keys:
+            raise RuntimeError("AGNES_API_KEYS is empty")
+        key_pool = KeyPool(settings.api_keys)
+        http = AgnesHttpClient()
+        try:
+            store = PublicMediaStore(settings)
+            image_client = AgnesImageClient(settings, http)
+            builder = CharacterBuilder(
+                settings=settings,
+                key_pool=key_pool,
+                http=http,
+                image_client=image_client,
+                media_store=store,
+            )
+            bible = await builder.create_bible(
+                character_id=character_id,
+                display_name=name,
+                description=description,
+            )
+            style_keys = style or ["felt", "clay", "toy"]
+            reference_sets = await asyncio.gather(
+                *[
+                    builder.build_reference_set(bible=bible, style_key=style_key)
+                    for style_key in style_keys
+                ]
+            )
+            return {
+                "bible": bible.model_dump(),
+                "reference_sets": [item.model_dump() for item in reference_sets],
+            }
+        finally:
+            await http.aclose()
+
+    typer.echo(json.dumps(asyncio.run(_run()), ensure_ascii=False, indent=2))
 
 
 @app.command("segment")
