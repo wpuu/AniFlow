@@ -34,6 +34,10 @@ class DailyHistoryItem(BaseModel):
     bc_score: float | None = None
     ab_rounds: int = 0
     bc_rounds: int = 0
+    final_qa_total: float | None = None
+    final_qa_advisory_pass: bool | None = None
+    final_qa_error: str | None = None
+    run_error: str | None = None
 
 
 class DailyHistory(BaseModel):
@@ -46,6 +50,7 @@ class DailyRunReport(BaseModel):
     style_key: str
     requested: int
     completed: int
+    failed_with_error: int = 0
     items: list[DailyHistoryItem] = Field(default_factory=list)
 
 
@@ -108,41 +113,59 @@ class DailyRunner:
         semaphore = asyncio.Semaphore(concurrency)
 
         async def run_one(index: int, idea: StoryIdea) -> DailyHistoryItem:
+            episode_id = (
+                f"{self._slug(character_id)}-{self._slug(style_key)}-"
+                f"{run_id}-{index + 1:02d}"
+            )
             async with semaphore:
-                episode_id = (
-                    f"{self._slug(character_id)}-{self._slug(style_key)}-"
-                    f"{run_id}-{index + 1:02d}"
-                )
-                result = await self.episode_pipeline.run(
-                    episode_id=episode_id,
-                    idea=f"{idea.premise} Visual hook: {idea.visual_hook}",
-                    character_description=profile.bible.identity_prompt(),
-                    character_reference_urls=profile.urls,
-                    output_dir=output_root / now.strftime("%Y-%m-%d"),
-                    style=profile.style_description,
-                )
-                return DailyHistoryItem(
-                    episode_id=episode_id,
-                    created_at=datetime.now(local_tz).isoformat(),
-                    character_id=character_id,
-                    style_key=style_key,
-                    title=idea.title,
-                    premise=idea.premise,
-                    completed=result.completed,
-                    final_public_url=result.final_public_url,
-                    ab_score=(
-                        result.segment_ab.selected.total
-                        if result.segment_ab.selected is not None
-                        else None
-                    ),
-                    bc_score=(
-                        result.segment_bc.selected.total
-                        if result.segment_bc.selected is not None
-                        else None
-                    ),
-                    ab_rounds=len(result.segment_ab.rounds),
-                    bc_rounds=len(result.segment_bc.rounds),
-                )
+                try:
+                    result = await self.episode_pipeline.run(
+                        episode_id=episode_id,
+                        idea=f"{idea.premise} Visual hook: {idea.visual_hook}",
+                        character_description=profile.bible.identity_prompt(),
+                        character_reference_urls=profile.urls,
+                        output_dir=output_root / now.strftime("%Y-%m-%d"),
+                        style=profile.style_description,
+                    )
+                except Exception as exc:  # noqa: BLE001 - one failed episode must not abort the day
+                    return DailyHistoryItem(
+                        episode_id=episode_id,
+                        created_at=datetime.now(local_tz).isoformat(),
+                        character_id=character_id,
+                        style_key=style_key,
+                        title=idea.title,
+                        premise=idea.premise,
+                        completed=False,
+                        run_error=f"{type(exc).__name__}: {exc}",
+                    )
+
+            return DailyHistoryItem(
+                episode_id=episode_id,
+                created_at=datetime.now(local_tz).isoformat(),
+                character_id=character_id,
+                style_key=style_key,
+                title=idea.title,
+                premise=idea.premise,
+                completed=result.completed,
+                final_public_url=result.final_public_url,
+                ab_score=(
+                    result.segment_ab.selected.total
+                    if result.segment_ab.selected is not None
+                    else None
+                ),
+                bc_score=(
+                    result.segment_bc.selected.total
+                    if result.segment_bc.selected is not None
+                    else None
+                ),
+                ab_rounds=len(result.segment_ab.rounds),
+                bc_rounds=len(result.segment_bc.rounds),
+                final_qa_total=(result.final_qa.total if result.final_qa is not None else None),
+                final_qa_advisory_pass=(
+                    result.final_qa.advisory_pass if result.final_qa is not None else None
+                ),
+                final_qa_error=result.final_qa_error,
+            )
 
         items = list(
             await asyncio.gather(
@@ -162,6 +185,7 @@ class DailyRunner:
             style_key=style_key,
             requested=count,
             completed=sum(1 for item in items if item.completed),
+            failed_with_error=sum(1 for item in items if item.run_error is not None),
             items=items,
         )
         report_dir.mkdir(parents=True, exist_ok=True)
