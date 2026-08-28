@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from aniflow.agnes.image import AgnesImageClient
 from aniflow.agnes.key_pool import KeyPool
+from aniflow.image_provider import AgnesImageProvider, ImageProvider
 from aniflow.pipeline.storyboard import Storyboard3
 
 
@@ -17,9 +18,19 @@ class KeyframeSet:
 class KeyframeGenerator:
     """Generate A/B/C while carrying character identity, style, and previous-frame context forward."""
 
-    def __init__(self, key_pool: KeyPool, image_client: AgnesImageClient) -> None:
-        self.key_pool = key_pool
-        self.image_client = image_client
+    def __init__(
+        self,
+        key_pool: KeyPool | None = None,
+        image_client: AgnesImageClient | None = None,
+        *,
+        image_provider: ImageProvider | None = None,
+    ) -> None:
+        if image_provider is not None:
+            self.image_provider = image_provider
+            return
+        if key_pool is None or image_client is None:
+            raise ValueError("key_pool and image_client are required when image_provider is not supplied")
+        self.image_provider = AgnesImageProvider(key_pool, image_client)
 
     async def generate_three(
         self,
@@ -80,14 +91,9 @@ class KeyframeGenerator:
         )
 
     async def _generate(self, *, prompt: str, references: list[str]) -> str:
-        slot = await self.key_pool.next()
-        image = await self.image_client.generate(
-            api_key=slot.api_key,
+        return await self.image_provider.generate(
             prompt=prompt,
+            references=references,
             size="1K",
             ratio="9:16",
-            reference_images=references,
         )
-        if not image.url:
-            raise RuntimeError("Agnes Image 2.1 Flash returned no URL")
-        return image.url
