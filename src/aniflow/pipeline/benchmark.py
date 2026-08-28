@@ -22,6 +22,7 @@ from aniflow.pipeline.storyboard import StoryboardPlanner
 
 class BenchmarkRow(BaseModel):
     style_key: str
+    idea_index: int
     episode_id: str
     title: str
     premise: str
@@ -48,6 +49,7 @@ class BenchmarkReport(BaseModel):
     character_id: str
     created_at: str
     per_style_target: int
+    shared_ideas: list[StoryIdea] = Field(default_factory=list)
     rows: list[BenchmarkRow] = Field(default_factory=list)
     summaries: list[StyleSummary] = Field(default_factory=list)
 
@@ -91,23 +93,31 @@ class BenchmarkRunner:
             raise ValueError("per_style must be at least 1")
         if concurrency < 1:
             raise ValueError("concurrency must be at least 1")
+        if not style_keys:
+            raise ValueError("At least one style key is required")
 
         run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         rows: list[BenchmarkRow] = []
-        previous_titles: list[str] = []
         semaphore = asyncio.Semaphore(concurrency)
 
+        profiles = {
+            style_key: self._load_profile(character_dir, character_id, style_key)
+            for style_key in style_keys
+        }
+        canonical_profile = profiles[style_keys[0]]
+        idea_slot = await self.key_pool.next()
+        batch = await self.idea_generator.generate(
+            api_key=idea_slot.api_key,
+            count=per_style,
+            character_description=canonical_profile.bible.identity_prompt(),
+            style_description=(
+                "handcrafted miniature animation; every story must be equally suitable for needle-felt, "
+                "clay stop-motion, and miniature toy-world rendering"
+            ),
+        )
+
         for style_key in style_keys:
-            profile = self._load_profile(character_dir, character_id, style_key)
-            idea_slot = await self.key_pool.next()
-            batch = await self.idea_generator.generate(
-                api_key=idea_slot.api_key,
-                count=per_style,
-                character_description=profile.bible.identity_prompt(),
-                style_description=profile.style_description,
-                previous_titles=previous_titles,
-            )
-            previous_titles.extend(item.title for item in batch.ideas)
+            profile = profiles[style_key]
 
             async def run_one(index: int, idea: StoryIdea) -> BenchmarkRow:
                 async with semaphore:
@@ -125,6 +135,7 @@ class BenchmarkRunner:
                     )
                     return BenchmarkRow(
                         style_key=style_key,
+                        idea_index=index + 1,
                         episode_id=episode_id,
                         title=idea.title,
                         premise=idea.premise,
@@ -154,6 +165,7 @@ class BenchmarkRunner:
             character_id=character_id,
             created_at=datetime.now(timezone.utc).isoformat(),
             per_style_target=per_style,
+            shared_ideas=batch.ideas,
             rows=rows,
             summaries=self._summaries(rows, style_keys),
         )
