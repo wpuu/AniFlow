@@ -57,6 +57,7 @@ class BenchmarkReport(BaseModel):
     shared_ideas: list[StoryIdea] = Field(default_factory=list)
     rows: list[BenchmarkRow] = Field(default_factory=list)
     summaries: list[StyleSummary] = Field(default_factory=list)
+    human_calibration: list[dict] = Field(default_factory=list)
 
 
 class HumanCalibrationRow(BaseModel):
@@ -200,6 +201,7 @@ class BenchmarkRunner:
             )
             rows.extend(style_rows)
 
+        calibration_rows = self._calibration_rows(rows)
         report = BenchmarkReport(
             run_id=run_id,
             character_id=character_id,
@@ -208,13 +210,18 @@ class BenchmarkRunner:
             shared_ideas=batch.ideas,
             rows=rows,
             summaries=self._summaries(rows, style_keys),
+            human_calibration=[item.model_dump() for item in calibration_rows],
         )
         report_dir.mkdir(parents=True, exist_ok=True)
         (report_dir / f"{run_id}.json").write_text(
             json.dumps(report.model_dump(), ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
-        self._write_calibration_sheet(report, calibration_dir / f"{run_id}.json")
+        self._write_calibration_sheet(
+            run_id=run_id,
+            rows=calibration_rows,
+            path=calibration_dir / f"{run_id}.json",
+        )
         return report
 
     @classmethod
@@ -272,23 +279,29 @@ class BenchmarkRunner:
         return result
 
     @staticmethod
-    def _write_calibration_sheet(report: BenchmarkReport, path: Path) -> None:
-        sheet = HumanCalibrationSheet(
-            run_id=report.run_id,
-            rows=[
-                HumanCalibrationRow(
-                    episode_id=row.episode_id,
-                    style_key=row.style_key,
-                    title=row.title,
-                    final_public_url=row.final_public_url,
-                    machine_ab_score=row.ab_score,
-                    machine_bc_score=row.bc_score,
-                    machine_final_qa_score=row.final_qa_total,
-                    machine_final_qa_pass=row.final_qa_advisory_pass,
-                )
-                for row in report.rows
-            ],
-        )
+    def _calibration_rows(rows: list[BenchmarkRow]) -> list[HumanCalibrationRow]:
+        return [
+            HumanCalibrationRow(
+                episode_id=row.episode_id,
+                style_key=row.style_key,
+                title=row.title,
+                final_public_url=row.final_public_url,
+                machine_ab_score=row.ab_score,
+                machine_bc_score=row.bc_score,
+                machine_final_qa_score=row.final_qa_total,
+                machine_final_qa_pass=row.final_qa_advisory_pass,
+            )
+            for row in rows
+        ]
+
+    @staticmethod
+    def _write_calibration_sheet(
+        *,
+        run_id: str,
+        rows: list[HumanCalibrationRow],
+        path: Path,
+    ) -> None:
+        sheet = HumanCalibrationSheet(run_id=run_id, rows=rows)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
             json.dumps(sheet.model_dump(), ensure_ascii=False, indent=2),
