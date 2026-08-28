@@ -1,0 +1,216 @@
+from __future__ import annotations
+
+import asyncio
+import json
+import re
+from datetime import datetime, timezone
+from pathlib import Path
+
+from pydantic import BaseModel, Field
+
+from aniflow.agnes.http import AgnesHttpClient
+from aniflow.agnes.image import AgnesImageClient
+from aniflow.agnes.key_pool import KeyPool
+from aniflow.config import Settings
+from aniflow.media.store import PublicMediaStore
+from aniflow.pipeline.character import CharacterReferenceSet
+from aniflow.pipeline.episode import EpisodePipeline
+from aniflow.pipeline.ideas import IdeaGenerator, StoryIdea
+from aniflow.pipeline.segment import SegmentPipeline
+from aniflow.pipeline.storyboard import StoryboardPlanner
+
+
+class BenchmarkRow(BaseModel):
+    style_key: str
+    episode_id: str
+    title: str
+    premise: str
+    completed: bool
+    final_public_url: str | None = None
+    ab_score: float | None = None
+    bc_score: float | None = None
+    ab_rounds: int = 0
+    bc_rounds: int = 0
+
+
+class StyleSummary(BaseModel):
+    style_key: str
+    attempted: int
+    completed: int
+    completion_rate: float
+    mean_ab_score: float | None = None
+    mean_bc_score: float | None = None
+    mean_rounds: float | None = None
+
+
+class BenchmarkReport(BaseModel):
+    run_id: str
+    character_id: str
+    created_at: str
+    per_style_target: int
+    rows: list[BenchmarkRow] = Field(default_factory=list)
+    summaries: list[StyleSummary] = Field(default_factory=list)
+
+
+class BenchmarkRunner:
+    def __init__(
+        self,
+        *,
+        settings: Settings,
+        key_pool: KeyPool,
+        http: AgnesHttpClient,
+        image_client: AgnesImageClient,
+        segment_pipeline: SegmentPipeline,
+        media_store: PublicMediaStore,
+    ) -> None:
+        self.settings = settings
+        self.key_pool = key_pool
+        self.http = http
+        self.idea_generator = IdeaGenerator(settings, http)
+        self.episode_pipeline = EpisodePipeline(
+            settings=settings,
+            key_pool=key_pool,
+            storyboard_planner=StoryboardPlanner(settings, http),
+            image_client=image_client,
+            segment_pipeline=segment_pipeline,
+            media_store=media_store,
+        )
+
+    async def run(
+        self,
+        *,
+        character_id: str,
+        style_keys: list[str],
+        per_style: int = 10,
+        character_dir: Path = Path("data/characters"),
+        output_root: Path = Path("output/benchmarks"),
+        report_dir: Path = Path("data/benchmarks"),
+        concurrency: int = 2,
+    ) -> BenchmarkReport:
+        if per_style < 1:
+            raise ValueError("per_style must be at least 1")
+        if concurrency < 1:
+            raise ValueError("concurrency must be at least 1")
+
+        run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        rows: list[BenchmarkRow] = []
+        previous_titles: list[str] = []
+        semaphore = asyncio.Semaphore(concurrency)
+
+        for style_key in style_keys:
+            profile = self._load_profile(character_dir, character_id, style_key)
+            idea_slot = await self.key_pool.next()
+            batch = await self.idea_generator.generate(
+                api_key=idea_slot.api_key,
+                count=per_style,
+                character_description=profile.bible.identity_prompt(),
+                style_description=profile.style_description,
+                previous_titles=previous_titles,
+            )
+            previous_titles.extend(item.title for item in batch.ideas)
+
+            async def run_one(index: int, idea: StoryIdea) -> BenchmarkRow:
+                async with semaphore:
+                    episode_id = (
+                        f"{self._slug(character_id)}-{self._slug(style_key)}-"
+                        f"{run_id}-{index + 1:02d}"
+                    )
+                    result = await self.episode_pipeline.run(
+                        episode_id=episode_id,
+                        idea=f"{idea.premise} Visual hook: {idea.visual_hook}",
+                        character_description=profile.bible.identity_prompt(),
+                        character_reference_urls=profile.urls,
+                        output_dir=output_root / run_id / style_key,
+                        style=profile.style_description,
+                    )
+                    return BenchmarkRow(
+                        style_key=style_key,
+                        episode_id=episode_id,
+                        title=idea.title,
+                        premise=idea.premise,
+                        completed=result.completed,
+                        final_public_url=result.final_public_url,
+                        ab_score=(
+                            result.segment_ab.selected.total
+                            if result.segment_ab.selected is not None
+                            else None
+                        ),
+                        bc_score=(
+                            result.segment_bc.selected.total
+                            if result.segment_bc.selected is not None
+                            else None
+                        ),
+                        ab_rounds=len(result.segment_ab.rounds),
+                        bc_rounds=len(result.segment_bc.rounds),
+                    )
+
+            style_rows = await asyncio.gather(
+                *[run_one(index, idea) for index, idea in enumerate(batch.ideas)]
+            )
+            rows.extend(style_rows)
+
+        report = BenchmarkReport(
+            run_id=run_id,
+            character_id=character_id,
+            created_at=datetime.now(timezone.utc).isoformat(),
+            per_style_target=per_style,
+            rows=rows,
+            summaries=self._summaries(rows, style_keys),
+        )
+        report_dir.mkdir(parents=True, exist_ok=True)
+        (report_dir / f"{run_id}.json").write_text(
+            json.dumps(report.model_dump(), ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        return report
+
+    @classmethod
+    def _load_profile(
+        cls,
+        character_dir: Path,
+        character_id: str,
+        style_key: str,
+    ) -> CharacterReferenceSet:
+        path = character_dir / f"{cls._slug(character_id)}-{cls._slug(style_key)}.json"
+        if not path.is_file():
+            raise FileNotFoundError(
+                f"Missing character style profile: {path}. Run `aniflow character` first."
+            )
+        return CharacterReferenceSet.model_validate_json(path.read_text(encoding="utf-8"))
+
+    @staticmethod
+    def _summaries(rows: list[BenchmarkRow], style_keys: list[str]) -> list[StyleSummary]:
+        result: list[StyleSummary] = []
+        for style_key in style_keys:
+            subset = [row for row in rows if row.style_key == style_key]
+            completed = [row for row in subset if row.completed]
+            ab_scores = [row.ab_score for row in completed if row.ab_score is not None]
+            bc_scores = [row.bc_score for row in completed if row.bc_score is not None]
+            round_values = [
+                (row.ab_rounds + row.bc_rounds) / 2
+                for row in subset
+                if row.ab_rounds or row.bc_rounds
+            ]
+            result.append(
+                StyleSummary(
+                    style_key=style_key,
+                    attempted=len(subset),
+                    completed=len(completed),
+                    completion_rate=round(len(completed) / len(subset), 4) if subset else 0.0,
+                    mean_ab_score=BenchmarkRunner._mean(ab_scores),
+                    mean_bc_score=BenchmarkRunner._mean(bc_scores),
+                    mean_rounds=BenchmarkRunner._mean(round_values),
+                )
+            )
+        return result
+
+    @staticmethod
+    def _mean(values: list[float]) -> float | None:
+        if not values:
+            return None
+        return round(sum(values) / len(values), 2)
+
+    @staticmethod
+    def _slug(value: str) -> str:
+        slug = re.sub(r"[^a-zA-Z0-9._-]+", "-", value.strip()).strip("-").lower()
+        return slug or "item"
