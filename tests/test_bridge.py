@@ -40,11 +40,28 @@ def test_bridge_health_reports_media_capcut_and_frontend_state(tmp_path: Path) -
     assert response.json() == {
         "ok": True,
         "media_ready": True,
+        "capcut_runner_ready": True,
         "capcut_ready": True,
         "frontend_ready": True,
         "capcut_model": "Seedream 5.0",
         "bridge": "aniflow-local",
     }
+
+
+def test_bridge_reports_runner_ready_even_without_default_capcut_model() -> None:
+    app = create_bridge_app(
+        settings=Settings(capcut_runner_command='["python", "adapter.py"]'),
+        media_store=FakeMediaStore(),
+    )
+    client = TestClient(app)
+
+    response = client.get("/api/health")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["capcut_runner_ready"] is True
+    assert data["capcut_ready"] is False
+    assert data["capcut_model"] is None
 
 
 def test_bridge_root_serves_built_single_file_frontend(tmp_path: Path) -> None:
