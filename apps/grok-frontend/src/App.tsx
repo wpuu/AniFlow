@@ -5,10 +5,16 @@ import SettingsForm from './components/SettingsForm';
 import RightPanel from './components/RightPanel';
 import CollapsibleSection from './components/CollapsibleSection';
 import { STORAGE_KEYS, loadJSON, saveJSON } from './lib/storage';
-import { DEFAULT_PARAMS } from './lib/constants';
+import { DEFAULT_PARAMS_BY_MODEL, VIDEO_MODELS } from './lib/constants';
 import { createVideoTask, getVideoResult } from './lib/api';
 import { genId } from './lib/imageUtils';
-import type { GenerationParams, HistoryItem, TaskState, TaskStatus } from './lib/types';
+import type {
+  GenerationParams,
+  HistoryItem,
+  TaskState,
+  TaskStatus,
+  VideoModelKey,
+} from './lib/types';
 
 const BUSY_STATUSES = new Set<TaskStatus>(['creating', 'queued', 'in_progress']);
 
@@ -23,6 +29,22 @@ function mapStatus(status?: string): TaskStatus {
   return 'queued';
 }
 
+function isPublicImageUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value.trim());
+}
+
+function mergeParams(
+  base: GenerationParams,
+  saved: Partial<GenerationParams> | null | undefined,
+): GenerationParams {
+  return {
+    ...base,
+    ...(saved || {}),
+    keyframeScenes:
+      saved?.keyframeScenes?.length ? saved.keyframeScenes : base.keyframeScenes,
+  };
+}
+
 export default function App() {
   const [apiKeyCount, setApiKeyCount] = useState<number>(() => loadJSON(STORAGE_KEYS.KEY_COUNT, 1));
   const [apiKeys, setApiKeys] = useState<string[]>(() => {
@@ -31,7 +53,20 @@ export default function App() {
     return Array.from({ length: count }, (_, i) => saved[i] ?? '');
   });
 
-  const [params, setParams] = useState<GenerationParams>(() => loadJSON(STORAGE_KEYS.LAST_PARAMS, DEFAULT_PARAMS));
+  const [modelKey, setModelKey] = useState<VideoModelKey>(() =>
+    loadJSON<VideoModelKey>(STORAGE_KEYS.ACTIVE_MODEL, 'v2'),
+  );
+
+  const [paramsByModel, setParamsByModel] = useState<Record<VideoModelKey, GenerationParams>>(() => {
+    const saved = loadJSON<Partial<Record<VideoModelKey, GenerationParams>>>(STORAGE_KEYS.PARAMS_BY_MODEL, {});
+    const legacy = loadJSON<GenerationParams | null>(STORAGE_KEYS.LAST_PARAMS, null);
+    return {
+      v2: mergeParams(DEFAULT_PARAMS_BY_MODEL.v2, saved.v2 ?? legacy),
+      flash25: mergeParams(DEFAULT_PARAMS_BY_MODEL.flash25, saved.flash25),
+    };
+  });
+
+  const params = paramsByModel[modelKey];
 
   const [tasksByKey, setTasksByKey] = useState<Record<number, TaskState>>({});
   const [history, setHistory] = useState<HistoryItem[]>(() => loadJSON(STORAGE_KEYS.HISTORY, []));
@@ -41,6 +76,7 @@ export default function App() {
 
   const pollTimers = useRef<Record<number, number>>({});
   const stopFlags = useRef<Record<number, boolean>>({});
+  const activeHistoryIdByKey = useRef<Record<number, string>>({});
 
   useEffect(() => {
     saveJSON(STORAGE_KEYS.API_KEYS, apiKeys);
@@ -51,13 +87,20 @@ export default function App() {
   }, [apiKeyCount]);
 
   useEffect(() => {
+    saveJSON(STORAGE_KEYS.ACTIVE_MODEL, modelKey);
+  }, [modelKey]);
+
+  useEffect(() => {
     saveJSON(STORAGE_KEYS.HISTORY, history.slice(0, 300));
   }, [history]);
 
   useEffect(() => {
-    const t = window.setTimeout(() => saveJSON(STORAGE_KEYS.LAST_PARAMS, params), 500);
+    const t = window.setTimeout(() => {
+      saveJSON(STORAGE_KEYS.PARAMS_BY_MODEL, paramsByModel);
+      saveJSON(STORAGE_KEYS.LAST_PARAMS, paramsByModel.v2);
+    }, 500);
     return () => window.clearTimeout(t);
-  }, [params]);
+  }, [paramsByModel]);
 
   useEffect(() => {
     if (!message) return;
@@ -83,6 +126,18 @@ export default function App() {
     setHistory((prev) => prev.map((h) => (h.id === id ? { ...h, ...patch } : h)));
   }
 
+  function updateParams(updater: (prev: GenerationParams) => GenerationParams) {
+    setParamsByModel((prev) => ({
+      ...prev,
+      [modelKey]: updater(prev[modelKey]),
+    }));
+  }
+
+  function handleModelChange(nextModel: VideoModelKey) {
+    setModelKey(nextModel);
+    notify(`已切换到 ${VIDEO_MODELS[nextModel].label}，该模型上次设置已恢复`);
+  }
+
   function handleKeyCountChange(count: number) {
     setApiKeyCount(count);
     setApiKeys((prev) => Array.from({ length: count }, (_, i) => prev[i] ?? ''));
@@ -98,11 +153,18 @@ export default function App() {
   }
 
   const poll = useCallback(
-    (keyIndex: number, apiKey: string, videoId: string, historyId: string, retriesLeft = 5) => {
+    (
+      keyIndex: number,
+      apiKey: string,
+      videoId: string,
+      historyId: string,
+      taskModelKey: VideoModelKey,
+      retriesLeft = 5,
+    ) => {
       const run = async () => {
         if (stopFlags.current[keyIndex]) return;
         try {
-          const result = await getVideoResult(apiKey, videoId);
+          const result = await getVideoResult(apiKey, videoId, taskModelKey);
           if (stopFlags.current[keyIndex]) return;
           const status = mapStatus(result.status);
           const patch: Partial<TaskState> = {
@@ -110,6 +172,7 @@ export default function App() {
             progress: result.progress ?? 0,
             size: result.size,
             seconds: result.seconds,
+            modelKey: taskModelKey,
           };
           if (status === 'completed') {
             patch.videoUrl = result.metadata?.url ?? null;
@@ -123,23 +186,25 @@ export default function App() {
 
           if (status === 'completed' || status === 'failed') {
             delete pollTimers.current[keyIndex];
+            delete activeHistoryIdByKey.current[keyIndex];
             return;
           }
           pollTimers.current[keyIndex] = window.setTimeout(
-            () => poll(keyIndex, apiKey, videoId, historyId, 5),
+            () => poll(keyIndex, apiKey, videoId, historyId, taskModelKey, 5),
             3000,
           );
         } catch (err) {
           if (stopFlags.current[keyIndex]) return;
           if (retriesLeft > 0) {
             pollTimers.current[keyIndex] = window.setTimeout(
-              () => poll(keyIndex, apiKey, videoId, historyId, retriesLeft - 1),
+              () => poll(keyIndex, apiKey, videoId, historyId, taskModelKey, retriesLeft - 1),
               4000,
             );
           } else {
             const msg = err instanceof Error ? err.message : '网络异常，查询进度失败';
-            updateTaskState(keyIndex, { status: 'failed', error: msg });
+            updateTaskState(keyIndex, { status: 'failed', error: msg, modelKey: taskModelKey });
             updateHistoryItem(historyId, { status: 'failed', error: msg });
+            delete activeHistoryIdByKey.current[keyIndex];
           }
         }
       };
@@ -159,29 +224,50 @@ export default function App() {
         notify('请先填写提示词', 'error');
         return;
       }
+
       if (params.mode === 'i2v' && !params.singleImage) {
         notify('图生视频模式需要先上传图片或填写图片地址', 'error');
         return;
       }
-      if (params.mode === 'keyframes') {
+
+      if (modelKey === 'flash25') {
+        if (params.mode === 'i2v' && !isPublicImageUrl(params.singleImage)) {
+          notify('2.5 Flash 当前首帧需要可公开访问的 http(s) 图片 URL；本地图片需先上传到媒体存储', 'error');
+          return;
+        }
+        if (params.mode === 'keyframes') {
+          const images = params.keyframeScenes.map((s) => s.imageUrl.trim()).filter(Boolean);
+          if (images.length < 2) {
+            notify('2.5 Flash 首尾帧模式需要首帧和尾帧两张图片', 'error');
+            return;
+          }
+          if (!images.slice(0, 2).every(isPublicImageUrl)) {
+            notify('2.5 Flash 首尾帧需要可公开访问的 http(s) 图片 URL', 'error');
+            return;
+          }
+        }
+      } else if (params.mode === 'keyframes') {
         const valid = params.keyframeScenes.filter((s) => s.imageUrl.trim());
         if (valid.length < 2) {
-          notify('多关键帧模式至少需要上传 2 张关键帧图片', 'error');
+          notify('V2.0 多关键帧模式至少需要上传 2 张关键帧图片', 'error');
           return;
         }
       }
 
-      saveJSON(STORAGE_KEYS.LAST_PARAMS, params);
       stopFlags.current[keyIndex] = false;
 
       const historyId = genId('task');
+      activeHistoryIdByKey.current[keyIndex] = historyId;
       setSelectedKeyTab(keyIndex);
 
+      const modelName = VIDEO_MODELS[modelKey].apiModel;
       const newItem: HistoryItem = {
         id: historyId,
         keyIndex,
         createdAt: Date.now(),
         promptPreview: params.prompt.trim().slice(0, 100),
+        modelKey,
+        modelName,
         mode: params.mode,
         ratio: params.ratio,
         resolution: params.resolution,
@@ -200,25 +286,27 @@ export default function App() {
         videoId: null,
         taskId: null,
         error: null,
+        modelKey,
       });
 
       try {
-        const created = await createVideoTask(apiKey, params);
+        const created = await createVideoTask(apiKey, modelKey, params);
         const videoId = created.video_id || created.id || created.task_id || '';
         const taskId = created.task_id || created.id || '';
         if (!videoId) throw new Error('未获取到有效的视频任务 ID，请检查返回结果');
         const status = mapStatus(created.status);
-        updateTaskState(keyIndex, { status, progress: created.progress ?? 0, videoId, taskId });
+        updateTaskState(keyIndex, { status, progress: created.progress ?? 0, videoId, taskId, modelKey });
         updateHistoryItem(historyId, { status, progress: created.progress ?? 0, videoId, taskId });
-        poll(keyIndex, apiKey, videoId, historyId);
+        poll(keyIndex, apiKey, videoId, historyId, modelKey);
       } catch (err) {
         const msg = err instanceof Error ? err.message : '创建任务失败';
-        updateTaskState(keyIndex, { status: 'failed', error: msg });
+        updateTaskState(keyIndex, { status: 'failed', error: msg, modelKey });
         updateHistoryItem(historyId, { status: 'failed', error: msg });
+        delete activeHistoryIdByKey.current[keyIndex];
         notify(msg, 'error');
       }
     },
-    [apiKeys, params, poll],
+    [apiKeys, modelKey, params, poll],
   );
 
   function stopGeneration(keyIndex: number) {
@@ -233,13 +321,17 @@ export default function App() {
       if (!cur || cur.status === 'completed' || cur.status === 'failed') return prev;
       return { ...prev, [keyIndex]: { ...cur, status: 'stopped' } };
     });
-    const id = selectedHistoryIdByKey[keyIndex];
-    if (id) {
+
+    const activeId = activeHistoryIdByKey.current[keyIndex];
+    if (activeId) {
       setHistory((prev) =>
         prev.map((h) =>
-          h.id === id && h.status !== 'completed' && h.status !== 'failed' ? { ...h, status: 'stopped' } : h,
+          h.id === activeId && h.status !== 'completed' && h.status !== 'failed'
+            ? { ...h, status: 'stopped' }
+            : h,
         ),
       );
+      delete activeHistoryIdByKey.current[keyIndex];
     }
   }
 
@@ -258,7 +350,8 @@ export default function App() {
       notify('缺少 Key 或视频 ID，无法刷新', 'error');
       return;
     }
-    getVideoResult(apiKey, item.videoId)
+    const itemModelKey = item.modelKey ?? 'v2';
+    getVideoResult(apiKey, item.videoId, itemModelKey)
       .then((result) => {
         const status = mapStatus(result.status);
         const patch: Partial<HistoryItem> = {
@@ -270,7 +363,10 @@ export default function App() {
         if (status === 'completed') patch.videoUrl = result.metadata?.url ?? null;
         if (status === 'failed') patch.error = result.error?.message || '生成失败';
         updateHistoryItem(item.id, patch);
-        updateTaskState(item.keyIndex, patch as Partial<TaskState>);
+
+        if (activeHistoryIdByKey.current[item.keyIndex] === item.id) {
+          updateTaskState(item.keyIndex, patch as Partial<TaskState>);
+        }
       })
       .catch((err) => notify(err instanceof Error ? err.message : '刷新失败', 'error'));
   }
@@ -280,27 +376,40 @@ export default function App() {
   }
 
   function handleSaveAsDefault() {
-    saveJSON(STORAGE_KEYS.DEFAULT_PARAMS, params);
-    notify('已将当前设置保存为默认设置');
+    const defaults = loadJSON<Partial<Record<VideoModelKey, GenerationParams>>>(
+      STORAGE_KEYS.DEFAULT_PARAMS_BY_MODEL,
+      {},
+    );
+    const next = { ...defaults, [modelKey]: params };
+    saveJSON(STORAGE_KEYS.DEFAULT_PARAMS_BY_MODEL, next);
+    if (modelKey === 'v2') saveJSON(STORAGE_KEYS.DEFAULT_PARAMS, params);
+    notify(`已将 ${VIDEO_MODELS[modelKey].label} 当前设置保存为默认设置`);
   }
 
   function handleRestoreDefault() {
-    const def = loadJSON<GenerationParams | null>(STORAGE_KEYS.DEFAULT_PARAMS, null);
+    const defaults = loadJSON<Partial<Record<VideoModelKey, GenerationParams>>>(
+      STORAGE_KEYS.DEFAULT_PARAMS_BY_MODEL,
+      {},
+    );
+    const legacyDefault =
+      modelKey === 'v2' ? loadJSON<GenerationParams | null>(STORAGE_KEYS.DEFAULT_PARAMS, null) : null;
+    const def = defaults[modelKey] ?? legacyDefault;
     if (def) {
-      setParams(def);
-      notify('已恢复为默认设置');
+      updateParams(() => mergeParams(DEFAULT_PARAMS_BY_MODEL[modelKey], def));
+      notify(`已恢复 ${VIDEO_MODELS[modelKey].label} 默认设置`);
     } else {
-      notify('尚未保存过默认设置', 'error');
+      notify('当前模型尚未保存过默认设置', 'error');
     }
   }
 
   function handleRestoreLast() {
-    const last = loadJSON<GenerationParams | null>(STORAGE_KEYS.LAST_PARAMS, null);
+    const saved = loadJSON<Partial<Record<VideoModelKey, GenerationParams>>>(STORAGE_KEYS.PARAMS_BY_MODEL, {});
+    const last = saved[modelKey];
     if (last) {
-      setParams(last);
-      notify('已恢复上一次的内容');
+      updateParams(() => mergeParams(DEFAULT_PARAMS_BY_MODEL[modelKey], last));
+      notify(`已恢复 ${VIDEO_MODELS[modelKey].label} 上一次自动保存的设置`);
     } else {
-      notify('暂无上一次的记录', 'error');
+      notify('当前模型暂无已保存设置', 'error');
     }
   }
 
@@ -324,9 +433,11 @@ export default function App() {
               </div>
               <div>
                 <h1 className="text-base font-bold leading-tight text-zinc-900 sm:text-lg">
-                  Agnes Video V2.0 视频生成工作台
+                  Agnes 视频生成工作台
                 </h1>
-                <p className="text-xs text-zinc-400">文生视频 · 图生视频 · 多关键帧动画 · 多 Key 并行生成</p>
+                <p className="text-xs text-zinc-400">
+                  当前：{VIDEO_MODELS[modelKey].label} · 多 Key 并行 · 模型参数独立保存
+                </p>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -395,7 +506,12 @@ export default function App() {
             />
           </CollapsibleSection>
 
-          <SettingsForm params={params} onChange={setParams} />
+          <SettingsForm
+            modelKey={modelKey}
+            onModelChange={handleModelChange}
+            params={params}
+            onChange={updateParams}
+          />
         </div>
 
         <div className="lg:col-span-1">
@@ -415,7 +531,7 @@ export default function App() {
       </main>
 
       <footer className="mx-auto max-w-7xl px-4 pb-8 pt-2 text-center text-[11px] text-zinc-400 sm:px-6">
-        本工具直接调用 Agnes Video V2.0 官方接口（apihub.agnes-ai.com），请妥善保管你的 API Key。
+        当前模型：{VIDEO_MODELS[modelKey].label}。API Key 仅保存在本浏览器 localStorage；请勿在公共电脑使用。
       </footer>
     </div>
   );
