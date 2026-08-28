@@ -1,0 +1,115 @@
+name: Build Character References
+
+on:
+  workflow_dispatch:
+    inputs:
+      character_id:
+        description: 'Stable character ID, e.g. filo'
+        required: true
+        type: string
+      name:
+        description: 'Display name, e.g. Filo'
+        required: true
+        type: string
+      description:
+        description: 'Core character description'
+        required: true
+        type: string
+      styles:
+        description: 'Comma-separated styles. Empty = felt,clay,toy'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aniflow-character-${{ inputs.character_id }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      AGNES_API_ROOT: https://apihub.agnes-ai.com
+      AGNES_API_KEYS: ${{ secrets.AGNES_API_KEYS }}
+      AGNES_TEXT_MODEL: agnes-2.5-flash
+      AGNES_IMAGE_MODEL: agnes-image-2.1-flash
+      AGNES_VIDEO_MODEL: agnes-video-2.5-flash
+      S3_ENDPOINT_URL: ${{ secrets.S3_ENDPOINT_URL }}
+      S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+      S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+      S3_BUCKET: ${{ secrets.S3_BUCKET }}
+      S3_PUBLIC_BASE_URL: ${{ secrets.S3_PUBLIC_BASE_URL }}
+      S3_REGION: ${{ vars.S3_REGION || 'auto' }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install AniFlow
+        run: pip install -e '.[dev]'
+
+      - name: Validate secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$AGNES_API_KEYS" || { echo 'Missing secret AGNES_API_KEYS'; exit 1; }
+          test -n "$S3_ENDPOINT_URL" || { echo 'Missing secret S3_ENDPOINT_URL'; exit 1; }
+          test -n "$S3_ACCESS_KEY_ID" || { echo 'Missing secret S3_ACCESS_KEY_ID'; exit 1; }
+          test -n "$S3_SECRET_ACCESS_KEY" || { echo 'Missing secret S3_SECRET_ACCESS_KEY'; exit 1; }
+          test -n "$S3_BUCKET" || { echo 'Missing secret S3_BUCKET'; exit 1; }
+          test -n "$S3_PUBLIC_BASE_URL" || { echo 'Missing secret S3_PUBLIC_BASE_URL'; exit 1; }
+
+      - name: Build character reference sets
+        shell: bash
+        env:
+          INPUT_CHARACTER_ID: ${{ inputs.character_id }}
+          INPUT_NAME: ${{ inputs.name }}
+          INPUT_DESCRIPTION: ${{ inputs.description }}
+          INPUT_STYLES: ${{ inputs.styles }}
+        run: |
+          set -euo pipefail
+          style_args=()
+          if [ -n "$INPUT_STYLES" ]; then
+            IFS=',' read -ra styles <<< "$INPUT_STYLES"
+            for style in "${styles[@]}"; do
+              style="$(echo "$style" | xargs)"
+              if [ -n "$style" ]; then
+                style_args+=(--style "$style")
+              fi
+            done
+          fi
+          aniflow character \
+            --character-id "$INPUT_CHARACTER_ID" \
+            --name "$INPUT_NAME" \
+            --description "$INPUT_DESCRIPTION" \
+            "${style_args[@]}" \
+            | tee character-result.json
+
+      - name: Save private character profiles
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/characters
+          if git diff --cached --quiet; then
+            echo 'No character profile changes to commit.'
+          else
+            git commit -m 'chore: update AniFlow character references'
+            git push
+          fi
+
+      - name: Upload character manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: aniflow-character-${{ inputs.character_id }}-${{ github.run_id }}
+          path: character-result.json
+          retention-days: 14
