@@ -79,6 +79,9 @@ jobs:
           test -n "$S3_PUBLIC_BASE_URL" || { echo 'Missing secret S3_PUBLIC_BASE_URL'; exit 1; }
           aniflow doctor
 
+      - name: Live Agnes and media preflight
+        run: aniflow preflight
+
       - name: Run fair style benchmark
         shell: bash
         env:
