@@ -10,10 +10,11 @@ from aniflow.config import Settings
 
 
 class PublicMediaStore:
-    """S3-compatible uploader that returns stable public HTTPS URLs.
+    """S3-compatible public media storage.
 
     Cloudflare R2 is the recommended deployment, but any S3-compatible endpoint
-    with a public/custom domain works.
+    with a public/custom domain works. Permanent assets use stable object keys;
+    short-lived visual-QA assets can be deleted after judging.
     """
 
     def __init__(self, settings: Settings) -> None:
@@ -33,14 +34,41 @@ class PublicMediaStore:
         if not path.is_file():
             raise FileNotFoundError(path)
         content_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+        normalized_key = object_key.lstrip("/")
 
         def _upload() -> None:
             self._client.upload_file(
                 str(path),
                 self.settings.s3_bucket,
-                object_key,
+                normalized_key,
                 ExtraArgs={"ContentType": content_type},
             )
 
         await asyncio.to_thread(_upload)
-        return f"{self.settings.s3_public_base_url.rstrip('/')}/{object_key.lstrip('/')}"
+        return f"{self.settings.s3_public_base_url.rstrip('/')}/{normalized_key}"
+
+    async def delete(self, object_key: str) -> None:
+        normalized_key = object_key.lstrip("/")
+        if not normalized_key:
+            raise ValueError("object_key must not be empty")
+
+        def _delete() -> None:
+            self._client.delete_object(
+                Bucket=self.settings.s3_bucket,
+                Key=normalized_key,
+            )
+
+        await asyncio.to_thread(_delete)
+
+    async def delete_many(self, object_keys: list[str]) -> None:
+        keys = [key.lstrip("/") for key in object_keys if key.strip()]
+        if not keys:
+            return
+
+        def _delete_many() -> None:
+            self._client.delete_objects(
+                Bucket=self.settings.s3_bucket,
+                Delete={"Objects": [{"Key": key} for key in keys], "Quiet": True},
+            )
+
+        await asyncio.to_thread(_delete_many)
