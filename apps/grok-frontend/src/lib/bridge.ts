@@ -3,6 +3,7 @@ export const DEFAULT_BRIDGE_URL = 'http://127.0.0.1:8765';
 export interface BridgeHealth {
   ok: boolean;
   media_ready: boolean;
+  capcut_runner_ready: boolean;
   capcut_ready: boolean;
   frontend_ready: boolean;
   capcut_model?: string | null;
