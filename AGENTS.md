@@ -6,127 +6,177 @@
 
 Repository: `wpuu/AniFlow`
 
-AniFlow is a private automated animation-content pipeline. It is not a public Agnes API proxy. Real API keys must never be committed to repository files, embedded into generated bundles, printed in logs, or exposed in public artifacts.
-
-The owner's private interactive frontend may accept Agnes keys at runtime and save them in that user's browser `localStorage` for convenience. This is a private-use UX choice, not permission to hard-code keys into source code or ship them in build output.
+AniFlow is a private automated animation-content pipeline. It is not a public Agnes API proxy. Real secrets must not be committed or printed in logs/artifacts.
 
 ## Fixed product assumptions
 
-- Treat the currently available Agnes Flash models as primary project capabilities. Do not spend project time monitoring or optimizing around free-plan quotas unless the owner explicitly changes this rule.
-- The owner uses multiple Agnes accounts; their API keys are separate accounts and are intentionally pooled for parallel candidate generation.
+- Treat the currently available Agnes Flash models as primary project providers. Do not spend project time monitoring free-plan quotas/pricing unless the owner explicitly changes this rule.
+- The owner uses multiple independent Agnes accounts and may enter their API keys directly in the private frontend. Browser keys are intentionally auto-saved locally for convenience; do not use this on public/shared computers.
 - Primary reasoning / visual-QA model: `agnes-2.5-flash`.
-- Image generation must be provider-neutral. Agnes Image 2.1 Flash is the default direct-API provider, but CapCut/Seedream is a first-class planned image provider because the owner has observed better/faster reference-image results in their actual CapCut environment.
-- Video generation comparison must support both `agnes-video-v2.0` and `agnes-video-2.5-flash` in the private frontend. The backend V0.1 episode pipeline currently targets Video 2.5 Flash for the A->B / B->C benchmark.
-- Primary short-video format: `9:16`; Video 2.5 Flash output is `720x1280`.
-- Default Agnes keyframe image format: `9:16`, `1K` (`736x1312` native Agnes Image 2.1 Flash output).
+- Agnes image provider: `agnes-image-2.1-flash`.
+- Video models exposed in the private frontend: `agnes-video-v2.0` and `agnes-video-2.5-flash`.
+- Primary short-video format: `9:16`; Video 2.5 Flash output `720x1280`.
 - V0.1 episode structure: exactly 3 keyframes `A -> B -> C`, two 5-second keyframe-controlled video segments, then concatenate.
-- First content styles to validate: needle-felt, clay, miniature toy-world.
+- First benchmark styles: needle-felt, clay, miniature toy-world.
 - Default production timezone: `Asia/Shanghai`.
-- The owner's existing multi-key frontend is private and project-specific; do not redesign AniFlow as a public Agnes proxy.
-- The Grok-generated frontend lives under `apps/grok-frontend/` and is now an actively adapted AniFlow interactive workbench, not merely a reserved import area.
+- The frontend under `apps/grok-frontend/` is now an active AniFlow frontend, not merely a reserved import area.
+- GitHub Actions are currently not a reliable execution path because the owner's GitHub account blocks jobs on billing/spending status. Do not create extra Actions-based smoke work unless this changes.
 
-## Private frontend model policy
+## Video frontend policy
 
-`apps/grok-frontend/` supports two independent Agnes video profiles:
+The private frontend must preserve both video models and each model's own settings.
 
 ### Agnes Video V2.0
 
-- API model: `agnes-video-v2.0`
-- Preserve the imported V2 controls and request family: width/height, 480p/720p/1080p presets, `num_frames`, `frame_rate`, `negative_prompt`, inference steps, seed, single-image and multi-keyframe behavior.
+Keep the imported V2.0 parameter contract, including resolution tiers, width/height, `num_frames`, `frame_rate`, negative prompt, inference steps, seed, image-to-video and old multi-keyframe behavior.
 
 ### Agnes Video 2.5 Flash
 
-- API model: `agnes-video-2.5-flash`
-- `size`: `720P`
-- `seconds`: 4-12
-- `aspect_ratio`
-- text-to-video: `mode=text`
-- single-image animation: `mode=keyframe` + `first_frame`
-- first/last-frame animation: `mode=keyframe` + `first_frame` + `last_frame`
-- `n=1`
+Use the current contract:
 
-Each video model must keep an independent auto-saved parameter set. Switching V2.0 -> 2.5 Flash -> V2.0 must restore the user's previous V2.0 settings rather than rebuilding defaults.
+- model: `agnes-video-2.5-flash`
+- create: `POST /v1/videos`
+- retrieve: `GET /agnesapi?video_id=<id>&model_name=agnes-video-2.5-flash`
+- `size: "720P"`
+- `seconds`: strings `"4"` through `"12"`
+- `n: 1`
+- `mode: "text"` for text-to-video
+- `mode: "keyframe"` + `first_frame` for single-image animation
+- `mode: "keyframe"` + `first_frame` + `last_frame` for first/last-frame animation
+- 9:16 output = 720x1280
 
-History records must keep the model used to create each task, and polling/manual refresh must query with that original model even if the user has since switched the active model.
+The two video models keep independent browser-local last/default parameter sets. Switching models must not reset the other model's settings. History records the originating model and must refresh using that original model.
 
-Agnes API keys entered into the private frontend are auto-saved in browser `localStorage` because the owner explicitly wants that convenience. Never commit those values. Do not use this UX on shared/public computers.
+## Frontend hardening already implemented
 
-## Official Agnes Video 2.5 Flash constraints
-
-Source of truth: https://wiki.agnes-ai.com/en/docs/agnes-video-25-flash
-
-- Model: `agnes-video-2.5-flash`
-- Create: `POST /v1/videos`
-- Retrieve: `GET /agnesapi?video_id=<id>&model_name=agnes-video-2.5-flash`
-- Modes: `text`, `keyframe`, `reference`
-- Duration: strings `"4"` through `"12"`
-- `size`: only `"720P"`
-- `n`: only `1`
-- Keyframe mode supports `first_frame`, `last_frame`, or both
-- Reference mode supports up to 5 images and does not support reference videos
-- Media URLs must be publicly reachable until task completion
-- Supported output dimensions:
-  - 21:9 = 1680x720
-  - 16:9 = 1280x720
-  - 4:3 = 960x720
-  - 1:1 = 720x720
-  - 3:4 = 720x960
-  - 9:16 = 720x1280
-
-Local browser `data:` images must not be sent as Flash keyframes. They must first be persisted through AniFlow's public media layer and converted to reachable HTTP(S) URLs.
+- 1-9 browser-saved Agnes API keys.
+- "Generate all" starts all configured idle Keys instead of being globally disabled by one busy Key.
+- Active task history is tracked separately from whichever old history row the user is viewing.
+- "Stop tracking" is correctly described as stopping polling only; it does not claim to cancel the server-side Agnes task.
+- Busy Key inputs are locked so credentials cannot change during polling/history refresh.
+- Key count cannot hide a still-running Key.
+- History cannot be cleared while a task is active.
+- Local base64 preview images are excluded from saved parameter objects to avoid localStorage quota failure.
+- Local image upload errors are surfaced and the same file can be selected again.
+- Frontend `npm run build` runs strict TypeScript checking before Vite build.
 
 ## Image-provider architecture
 
-`src/aniflow/image_provider.py` defines the provider-neutral image interface used by character and story-keyframe pipelines.
+AniFlow image generation is provider-neutral.
 
-Current implementation:
+`src/aniflow/image_provider.py` defines the interface used by:
 
-- `ImageProvider` protocol
-- `AgnesImageProvider` default adapter
-- `KeyframeGenerator` accepts a custom provider
-- `CharacterBuilder` accepts a custom provider
+- cross-style Identity Anchor generation;
+- front / three-quarter / side character references;
+- story A/B/C keyframes.
 
-Therefore the following stages can use Agnes Image or a future CapCut/Seedream provider without rewriting downstream video/QA logic:
+Providers:
 
-1. shared identity anchor;
-2. style-specific front / three-quarter / side character references;
-3. episode A/B/C story keyframes.
+- `AgnesImageProvider` — direct Agnes Image API.
+- `CapCutSeedreamProvider` — controlled external browser-agent provider through a subprocess JSON contract.
 
-Provider output must become a durable/public URL before being passed into Agnes Video.
+Do not reintroduce direct `AgnesImageClient` assumptions into provider-neutral character/keyframe code.
 
-### CapCut / Seedream provider direction
+## CapCut / Seedream rules
 
-Preferred first implementation is normal CapCut Web UI automation through a browser Agent, not coordinate-based desktop clicking and not private API reverse engineering.
+CapCut/Seedream is a first-class image/keyframe candidate because the owner observes better/faster reference-image output. Do not hard-code one Seedream version. The exact model label is runtime configuration and may be typed in the AniFlow page and auto-saved.
 
-Rules:
+`CAPCUT_SEEDREAM_MODEL` is only an optional default. `CAPCUT_RUNNER_COMMAND` controls whether the local browser Agent Runner exists. Runner readiness and default-model readiness are separate states.
 
-- user performs normal login manually once;
-- authorized browser state is local-only and never committed;
-- automate visible model selection, prompt input, reference upload, ratio selection, Generate and normal result download;
-- treat the model label as runtime configuration rather than hard-coding a particular Seedream version, because the owner's account may expose labels such as Seedream 4.3 / 4.0s while public CapCut pages can expose newer labels;
-- no automated account creation, CAPTCHA bypass or anti-bot bypass;
-- fail closed when required UI elements cannot be identified;
-- persist downloaded candidates into AniFlow's media store before Video use;
-- when CapCut returns multiple images, compare candidates using visual QA rather than blindly choosing the first.
+The CapCut provider must automate only the normal signed-in CapCut UI:
 
-Detailed plan: `docs/capcut-seedream-provider.md`.
+- no account creation automation;
+- no CAPTCHA/anti-bot bypass;
+- no private/undocumented CapCut API reverse engineering;
+- no committed cookies or browser state;
+- expired login means normal manual sign-in.
+
+The final UI adapter is intentionally not guessed. `scripts/capcut_agent_probe.py` must first capture the owner's real logged-in CapCut AI Design page into gitignored `data/runtime/capcut/`. Only then should selectors/semantic controls be implemented.
+
+Current probe artifacts:
+
+- `snapshot.txt`
+- `body.txt`
+- `metadata.json`
+- `browser-state.json` (sensitive session state; local only)
+
+The subprocess runner contract appends:
+
+`--request <request.json> --response <response.json>`
+
+The response must contain `output_path` or non-empty `output_paths`. Current provider uses the first returned output. Multi-candidate visual ranking is still pending and must not be described as implemented.
+
+## Local Bridge
+
+The private browser frontend now uses a loopback FastAPI Bridge.
+
+Default:
+
+- host: `127.0.0.1`
+- port: `8765`
+- frontend: `apps/grok-frontend/dist/index.html`
+
+Standard local page:
+
+`http://127.0.0.1:8765/`
+
+The Bridge serves the Vite single-file frontend itself so normal use is same-origin. Do not restore broad `Origin: null` CORS for arbitrary `file://` pages.
+
+Bridge endpoints:
+
+- `GET /api/health`
+- `POST /api/media/upload`
+- `POST /api/images/generate`
+
+Media upload:
+
+- PNG/JPEG/WEBP only by magic bytes;
+- max 20 MiB;
+- persists to the S3-compatible public media layer.
+
+Video 2.5 Flash local frame handling:
+
+- browser local image remains a preview data URL only;
+- before task creation the frontend sends it to Bridge;
+- Bridge persists it to public media;
+- the public URL is used as `first_frame` / `last_frame`;
+- a multi-Key batch reuses the same in-flight/resolved upload instead of uploading once per Key.
+
+Image generation endpoint:
+
+- Agnes Image requires the request-scoped page Key and persists the upstream image into AniFlow media before returning it;
+- CapCut uses the configured Runner plus the page/default model label and also returns an AniFlow-persisted public URL.
+
+## Public media layer
+
+AniFlow uses an S3-compatible abstraction; Cloudflare R2 is recommended but not hard-coded.
+
+Persistent paths include:
+
+- `aniflow/characters/<id>/identity-anchor.*`
+- `aniflow/characters/`
+- `aniflow/episodes/<episode-id>/keyframes/`
+- `aniflow/final/`
+- Bridge-generated/uploaded image objects.
+
+Transient paths include visual-QA samples and preflight probes. Real credentials never belong in public media.
 
 ## Character identity policy
 
-A style benchmark must compare rendering/video behavior, not three independently randomized character designs.
+A style benchmark must compare rendering/video behavior, not independently randomized character designs.
 
-Character bootstrap therefore uses this fixed semantic chain:
+Fixed chain:
 
 1. `agnes-2.5-flash` creates one semantic Character Bible.
-2. the selected `ImageProvider` creates one persistent, style-neutral `identity-anchor` that locks silhouette, proportions, face placement, colors, accessory geometry and distinguishing feature.
-3. felt / clay / toy front references all use that same anchor as their source and may change material/rendering only.
-4. each style's three-quarter and side references use the shared anchor plus the already-generated style references.
+2. the selected ImageProvider creates one persistent, style-neutral Identity Anchor locking silhouette/proportions/face/colors/accessory geometry;
+3. felt/clay/toy front refs derive from the same anchor, changing material/rendering only;
+4. each style's three-quarter/side refs reuse the shared anchor plus existing same-style refs.
 
-Do not revert to generating each style's canonical front independently from text only.
+Do not revert to three independent text-only style fronts.
 
-## Quality policy
+## Video quality policy
 
-Each generated video candidate is sampled at 0/20/40/60/80/100% and judged by Agnes 2.5 Flash using three independent judging focuses. Numeric scores are median-aggregated.
+Each segment candidate is sampled at 0/20/40/60/80/100% and judged by three independent Agnes 2.5 Flash focuses. Numeric scores are median-aggregated.
 
 Hard minimums:
 
@@ -135,121 +185,85 @@ Hard minimums:
 - anatomy integrity >= 85
 - start frame match >= 85
 - end frame match >= 85
-- any hard-fail defect rejects the candidate regardless of total score
+- any hard-fail defect rejects regardless of total score
 
-If every candidate fails, use the best failed candidate's diagnosis to rewrite the video prompt and retry. Default maximum repair rounds is 2 after the initial round.
+If every candidate fails, use the best failure diagnosis to repair the video prompt and retry. Default maximum repair rounds: 2 after initial.
 
-After AB and BC pass and are assembled, V0.1 also runs an advisory whole-episode Final QA. It samples the final video with points bracketing the middle join at 49%/51% and evaluates whole-episode character identity, style consistency, seam continuity, temporal integrity, story clarity, pacing and visual appeal. During the first benchmark this Final QA must not discard an otherwise viewable video; its scores are calibration telemetry until compared with human ratings.
+After AB/BC assembly, advisory Final QA samples the whole episode including 49%/51% around the middle join and records identity/style/seam/temporal/story/pacing/appeal. It remains calibration telemetry until human review establishes its reliability.
 
-For multi-candidate image providers such as CapCut/Seedream, candidate selection should eventually judge character identity, anatomy/geometry, style/material, reference fidelity, scene continuity and suitability as a stable first/last video frame before selecting one durable image URL.
+## Human calibration
 
-## Human calibration policy
+The first real 30-video benchmark must preserve machine metrics plus human fields for usability, identity/anatomy/background/seam/motion/story/visual-appeal issues and notes. Do not turn Final QA into a hard production gate until the first human calibration is complete.
 
-The first real 30-video benchmark must preserve a human calibration sheet. The benchmark report already embeds human calibration rows; `data/calibration/<run_id>.json` may also be emitted locally. Do not claim the current GitHub benchmark workflow commits `data/calibration/` unless that workflow is explicitly updated and verified.
+## Multi-account video policy
 
-Do not make Final QA a hard production gate until the first human review is complete and false-positive/false-negative behavior has been measured.
-
-## Multi-account policy
-
-`AGNES_API_KEYS` is a comma-separated list of API keys from independently owned Agnes accounts. Each default segment batch independently includes at least one draw from every configured account, even when AB and BC run concurrently. If the configured/default candidate target exceeds account count, continue through accounts in deterministic round-robin order. An explicit CLI candidate count may override the all-account default.
+Backend `AGNES_API_KEYS` may be a comma-separated list of independent accounts. Default segment generation includes at least one candidate from each configured account, then deterministic round-robin extras. An explicit candidate count may override that default.
 
 Never commit real keys.
 
-In the private browser frontend, Key count and Key values are auto-saved locally. "Generate all" should start every configured idle Key and skip Keys already running rather than disabling the whole batch because one Key is busy.
+## Windows local commands
 
-## Frontend task/history rules
+Initial local preparation:
 
-- A running task is bound to its own history ID; selecting another history item must not change which record is marked stopped/completed.
-- "Stop tracking" means stop browser polling only. Do not claim the server-side Agnes generation was cancelled unless an actual cancel API is used.
-- Do not reduce the configured Key count if that would hide a currently running Key.
-- Do not clear task history while tasks are running.
-- Avoid nested interactive `<button>` elements in history cards.
-- Browser-uploaded base64 images are ephemeral and must not be persisted as part of the entire parameter object in `localStorage`, because a few images can exceed browser storage quota and make all setting persistence fail.
-- Image processing/upload errors must be visible to the user; do not silently swallow them.
-- `npm run build` must run strict TypeScript checking before Vite packaging.
+`powershell -ExecutionPolicy Bypass -File scripts\setup_aniflow_windows.ps1`
 
-## Media layer
+Normal start:
 
-Agnes visual input requires public media URLs. AniFlow uses an S3-compatible media abstraction; Cloudflare R2 is the recommended deployment but is not hard-coded into pipeline logic.
+`powershell -ExecutionPolicy Bypass -File scripts\start_aniflow_windows.ps1`
 
-Only media objects need public reachability. The repository, frontend, admin UI, API keys, and internal job metadata may remain private.
+Local full verification (replacement for currently blocked GitHub Actions):
 
-Persistent paths:
+`powershell -ExecutionPolicy Bypass -File scripts\verify_aniflow_windows.ps1`
 
-- `aniflow/characters/<id>/identity-anchor.*` — shared cross-style geometry/identity anchor
-- `aniflow/characters/` — style-specific canonical character references
-- `aniflow/episodes/<episode-id>/keyframes/` — persistent A/B/C episode keyframes
-- `aniflow/final/` — final videos
+This runs Python pytest plus strict frontend typecheck/Vite build. Do not claim these pass until the owner's real Windows checkout runs the script successfully.
 
-Transient paths:
+CapCut discovery:
 
-- `aniflow/preflight/` — connectivity probe; delete immediately after read verification
-- `aniflow/tmp/` — segment/final QA frames and future rejected image-provider candidates; delete after judging, with short lifecycle as crash fallback
+1. `python scripts/capcut_agent_probe.py open`
+2. normal manual login/navigation to actual image-generation workspace
+3. `python scripts/capcut_agent_probe.py capture`
 
-## Preflight / execution policy
-
-Before Character, Benchmark, or Daily generation, live validation must eventually cover every configured Agnes account plus the public media upload/read/delete path.
-
-The repository contains GitHub workflows for CI, Setup Preflight, character bootstrap, benchmark and daily generation. At the 2026-08-28 checkpoint, the owner's GitHub account is preventing Actions jobs from starting because of GitHub Billing/Spending-limit state. This is an external execution limitation, not an AniFlow or Agnes API failure.
-
-Until that account state is changed, do not waste project time using GitHub Actions as the primary validation mechanism. Prefer local/Codex execution for typecheck/build/tests and real runtime checks. Do not describe an unstarted GitHub Action as an Agnes failure.
+Do not commit `data/runtime/capcut/browser-state.json`.
 
 ## Current implementation status
 
-Implemented in V0.1 code:
+Implemented/committed:
 
-- multi-account Agnes key pool and per-segment all-account candidate coverage
-- Agnes Image 2.1 Flash client
-- provider-neutral `ImageProvider` + default `AgnesImageProvider`
-- provider-neutral character identity/reference generation injection
-- provider-neutral A/B/C keyframe generation injection
-- Agnes Video 2.5 Flash keyframe task client and polling
-- Agnes 2.5 Flash multimodal visual judge
-- three-pass segment judging with median score aggregation
-- candidate hard gates and weighted ranking
-- automatic video-prompt repair
-- six-frame segment video sampling with ffmpeg
-- advisory whole-episode Final QA with middle-seam-focused sampling
-- S3-compatible public media upload/delete
-- automatic cleanup of transient segment/final visual-QA frames
-- live multi-account Agnes + public-media preflight code
-- 3-frame storyboard planner
-- continuity-aware and selected-style-locked A/B/C keyframe generation
-- persistent A/B/C episode keyframes before video generation
-- parallel A->B and B->C candidate pipelines
-- final 720x1280 two-segment assembly
-- reusable Character Bible, shared identity anchor, plus felt/clay/toy style reference generation
-- shared-story style benchmark: default 10 identical stories x 3 styles = 30 videos
-- benchmark embedded human-calibration rows
-- history-aware daily content runner
-- adapted private Grok frontend under `apps/grok-frontend/`
-- frontend V2.0 / Video 2.5 Flash switch with model-specific request contracts
-- independent per-video-model auto-saved frontend settings
-- model-aware task history/result polling
-- hardened multi-Key controls and browser persistence
-- `aniflow doctor`, `preflight`, `character`, `segment`, `episode`, `benchmark`, and `daily` CLI commands
-- GitHub workflows: CI, Setup Preflight, character bootstrap, style benchmark, daily generation
-- unit/import tests for core control logic
-- CapCut/Seedream provider design document
+- multi-account video candidate pipeline;
+- Agnes Image, Agnes Video 2.5 Flash and Agnes 2.5 Flash judge clients;
+- segment scoring/gates/repair;
+- ffmpeg sampling and final assembly;
+- advisory Final QA;
+- S3-compatible media layer;
+- Character Bible / shared Identity Anchor / style refs;
+- benchmark/daily runners and calibration fields;
+- dual-model private video frontend with independent saved settings;
+- frontend bug hardening listed above;
+- provider-neutral image architecture;
+- local Bridge serving frontend + media upload + image-generation APIs;
+- automatic local-image-to-public-URL handoff for Video 2.5 Flash;
+- frontend CapCut/Agnes image panel with up to 3 reference images;
+- CapCut subprocess provider protocol and Windows-safe command parsing;
+- CapCut logged-in UI discovery probe;
+- Windows setup/start/verify helper scripts;
+- unit tests committed for Bridge/provider logic.
 
-Implemented or statically reviewed but not yet proven end-to-end with the owner's real runtime:
+Locally spot-checked in the ChatGPT execution environment (not the full repository checkout):
 
-- live Agnes API calls through the current backend using the owner's keys
-- live R2/S3 upload configuration and Agnes access to those URLs
-- complete private frontend Vite production build in the owner's environment (strict TypeScript checking of changed core files passed during review; GitHub Actions are unavailable at this checkpoint)
-- Video V2.0 / 2.5 Flash browser calls from the modified frontend with real keys
-- advisory Final QA behavior on real Agnes-generated assembled videos
-- 30-video Style Benchmark with real generation
-- scheduled Daily Animation Factory with real generation
+- CapCut Runner command parsing + JSON subprocess protocol -> OK;
+- Bridge health/frontend/media/core CapCut model-override protocol -> OK.
 
-Still pending / next external integrations:
+Not yet proven/completed:
 
-- actual `CapCutSeedreamProvider` browser Agent against the owner's signed-in CapCut Web UI
-- local image upload -> AniFlow media store -> public URL bridge for Video 2.5 Flash
-- candidate-level CapCut/Seedream image vision ranking
-- visual-score and Final-QA calibration against human ratings
-- final-publish approval UX
-- publishing integrations to external platforms
-- optional audio / music / subtitles
+- full repository pytest on the owner's Windows checkout after latest changes;
+- full frontend `npm run build` on the owner's checkout after latest changes;
+- real R2 configuration and live public-media upload from Bridge;
+- real Agnes generation through the new Bridge image panel;
+- real logged-in CapCut UI probe from the owner's machine;
+- final CapCut UI automation adapter;
+- real CapCut generation through AniFlow;
+- CapCut multi-candidate visual ranking;
+- real 30-video benchmark/human calibration;
+- production stability.
 
-Do not describe any unverified item above as completed or production-ready.
+Do not describe any unverified item as completed or production-ready.
