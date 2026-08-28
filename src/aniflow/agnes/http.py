@@ -40,6 +40,7 @@ class AgnesHttpClient:
             "Content-Type": "application/json",
         }
         last_error: Exception | None = None
+
         for attempt in range(1, self._max_attempts + 1):
             try:
                 response = await self._client.request(
@@ -49,19 +50,53 @@ class AgnesHttpClient:
                     json=json,
                     params=params,
                 )
-                if response.status_code == 429 or response.status_code >= 500:
-                    if attempt < self._max_attempts:
-                        await asyncio.sleep(min(2 ** (attempt - 1), 8))
-                        continue
-                response.raise_for_status()
-                payload = response.json()
-                if not isinstance(payload, dict):
-                    raise AgnesApiError(f"Unexpected Agnes response type: {type(payload)!r}")
-                return payload
-            except (httpx.HTTPError, ValueError, AgnesApiError) as exc:
+            except httpx.TransportError as exc:
                 last_error = exc
                 if attempt < self._max_attempts:
                     await asyncio.sleep(min(2 ** (attempt - 1), 8))
                     continue
                 break
+
+            if response.status_code == 429 or response.status_code >= 500:
+                last_error = AgnesApiError(self._http_error_message(response))
+                if attempt < self._max_attempts:
+                    await asyncio.sleep(min(2 ** (attempt - 1), 8))
+                    continue
+                break
+
+            if 400 <= response.status_code < 500:
+                raise AgnesApiError(self._http_error_message(response))
+
+            try:
+                response.raise_for_status()
+                payload = response.json()
+            except httpx.HTTPError as exc:
+                raise AgnesApiError(self._http_error_message(response)) from exc
+            except ValueError as exc:
+                last_error = exc
+                if attempt < self._max_attempts:
+                    await asyncio.sleep(min(2 ** (attempt - 1), 8))
+                    continue
+                break
+
+            if not isinstance(payload, dict):
+                raise AgnesApiError(f"Unexpected Agnes response type: {type(payload)!r}")
+            return payload
+
         raise AgnesApiError(f"Agnes API request failed after retries: {last_error}") from last_error
+
+    @staticmethod
+    def _http_error_message(response: httpx.Response) -> str:
+        detail: str | None = None
+        try:
+            payload = response.json()
+            if isinstance(payload, dict):
+                raw = payload.get("detail") or payload.get("message") or payload.get("error")
+                if isinstance(raw, dict):
+                    raw = raw.get("message") or raw.get("detail") or str(raw)
+                if raw is not None:
+                    detail = str(raw)
+        except ValueError:
+            pass
+        suffix = f": {detail}" if detail else ""
+        return f"Agnes API HTTP {response.status_code}{suffix}"
