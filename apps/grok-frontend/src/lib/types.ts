@@ -1,5 +1,6 @@
 export type Ratio = '16:9' | '9:16' | '1:1' | '4:3' | '3:4';
 export type ResolutionTier = '480p' | '720p' | '1080p';
+export type VideoModelKey = 'v2' | 'flash25';
 export type GenMode = 't2v' | 'i2v' | 'keyframes';
 export type DurationPresetKey = '3' | '5' | '10' | '18' | 'custom';
 
@@ -29,6 +30,7 @@ export interface GenerationParams {
   durationPreset: DurationPresetKey;
   numFrames: number;
   frameRate: number;
+  seconds: number;
   numInferenceSteps: number | '';
   seed: number | '';
   singleImage: string;
@@ -45,6 +47,7 @@ export interface TaskState {
   error: string | null;
   size?: string;
   seconds?: string;
+  modelKey?: VideoModelKey;
 }
 
 export interface HistoryItem {
@@ -52,6 +55,8 @@ export interface HistoryItem {
   keyIndex: number;
   createdAt: number;
   promptPreview: string;
+  modelKey?: VideoModelKey;
+  modelName?: string;
   mode: GenMode;
   ratio: Ratio;
   resolution: ResolutionTier;
