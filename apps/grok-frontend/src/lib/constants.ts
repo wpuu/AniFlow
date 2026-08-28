@@ -1,7 +1,28 @@
-import type { DurationPresetKey, GenerationParams, Ratio, ResolutionTier } from './types';
+import type {
+  DurationPresetKey,
+  GenerationParams,
+  Ratio,
+  ResolutionTier,
+  VideoModelKey,
+} from './types';
 
 export const API_BASE = 'https://apihub.agnes-ai.com';
-export const MODEL_NAME = 'agnes-video-v2.0';
+
+export const VIDEO_MODELS: Record<
+  VideoModelKey,
+  { label: string; apiModel: string; description: string }
+> = {
+  v2: {
+    label: 'Agnes Video V2.0',
+    apiModel: 'agnes-video-v2.0',
+    description: '旧版高级参数完整，保留分辨率、帧数、帧率和多关键帧能力',
+  },
+  flash25: {
+    label: 'Agnes Video 2.5 Flash',
+    apiModel: 'agnes-video-2.5-flash',
+    description: '新版 Flash 接口，720P，4–12 秒，支持文生视频、单图和首尾帧',
+  },
+};
 
 export const RESOLUTION_PRESETS: Record<ResolutionTier, Record<Ratio, [number, number]>> = {
   '480p': {
@@ -54,15 +75,30 @@ export const DURATION_PRESETS: {
   { key: 'custom', label: '自定义', numFrames: 121, frameRate: 24 },
 ];
 
-export const MODE_OPTIONS: { value: GenerationParams['mode']; label: string; desc: string }[] = [
-  { value: 't2v', label: '文生视频', desc: '仅通过文字提示词生成视频' },
-  { value: 'i2v', label: '图生视频', desc: '上传一张图片，让画面动起来' },
-  { value: 'keyframes', label: '多关键帧动画', desc: '上传多张关键帧图片，生成过渡动画' },
-];
+export const FLASH_SECONDS_PRESETS = [4, 5, 6, 8, 10, 12] as const;
+
+export function modeOptions(modelKey: VideoModelKey): {
+  value: GenerationParams['mode'];
+  label: string;
+  desc: string;
+}[] {
+  if (modelKey === 'flash25') {
+    return [
+      { value: 't2v', label: '文生视频', desc: '2.5 Flash text 模式' },
+      { value: 'i2v', label: '单图生视频', desc: '使用首帧 first_frame 让图片动起来' },
+      { value: 'keyframes', label: '首尾帧动画', desc: '使用 first_frame + last_frame 控制过渡' },
+    ];
+  }
+  return [
+    { value: 't2v', label: '文生视频', desc: '仅通过文字提示词生成视频' },
+    { value: 'i2v', label: '图生视频', desc: '上传一张图片，让画面动起来' },
+    { value: 'keyframes', label: '多关键帧动画', desc: '上传多张关键帧图片，生成过渡动画' },
+  ];
+}
 
 export const MAX_NUM_FRAMES = 441;
 
-export const DEFAULT_PARAMS: GenerationParams = {
+export const DEFAULT_PARAMS_V2: GenerationParams = {
   mode: 't2v',
   prompt: '',
   negativePrompt: '',
@@ -73,6 +109,7 @@ export const DEFAULT_PARAMS: GenerationParams = {
   durationPreset: '5',
   numFrames: 121,
   frameRate: 24,
+  seconds: 5,
   numInferenceSteps: '',
   seed: '',
   singleImage: '',
@@ -82,6 +119,27 @@ export const DEFAULT_PARAMS: GenerationParams = {
     { id: 'scene-2', imageUrl: '', fileName: '' },
   ],
 };
+
+export const DEFAULT_PARAMS_FLASH25: GenerationParams = {
+  ...DEFAULT_PARAMS_V2,
+  mode: 't2v',
+  resolution: '720p',
+  width: 720,
+  height: 1280,
+  seconds: 5,
+  keyframeScenes: [
+    { id: 'flash-first', imageUrl: '', fileName: '' },
+    { id: 'flash-last', imageUrl: '', fileName: '' },
+  ],
+};
+
+export const DEFAULT_PARAMS_BY_MODEL: Record<VideoModelKey, GenerationParams> = {
+  v2: DEFAULT_PARAMS_V2,
+  flash25: DEFAULT_PARAMS_FLASH25,
+};
+
+// Backward compatibility for the imported Grok frontend.
+export const DEFAULT_PARAMS = DEFAULT_PARAMS_V2;
 
 export const STATUS_LABELS: Record<string, string> = {
   idle: '未开始',
