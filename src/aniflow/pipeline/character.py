@@ -12,6 +12,7 @@ from aniflow.agnes.image import AgnesImageClient
 from aniflow.agnes.key_pool import KeyPool
 from aniflow.config import Settings
 from aniflow.media.download import download_file
+from aniflow.media.images import persist_remote_image
 from aniflow.media.store import PublicMediaStore
 from aniflow.styles import resolve_style
 
@@ -46,6 +47,7 @@ class CharacterReferenceSet(BaseModel):
     style_key: str
     style_description: str
     bible: CharacterBible
+    identity_anchor_url: str | None = None
     front_url: str
     three_quarter_url: str
     side_url: str
@@ -120,42 +122,73 @@ Return JSON only:
             raise AgnesApiError("Character bible response missing assistant content") from exc
         return CharacterBible.model_validate(self._parse_json(text))
 
+    async def build_identity_anchor(self, *, bible: CharacterBible) -> str:
+        """Create one cross-style geometry/identity anchor shared by every style benchmark."""
+        identity = bible.identity_prompt()
+        source_url = await self._generate_image(
+            prompt=(
+                f"{identity}\n"
+                "Create a canonical full-body FRONT identity anchor for an animation character. "
+                "The purpose is to lock silhouette, head-to-body ratio, limb length, face placement, colors, "
+                "accessory shape and distinguishing feature before later style conversion. Use a simple neutral "
+                "matte studio maquette appearance with minimal generic material cues: not wool/felt, not clay, "
+                "and not a finished toy style. Centered neutral standing pose, arms and legs clearly separated, "
+                "plain neutral background, soft even lighting, vertical 9:16. No text, labels or watermark."
+            ),
+            references=[],
+        )
+        return await persist_remote_image(
+            media_store=self.media_store,
+            source_url=source_url,
+            object_key_without_suffix=(
+                f"aniflow/characters/{self._slug(bible.character_id)}/identity-anchor"
+            ),
+        )
+
     async def build_reference_set(
         self,
         *,
         bible: CharacterBible,
         style_key: str,
+        identity_anchor_url: str,
         data_dir: Path = Path("data/characters"),
     ) -> CharacterReferenceSet:
+        if not identity_anchor_url.strip():
+            raise ValueError("identity_anchor_url must not be empty")
         style = resolve_style(style_key)
         identity = bible.identity_prompt()
 
         front = await self._generate_image(
             prompt=(
                 f"{identity}\nVisual style: {style}.\n"
-                "Create the canonical full-body FRONT reference of this exact character, centered, neutral standing pose, "
-                "arms/legs clearly separated, simple neutral miniature studio background, soft even lighting, vertical 9:16. "
+                "The supplied image is the shared canonical identity anchor. Render the EXACT SAME character "
+                "in the requested visual style while changing only material/rendering language. Preserve the "
+                "anchor silhouette, head-to-body ratio, limb lengths, face placement, colors, accessory geometry "
+                "and distinguishing feature exactly. Full-body FRONT view, centered neutral standing pose, arms/legs "
+                "clearly separated, simple neutral miniature studio background, soft even lighting, vertical 9:16. "
                 "This is an identity reference, not a story scene. No text, labels, borders or watermark."
             ),
-            references=[],
+            references=[identity_anchor_url],
         )
         three_quarter = await self._generate_image(
             prompt=(
                 f"{identity}\nVisual style: {style}.\n"
-                "Using the supplied canonical front reference, render the EXACT SAME character in a neutral full-body "
-                "three-quarter view. Preserve every locked trait, color, accessory, proportions, face and material. "
-                "Same neutral miniature studio setup and lighting. No text, labels, borders or watermark."
+                "The first supplied image is the cross-style identity anchor and the second is this style's canonical "
+                "front view. Render the EXACT SAME character in a neutral full-body three-quarter view. Preserve every "
+                "locked trait, silhouette, color, accessory, proportions, face and requested material. Same neutral "
+                "miniature studio setup and lighting. No text, labels, borders or watermark."
             ),
-            references=[front],
+            references=[identity_anchor_url, front],
         )
         side = await self._generate_image(
             prompt=(
                 f"{identity}\nVisual style: {style}.\n"
-                "Using the supplied canonical references, render the EXACT SAME character in a neutral full-body SIDE view. "
-                "Preserve every locked trait, color, accessory, proportions, face and material. Same neutral miniature studio "
+                "Use the supplied cross-style identity anchor plus this style's front and three-quarter references to "
+                "render the EXACT SAME character in a neutral full-body SIDE view. Preserve every locked trait, "
+                "silhouette, color, accessory, proportions, face and requested material. Same neutral miniature studio "
                 "setup and lighting. No text, labels, borders or watermark."
             ),
-            references=[front, three_quarter],
+            references=[identity_anchor_url, front, three_quarter],
         )
 
         persisted = await self._persist_reference_urls(
@@ -168,6 +201,7 @@ Return JSON only:
             style_key=style_key,
             style_description=style,
             bible=bible,
+            identity_anchor_url=identity_anchor_url,
             front_url=persisted[0],
             three_quarter_url=persisted[1],
             side_url=persisted[2],
