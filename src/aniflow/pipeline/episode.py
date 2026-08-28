@@ -9,6 +9,7 @@ from aniflow.agnes.image import AgnesImageClient
 from aniflow.agnes.key_pool import KeyPool
 from aniflow.config import Settings
 from aniflow.media.assemble import assemble_vertical_two_segments
+from aniflow.media.images import persist_remote_image
 from aniflow.media.store import PublicMediaStore
 from aniflow.pipeline.keyframes import KeyframeGenerator, KeyframeSet
 from aniflow.pipeline.segment import SegmentPipeline, SegmentRunResult
@@ -87,6 +88,32 @@ class EpisodePipeline:
             storyboard=storyboard,
             character_reference_urls=character_reference_urls,
         )
+
+        # Agnes image URLs may be temporary. Persist A/B/C before they are used as
+        # video keyframes so generation, later review, and manifests share stable URLs.
+        if self.media_store is not None:
+            persisted = await asyncio.gather(
+                persist_remote_image(
+                    media_store=self.media_store,
+                    source_url=keyframes.frame_a_url,
+                    object_key_without_suffix=f"aniflow/episodes/{episode_id}/keyframes/a",
+                ),
+                persist_remote_image(
+                    media_store=self.media_store,
+                    source_url=keyframes.frame_b_url,
+                    object_key_without_suffix=f"aniflow/episodes/{episode_id}/keyframes/b",
+                ),
+                persist_remote_image(
+                    media_store=self.media_store,
+                    source_url=keyframes.frame_c_url,
+                    object_key_without_suffix=f"aniflow/episodes/{episode_id}/keyframes/c",
+                ),
+            )
+            keyframes = KeyframeSet(
+                frame_a_url=persisted[0],
+                frame_b_url=persisted[1],
+                frame_c_url=persisted[2],
+            )
 
         segment_ab, segment_bc = await asyncio.gather(
             self.segment_pipeline.run(
