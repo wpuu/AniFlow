@@ -11,6 +11,7 @@ from aniflow.config import Settings
 from aniflow.media.assemble import assemble_vertical_two_segments
 from aniflow.media.images import persist_remote_image
 from aniflow.media.store import PublicMediaStore
+from aniflow.pipeline.final_qa import EpisodeFinalQa, FinalQaScores
 from aniflow.pipeline.keyframes import KeyframeGenerator, KeyframeSet
 from aniflow.pipeline.segment import SegmentPipeline, SegmentRunResult
 from aniflow.pipeline.storyboard import Storyboard3, StoryboardPlanner
@@ -25,6 +26,8 @@ class EpisodeRunResult:
     segment_bc: SegmentRunResult
     final_local_path: str | None = None
     final_public_url: str | None = None
+    final_qa: FinalQaScores | None = None
+    final_qa_error: str | None = None
 
     @property
     def completed(self) -> bool:
@@ -44,6 +47,16 @@ class EpisodeRunResult:
             "segment_bc": self.segment_bc.as_dict(),
             "final_local_path": self.final_local_path,
             "final_public_url": self.final_public_url,
+            "final_qa": (
+                self.final_qa.model_dump()
+                | {
+                    "total": self.final_qa.total,
+                    "advisory_pass": self.final_qa.advisory_pass,
+                }
+                if self.final_qa is not None
+                else None
+            ),
+            "final_qa_error": self.final_qa_error,
         }
 
 
@@ -64,6 +77,16 @@ class EpisodePipeline:
         self.keyframe_generator = KeyframeGenerator(key_pool, image_client)
         self.segment_pipeline = segment_pipeline
         self.media_store = media_store
+        self.final_qa = (
+            EpisodeFinalQa(
+                settings=settings,
+                key_pool=key_pool,
+                http=storyboard_planner.http,
+                media_store=media_store,
+            )
+            if media_store is not None
+            else None
+        )
 
     async def run(
         self,
@@ -154,6 +177,20 @@ class EpisodePipeline:
                 final_path,
             )
             result.final_local_path = str(final_path)
+
+            # V0.1 final QA is deliberately advisory. A judging failure must not
+            # discard an otherwise viewable benchmark video; it is recorded for calibration.
+            if self.final_qa is not None:
+                try:
+                    result.final_qa = await self.final_qa.evaluate(
+                        episode_id=episode_id,
+                        final_path=final_path,
+                        storyboard=storyboard,
+                        keyframes=keyframes,
+                    )
+                except Exception as exc:  # noqa: BLE001 - advisory telemetry must not abort output
+                    result.final_qa_error = f"{type(exc).__name__}: {exc}"
+
             if self.media_store is not None:
                 result.final_public_url = await self.media_store.upload(
                     final_path,
