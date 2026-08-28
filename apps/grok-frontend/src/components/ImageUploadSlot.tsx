@@ -15,16 +15,21 @@ export default function ImageUploadSlot({ label, imageUrl, fileName, onChange, o
   const inputRef = useRef<HTMLInputElement>(null);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   async function handleFile(file: File | null) {
     if (!file) return;
-    if (!file.type.startsWith('image/')) return;
+    if (!file.type.startsWith('image/')) {
+      setError('请选择图片文件');
+      return;
+    }
     setLoading(true);
+    setError('');
     try {
       const dataUrl = await fileToResizedDataUrl(file);
       onChange(dataUrl, file.name);
-    } catch {
-      // ignore
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '图片处理失败');
     } finally {
       setLoading(false);
     }
@@ -57,7 +62,11 @@ export default function ImageUploadSlot({ label, imageUrl, fileName, onChange, o
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+              onChange={(e) => {
+                const file = e.currentTarget.files?.[0] ?? null;
+                void handleFile(file);
+                e.currentTarget.value = '';
+              }}
             />
             <button
               type="button"
@@ -77,7 +86,10 @@ export default function ImageUploadSlot({ label, imageUrl, fileName, onChange, o
             {imageUrl ? (
               <button
                 type="button"
-                onClick={() => onChange('', '')}
+                onClick={() => {
+                  setError('');
+                  onChange('', '');
+                }}
                 className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-500 hover:bg-zinc-100"
               >
                 清除图片
@@ -88,12 +100,16 @@ export default function ImageUploadSlot({ label, imageUrl, fileName, onChange, o
             <input
               type="text"
               value={imageUrl.startsWith('data:') ? '' : imageUrl}
-              onChange={(e) => onChange(e.target.value, undefined)}
+              onChange={(e) => {
+                setError('');
+                onChange(e.target.value, undefined);
+              }}
               placeholder="https://example.com/image.png"
               className="w-full rounded-md border border-zinc-300 px-2 py-1.5 text-xs outline-none focus:border-indigo-500"
             />
           ) : null}
           {fileName ? <span className="truncate text-[11px] text-zinc-400">已上传：{fileName}</span> : null}
+          {error ? <span className="text-[11px] text-rose-500">{error}</span> : null}
         </div>
       </div>
     </div>
