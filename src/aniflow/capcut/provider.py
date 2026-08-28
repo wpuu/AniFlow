@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import os
 import shlex
 import tempfile
 from dataclasses import asdict, dataclass
@@ -23,6 +22,36 @@ class CapCutAutomationRequest:
     output_dir: str
 
 
+def _parse_command(command: str) -> list[str]:
+    value = command.strip()
+    if not value:
+        raise ValueError("CapCut runner command must not be empty")
+
+    if value.startswith("["):
+        parsed = json.loads(value)
+        if not isinstance(parsed, list) or not parsed or not all(isinstance(item, str) and item for item in parsed):
+            raise ValueError("CAPCUT_RUNNER_COMMAND JSON form must be a non-empty string array")
+        return parsed
+
+    # posix=True removes surrounding quotes correctly even for quoted Windows
+    # paths such as "C:\\Program Files\\Python\\python.exe".
+    parsed = shlex.split(value, posix=True)
+    if not parsed:
+        raise ValueError("CapCut runner command must not be empty")
+    return parsed
+
+
+def _detect_image_suffix(path: Path) -> str:
+    header = path.read_bytes()[:16]
+    if header.startswith(b"\x89PNG\r\n\x1a\n"):
+        return ".png"
+    if header.startswith(b"\xff\xd8\xff"):
+        return ".jpg"
+    if header.startswith(b"RIFF") and header[8:12] == b"WEBP":
+        return ".webp"
+    raise RuntimeError(f"Unsupported reference image format: {path}")
+
+
 class SubprocessCapCutRunner:
     """Run an external browser-automation adapter through a small JSON file protocol.
 
@@ -33,12 +62,15 @@ class SubprocessCapCutRunner:
     It must write JSON containing either `output_path` or a non-empty
     `output_paths` array. No shell is used, so prompts and paths are not
     interpreted by cmd.exe/PowerShell/bash.
+
+    `CAPCUT_RUNNER_COMMAND` may be either a quoted command string or, for the
+    most reliable Windows behavior, a JSON string array such as:
+
+      ["python", "scripts/capcut_agent_adapter.py"]
     """
 
     def __init__(self, command: str, *, timeout_seconds: float = 300.0) -> None:
-        if not command.strip():
-            raise ValueError("CapCut runner command must not be empty")
-        self.command = command.strip()
+        self.args = _parse_command(command)
         self.timeout_seconds = timeout_seconds
 
     async def run(self, request: CapCutAutomationRequest) -> Path:
@@ -51,8 +83,7 @@ class SubprocessCapCutRunner:
                 encoding="utf-8",
             )
 
-            args = shlex.split(self.command, posix=os.name != "nt")
-            args.extend(["--request", str(request_path), "--response", str(response_path)])
+            args = [*self.args, "--request", str(request_path), "--response", str(response_path)]
             process = await asyncio.create_subprocess_exec(
                 *args,
                 stdout=asyncio.subprocess.PIPE,
@@ -93,7 +124,7 @@ class SubprocessCapCutRunner:
 
             # The temporary automation directory is about to be removed, so copy
             # the result into a separate named temp file for the caller.
-            suffix = output.suffix.lower() if output.suffix else ".png"
+            suffix = output.suffix.lower() if output.suffix else _detect_image_suffix(output)
             persistent_tmp = Path(tempfile.gettempdir()) / f"aniflow-capcut-{uuid4().hex}{suffix}"
             persistent_tmp.write_bytes(output.read_bytes())
             return persistent_tmp
@@ -137,11 +168,14 @@ class CapCutSeedreamProvider(ImageProvider):
             for index, url in enumerate(references):
                 if not url.strip():
                     continue
-                path = await download_file(
+                raw = await download_file(
                     url,
                     root / f"reference-{index}.bin",
                     timeout_seconds=180.0,
                 )
+                suffix = _detect_image_suffix(raw)
+                path = raw.with_suffix(suffix)
+                raw.replace(path)
                 local_references.append(str(path))
 
             request = CapCutAutomationRequest(
@@ -154,7 +188,7 @@ class CapCutSeedreamProvider(ImageProvider):
             generated = await self.runner.run(request)
 
         try:
-            suffix = generated.suffix.lower() or ".png"
+            suffix = generated.suffix.lower() or _detect_image_suffix(generated)
             object_key = f"aniflow/capcut/{uuid4().hex}{suffix}"
             return await self.media_store.upload(generated, object_key)
         finally:
