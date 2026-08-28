@@ -23,13 +23,14 @@ from aniflow.pipeline.evaluate import CandidateEvaluator
 from aniflow.pipeline.repair import PromptRepairer
 from aniflow.pipeline.segment import SegmentPipeline
 from aniflow.pipeline.storyboard import StoryboardPlanner
+from aniflow.preflight import run_preflight
 
 app = typer.Typer(no_args_is_help=True)
 
 
 @app.command()
 def doctor() -> None:
-    """Check whether AniFlow has the minimum runtime configuration."""
+    """Check whether AniFlow has the minimum local runtime configuration."""
     settings = get_settings()
     report = {
         "agnes_accounts": len(settings.api_keys),
@@ -43,6 +44,31 @@ def doctor() -> None:
         "ffprobe": bool(shutil.which("ffprobe")),
     }
     typer.echo(json.dumps(report, ensure_ascii=False, indent=2))
+
+
+@app.command("preflight")
+def preflight() -> None:
+    """Verify every Agnes account and public media upload/read/delete before generation."""
+
+    async def _run() -> dict:
+        settings = get_settings()
+        if not settings.api_keys:
+            raise RuntimeError("AGNES_API_KEYS is empty")
+        if not settings.s3_ready:
+            raise RuntimeError("S3/R2 media storage is not fully configured")
+
+        http = AgnesHttpClient()
+        try:
+            store = PublicMediaStore(settings)
+            report = await run_preflight(settings=settings, http=http, media_store=store)
+            return report.model_dump() | {"ok": report.ok}
+        finally:
+            await http.aclose()
+
+    report = asyncio.run(_run())
+    typer.echo(json.dumps(report, ensure_ascii=False, indent=2))
+    if not report["ok"]:
+        raise typer.Exit(code=1)
 
 
 def _build_segment_pipeline(settings, key_pool, http, store) -> SegmentPipeline:
