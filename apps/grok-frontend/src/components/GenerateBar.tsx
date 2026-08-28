@@ -13,7 +13,10 @@ interface Props {
 const BUSY_STATUSES = new Set(['creating', 'queued', 'in_progress']);
 
 export default function GenerateBar({ keyCount, apiKeys, tasksByKey, onGenerate, onStop, onGenerateAll }: Props) {
-  const anyBusy = Array.from({ length: keyCount }).some((_, i) => BUSY_STATUSES.has(tasksByKey[i]?.status));
+  const hasRunnableKey = Array.from({ length: keyCount }).some((_, i) => {
+    const busy = BUSY_STATUSES.has(tasksByKey[i]?.status ?? 'idle');
+    return !busy && !!apiKeys[i]?.trim();
+  });
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -56,13 +59,13 @@ export default function GenerateBar({ keyCount, apiKeys, tasksByKey, onGenerate,
         <button
           type="button"
           onClick={onGenerateAll}
-          disabled={anyBusy}
+          disabled={!hasRunnableKey}
           className="flex items-center gap-2 rounded-lg border-2 border-indigo-600 bg-white px-4 py-2.5 text-sm font-semibold text-indigo-600 shadow-sm transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
             <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" />
           </svg>
-          一键生成全部
+          一键生成全部可用 Key
         </button>
       ) : null}
     </div>
