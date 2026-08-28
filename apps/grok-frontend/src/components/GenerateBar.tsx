@@ -30,7 +30,7 @@ export default function GenerateBar({ keyCount, apiKeys, tasksByKey, onGenerate,
             type="button"
             disabled={!hasKey && !busy}
             onClick={() => (busy ? onStop(i) : onGenerate(i))}
-            title={!hasKey ? `请先填写 Key ${i + 1}` : undefined}
+            title={busy ? '仅停止状态轮询，不取消服务端已创建的生成任务' : !hasKey ? `请先填写 Key ${i + 1}` : undefined}
             className={cn(
               'flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-40',
               busy
@@ -49,7 +49,7 @@ export default function GenerateBar({ keyCount, apiKeys, tasksByKey, onGenerate,
               </svg>
             )}
             <span>
-              {busy ? '停止生成' : '生成视频'}
+              {busy ? '停止跟踪' : '生成视频'}
               {keyCount > 1 ? ` · Key${i + 1}` : ''}
             </span>
           </button>
