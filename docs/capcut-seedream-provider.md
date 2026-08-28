@@ -4,7 +4,7 @@
 
 AniFlow must not hard-code Agnes Image as the only source for character references and A/B/C keyframes.
 
-The preferred architecture is:
+Current architecture:
 
 ```text
 Storyboard / Character prompts
@@ -13,16 +13,17 @@ Storyboard / Character prompts
 ImageProvider
    |----------- AgnesImageProvider
    |
-   `----------- CapCutSeedreamProvider (browser-agent adapter)
+   `----------- CapCutSeedreamProvider
                         |
-                        v
+                 subprocess JSON contract
+                        |
+                 browser Agent adapter
+                        |
                  CapCut normal Web UI
                         |
-                 4 image candidates
+                 downloaded image(s)
                         |
               persist to public media
-                        |
-              select best candidate
                         |
                         v
                  one public URL
@@ -31,54 +32,156 @@ ImageProvider
 existing Video / QA pipeline
 ```
 
-`src/aniflow/image_provider.py` is the provider-neutral interface. Existing Agnes behavior remains the default.
+`src/aniflow/image_provider.py` is the provider-neutral interface. It is already used by character identity/reference generation and story A/B/C keyframe generation, so those pipelines are no longer structurally tied to Agnes Image.
 
-## Why CapCut is a first-class candidate
+## Model-name policy
 
-CapCut's official AI Image workflow supports text-to-image, reference-image input, multiple image models, aspect-ratio selection and multiple generated results. Seedream 4.x documentation also describes multi-reference fusion and consistency-oriented generation.
+Do not compile one Seedream version into AniFlow.
 
-The exact model label must be configurable rather than compiled into AniFlow. The owner's CapCut installation/account may expose labels such as Seedream 4.3 or 4.0s while CapCut's public Web pages can expose newer labels such as Seedream 4.5/5.0.
+CapCut changes the models exposed by account, region and product version. The exact model label is runtime data. AniFlow therefore supports:
 
-## Browser-agent contract
+- optional default: `CAPCUT_SEEDREAM_MODEL`;
+- page-level model field stored in browser localStorage;
+- per-request model override sent from the frontend to the local Bridge.
 
-The adapter should automate only the normal signed-in CapCut Web UI.
+Only `CAPCUT_RUNNER_COMMAND` must be configured for the browser Agent. A missing default model must not disable CapCut if the user has entered a model in the page.
 
-1. User signs in manually once.
-2. Persist the authorized browser session locally; never commit session files/cookies.
-3. Open CapCut AI Design / AI Image.
-4. Select the configured model label.
-5. Select the requested aspect ratio (AniFlow V0.1 defaults to 9:16).
-6. Download AniFlow public reference URLs to a temporary local directory when references are supplied.
-7. Upload the reference images through the normal CapCut file input.
-8. Fill the prompt exactly as produced by AniFlow.
-9. Start generation through the visible Generate/Send control.
-10. Wait for the UI to expose completed candidates.
-11. Download candidate images through the normal UI/download action.
-12. Upload downloaded files into AniFlow public media storage (R2/S3-compatible store).
-13. Delete temporary local files.
-14. Return persistent public candidate URLs.
+## Implemented local Bridge contract
 
-The adapter must fail closed if the model selector, prompt box, upload input, result area or download control cannot be identified. It must not guess coordinates and continue blindly.
+The loopback Bridge exposes:
 
-## Candidate selection
+- `GET /api/health`
+  - media readiness;
+  - frontend readiness;
+  - CapCut Runner readiness;
+  - optional default CapCut model.
+- `POST /api/media/upload`
+  - PNG/JPEG/WEBP only;
+  - maximum 20 MiB;
+  - persists local browser images into AniFlow's R2/S3-compatible public media store.
+- `POST /api/images/generate`
+  - `provider=agnes|capcut`;
+  - prompt;
+  - reference URLs;
+  - ratio;
+  - model override for CapCut;
+  - request-scoped Agnes API key when Agnes Image is selected.
 
-CapCut commonly returns several images per generation. AniFlow should use that as an advantage rather than arbitrarily selecting the first result.
+The Bridge serves the built single-file frontend at `http://127.0.0.1:8765/`. Standard use is same-origin; it does not enable broad `Origin: null` access for arbitrary local HTML files.
 
-For each requested keyframe:
+## CapCut Runner protocol
 
-1. ask CapCut for its normal candidate set;
-2. persist all candidates temporarily;
-3. use `agnes-2.5-flash` vision judging to compare:
-   - character identity;
-   - anatomy/geometry;
-   - requested style/material;
-   - reference-image fidelity;
-   - scene continuity with the previous keyframe;
-   - composition suitability as a video first/last frame;
-4. return the best candidate as the provider's single `generate()` result;
-5. delete rejected temporary candidates after scoring unless benchmark retention is explicitly enabled.
+`src/aniflow/capcut/provider.py` defines the external browser-automation process contract.
 
-This keeps the rest of AniFlow provider-neutral while still exploiting CapCut's multi-output workflow.
+`CAPCUT_RUNNER_COMMAND` may be a command string, or preferably on Windows a JSON string array such as:
+
+```text
+["python","scripts/capcut_agent_adapter.py"]
+```
+
+AniFlow appends:
+
+```text
+--request <request.json> --response <response.json>
+```
+
+The request contains:
+
+```json
+{
+  "prompt": "...",
+  "model": "exact model label from the page",
+  "ratio": "9:16",
+  "reference_paths": ["C:/.../reference-0.png"],
+  "output_dir": "C:/.../output"
+}
+```
+
+The adapter must write either:
+
+```json
+{"output_path":"C:/.../result.png"}
+```
+
+or:
+
+```json
+{"output_paths":["C:/.../1.png","C:/.../2.png"]}
+```
+
+The provider currently accepts the first returned output as the provider result and uploads it to AniFlow media storage. Multi-candidate scoring remains a later hardening step; it must not be described as already implemented.
+
+Reference images are downloaded from AniFlow public URLs and restored to real `.png`, `.jpg` or `.webp` extensions before the browser adapter sees them. Temporary files are removed after use.
+
+## Logged-in UI discovery gate
+
+The final browser adapter must be based on the owner's real logged-in CapCut page rather than guessed selectors.
+
+AniFlow now includes:
+
+```text
+scripts/capcut_agent_probe.py
+```
+
+The probe uses an `agent-browser` session and writes private runtime artifacts only under the gitignored:
+
+```text
+data/runtime/capcut/
+```
+
+Suggested sequence on the real Windows machine:
+
+```text
+python scripts/capcut_agent_probe.py open
+```
+
+Log in normally and navigate to the actual AI Design / image-generation workspace, then:
+
+```text
+python scripts/capcut_agent_probe.py capture
+```
+
+The capture stores:
+
+- current URL;
+- page title;
+- interactive-element snapshot;
+- body text;
+- authenticated browser state.
+
+`browser-state.json` may contain session credentials/cookies and must remain local/private. `data/runtime/` is gitignored.
+
+After the probe, the final adapter should be written against the real semantic controls found in `snapshot.txt`. It must fail closed if a required control cannot be identified.
+
+## Browser-agent target behavior
+
+After the probe confirms the real UI, the final adapter should:
+
+1. load/reuse the authorized local browser session;
+2. open the real CapCut AI Design/image workspace;
+3. select the request's exact model label;
+4. select the requested aspect ratio;
+5. upload any request reference images through the normal file control;
+6. fill the prompt exactly as received;
+7. start generation through the visible control;
+8. wait for completion using page state, not fixed blind sleeps where avoidable;
+9. download completed output(s) through normal UI behavior;
+10. write the JSON response expected by `CapCutSeedreamProvider`.
+
+No coordinate-only automation should be used as the primary control strategy.
+
+## Candidate selection — pending hardening
+
+CapCut may return several images per generation. AniFlow should eventually exploit this rather than arbitrarily selecting the first result.
+
+Planned later behavior:
+
+1. retain all returned candidates temporarily;
+2. use `agnes-2.5-flash` vision judging to compare character identity, anatomy, style/material, reference fidelity, scene continuity and suitability as a video keyframe;
+3. return the best candidate;
+4. delete rejected temporary candidates unless benchmark retention is enabled.
+
+This is **not yet implemented** in the CapCut provider.
 
 ## Reference-image strategy
 
@@ -94,36 +197,34 @@ CapCut/Seedream can receive these references through its normal upload UI. No Ca
 
 - No automated account creation.
 - No CAPTCHA or anti-bot bypass.
-- No private/undocumented CapCut API reverse engineering in the V0.1 provider.
+- No private/undocumented CapCut API reverse engineering in V0.1.
 - No committed cookies, auth state or CapCut credentials.
 - Browser session state is local-only and gitignored.
-- When login expires, stop and request normal user sign-in instead of attempting bypasses.
+- When login expires, stop and use normal user sign-in instead of attempting bypasses.
 
-## Implementation stages
+## Current status
 
-### Stage A — now
+Implemented:
 
 - provider-neutral image interface;
-- Agnes provider adapter remains default;
-- keyframe pipeline accepts any provider;
-- model label treated as runtime configuration.
+- Agnes image provider;
+- CapCut subprocess provider contract;
+- Windows-safe Runner command parsing;
+- reference download with valid image extensions;
+- local Bridge media upload and provider generation endpoints;
+- frontend Agnes/CapCut provider selector;
+- page-saved CapCut model label;
+- up to three reference images in the private frontend;
+- generated-image handoff to video first/last-frame inputs;
+- logged-in CapCut UI discovery probe;
+- tests for Bridge and subprocess contract committed to the repository.
 
-### Stage B — first CapCut integration
+Not yet proven/completed:
 
-- browser-agent script with manual first login;
-- prompt + ratio + model selection;
-- optional reference uploads;
-- candidate download and R2 persistence;
-- return one selected public URL.
+- real logged-in CapCut UI snapshot from the owner's machine;
+- final UI control adapter;
+- real CapCut generation through AniFlow;
+- multi-candidate visual ranking;
+- production stability against future CapCut UI changes.
 
-### Stage C — production hardening
-
-- semantic selector fallbacks;
-- screenshots on UI mismatch;
-- per-step timeouts and retry only safe/idempotent steps;
-- candidate-level vision scoring;
-- CapCut/Agnes comparative benchmark recorded by provider/model.
-
-## Non-goal
-
-Do not replace Agnes Video with CapCut video generation in this step. CapCut/Seedream is being introduced as an image/keyframe provider first; the existing Agnes Video V2.0 / Agnes Video 2.5 Flash comparison remains independent.
+Do not replace Agnes Video with CapCut video generation in this step. CapCut/Seedream is being introduced as an image/keyframe provider first; the Agnes Video V2.0 / Agnes Video 2.5 Flash comparison remains independent.
