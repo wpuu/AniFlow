@@ -19,6 +19,8 @@ AniFlow is a private automated animation-content pipeline. It is not a public Ag
 - Keyframe image format: `9:16`, `1K` (`736x1312` native Agnes Image 2.1 Flash output).
 - V0.1 episode structure: exactly 3 keyframes `A -> B -> C`, two 5-second keyframe-controlled video segments, then concatenate.
 - First content styles to validate: needle-felt, clay, miniature toy-world.
+- Default production timezone: `Asia/Shanghai`.
+- The owner's existing multi-key frontend is private and project-specific; do not redesign AniFlow as a public Agnes proxy.
 
 ## Official Agnes Video 2.5 Flash constraints
 
@@ -69,6 +71,13 @@ Agnes visual input requires public media URLs. AniFlow uses an S3-compatible med
 
 Only media objects need public reachability. The repository, frontend, admin UI, API keys, and internal job metadata may remain private.
 
+Persistent paths:
+
+- `aniflow/characters/` — canonical character references
+- `aniflow/episodes/<episode-id>/keyframes/` — persistent A/B/C episode keyframes
+- `aniflow/final/` — final videos
+- `aniflow/tmp/` — visual-QA sampled frames; configure lifecycle deletion, suggested 7 days
+
 ## Current implementation status
 
 Implemented in V0.1 code:
@@ -84,18 +93,30 @@ Implemented in V0.1 code:
 - S3-compatible public media upload
 - 3-frame storyboard planner
 - continuity-aware A/B/C keyframe generation
+- persistent A/B/C episode keyframes before video generation
 - parallel A->B and B->C candidate pipelines
 - final 720x1280 two-segment assembly
-- `aniflow doctor`, `aniflow segment`, and `aniflow episode` CLI commands
-- unit/import tests and GitHub Actions CI
+- reusable character bible plus felt/clay/toy reference generation
+- shared-story style benchmark: default 10 identical stories x 3 styles = 30 videos
+- history-aware daily content runner
+- `aniflow doctor`, `character`, `segment`, `episode`, `benchmark`, and `daily` CLI commands
+- GitHub workflows: CI, character bootstrap, style benchmark, daily generation
+- unit/import tests for core control logic
 
-Not yet proven with a real production run:
+Implemented but not yet proven with a real production run:
 
 - live Agnes API calls using the owner's real multi-account keys
-- live R2/S3 upload configuration
-- visual-score calibration against human ratings
-- integration of the owner's existing multi-key frontend
-- daily idea queue and unattended scheduled content generation
-- publishing integrations
+- live R2/S3 upload configuration and Agnes access to those URLs
+- Build Character References workflow with real secrets
+- 30-video Style Benchmark with real generation
+- scheduled Daily Animation Factory with real generation
 
-Do not describe any unverified item above as completed.
+Still pending after first real validation:
+
+- visual-score calibration against human ratings
+- integration of the owner's existing private multi-key frontend
+- final-publish approval UX
+- publishing integrations to external platforms
+- optional final whole-episode QA / audio / music / subtitles
+
+Do not describe any unverified item above as completed or production-ready.
