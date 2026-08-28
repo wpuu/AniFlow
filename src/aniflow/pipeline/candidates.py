@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass, field
 
-from aniflow.agnes.key_pool import KeyPool
+from aniflow.agnes.key_pool import KeyPool, KeySlot
 from aniflow.agnes.video import AgnesVideoClient
 from aniflow.config import Settings
 
@@ -44,15 +44,17 @@ class CandidateGenerator:
         count: int | None = None,
         base_seed: int | None = None,
     ) -> CandidateBatch:
-        # Default policy: use at least one candidate from every configured Agnes account.
-        # If ANIFLOW_CANDIDATES_PER_SEGMENT is larger, continue round-robin for more draws.
+        account_slots = self.key_pool.all_slots()
+        # Default policy: every segment independently uses every configured Agnes
+        # account at least once. This remains true even when AB and BC are generated
+        # concurrently. An explicit count is allowed to override that policy.
         target_count = count or max(
             self.settings.aniflow_candidates_per_segment,
-            len(self.key_pool),
+            len(account_slots),
         )
+        slots = [account_slots[index % len(account_slots)] for index in range(target_count)]
 
-        async def generate_one(index: int):
-            slot = await self.key_pool.next()
+        async def generate_one(index: int, slot: KeySlot):
             seed = base_seed + index if base_seed is not None else None
             task = await self.video_client.create_keyframe_task(
                 api_key=slot.api_key,
@@ -74,7 +76,7 @@ class CandidateGenerator:
             )
 
         results = await asyncio.gather(
-            *(generate_one(index) for index in range(target_count)),
+            *(generate_one(index, slot) for index, slot in enumerate(slots)),
             return_exceptions=True,
         )
         batch = CandidateBatch()
