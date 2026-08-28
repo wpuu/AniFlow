@@ -32,6 +32,9 @@ class BenchmarkRow(BaseModel):
     bc_score: float | None = None
     ab_rounds: int = 0
     bc_rounds: int = 0
+    final_qa_total: float | None = None
+    final_qa_advisory_pass: bool | None = None
+    final_qa_error: str | None = None
 
 
 class StyleSummary(BaseModel):
@@ -42,6 +45,8 @@ class StyleSummary(BaseModel):
     mean_ab_score: float | None = None
     mean_bc_score: float | None = None
     mean_rounds: float | None = None
+    mean_final_qa_score: float | None = None
+    final_qa_advisory_rate: float | None = None
 
 
 class BenchmarkReport(BaseModel):
@@ -52,6 +57,35 @@ class BenchmarkReport(BaseModel):
     shared_ideas: list[StoryIdea] = Field(default_factory=list)
     rows: list[BenchmarkRow] = Field(default_factory=list)
     summaries: list[StyleSummary] = Field(default_factory=list)
+
+
+class HumanCalibrationRow(BaseModel):
+    episode_id: str
+    style_key: str
+    title: str
+    final_public_url: str | None = None
+    machine_ab_score: float | None = None
+    machine_bc_score: float | None = None
+    machine_final_qa_score: float | None = None
+    machine_final_qa_pass: bool | None = None
+    human_usable: bool | None = None
+    issue_identity: bool = False
+    issue_anatomy: bool = False
+    issue_background: bool = False
+    issue_seam: bool = False
+    issue_motion: bool = False
+    issue_story: bool = False
+    issue_visual_appeal: bool = False
+    notes: str = ""
+
+
+class HumanCalibrationSheet(BaseModel):
+    run_id: str
+    instructions: str = (
+        "Review every final_public_url. Set human_usable true/false and mark only visible issue flags. "
+        "Do not change machine scores. This first sheet calibrates AniFlow QA thresholds."
+    )
+    rows: list[HumanCalibrationRow] = Field(default_factory=list)
 
 
 class BenchmarkRunner:
@@ -87,6 +121,7 @@ class BenchmarkRunner:
         character_dir: Path = Path("data/characters"),
         output_root: Path = Path("output/benchmarks"),
         report_dir: Path = Path("data/benchmarks"),
+        calibration_dir: Path = Path("data/calibration"),
         concurrency: int = 2,
     ) -> BenchmarkReport:
         if per_style < 1:
@@ -153,6 +188,11 @@ class BenchmarkRunner:
                         ),
                         ab_rounds=len(result.segment_ab.rounds),
                         bc_rounds=len(result.segment_bc.rounds),
+                        final_qa_total=(result.final_qa.total if result.final_qa is not None else None),
+                        final_qa_advisory_pass=(
+                            result.final_qa.advisory_pass if result.final_qa is not None else None
+                        ),
+                        final_qa_error=result.final_qa_error,
                     )
 
             style_rows = await asyncio.gather(
@@ -174,6 +214,7 @@ class BenchmarkRunner:
             json.dumps(report.model_dump(), ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+        self._write_calibration_sheet(report, calibration_dir / f"{run_id}.json")
         return report
 
     @classmethod
@@ -198,6 +239,14 @@ class BenchmarkRunner:
             completed = [row for row in subset if row.completed]
             ab_scores = [row.ab_score for row in completed if row.ab_score is not None]
             bc_scores = [row.bc_score for row in completed if row.bc_score is not None]
+            final_scores = [
+                row.final_qa_total for row in completed if row.final_qa_total is not None
+            ]
+            final_passes = [
+                row.final_qa_advisory_pass
+                for row in completed
+                if row.final_qa_advisory_pass is not None
+            ]
             round_values = [
                 (row.ab_rounds + row.bc_rounds) / 2
                 for row in subset
@@ -212,9 +261,39 @@ class BenchmarkRunner:
                     mean_ab_score=BenchmarkRunner._mean(ab_scores),
                     mean_bc_score=BenchmarkRunner._mean(bc_scores),
                     mean_rounds=BenchmarkRunner._mean(round_values),
+                    mean_final_qa_score=BenchmarkRunner._mean(final_scores),
+                    final_qa_advisory_rate=(
+                        round(sum(bool(value) for value in final_passes) / len(final_passes), 4)
+                        if final_passes
+                        else None
+                    ),
                 )
             )
         return result
+
+    @staticmethod
+    def _write_calibration_sheet(report: BenchmarkReport, path: Path) -> None:
+        sheet = HumanCalibrationSheet(
+            run_id=report.run_id,
+            rows=[
+                HumanCalibrationRow(
+                    episode_id=row.episode_id,
+                    style_key=row.style_key,
+                    title=row.title,
+                    final_public_url=row.final_public_url,
+                    machine_ab_score=row.ab_score,
+                    machine_bc_score=row.bc_score,
+                    machine_final_qa_score=row.final_qa_total,
+                    machine_final_qa_pass=row.final_qa_advisory_pass,
+                )
+                for row in report.rows
+            ],
+        )
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(sheet.model_dump(), ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
 
     @staticmethod
     def _mean(values: list[float]) -> float | None:
