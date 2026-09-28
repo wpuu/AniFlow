@@ -7,16 +7,16 @@ pause
 exit /b
 #PSBEGIN#
 <#
-  AniFlow - 视频工作台一键安装
+  AniFlow - 视频工作台一键安装（v2）
 
-  做三件事：
-    1. 下载 lcy362/agnes-video-generator（MIT，436★，持续更新）
-    2. 打上我们的优化补丁：队列满时先把其余账号试一遍，再退避
-    3. 写好多 Key 配置并启动
+  v1 的教训：
+    - 没有日志，出错就什么都看不到
+    - 在同一个窗口里调 start.bat，它一失败就退回来，
+      而用户多按的那次回车会被结尾的 pause 吃掉，窗口瞬间关闭
+    - 没告诉用户地址是 http://localhost:8765
 
-  为什么不是自己写：这个项目已经有 Web 界面、多 Key 轮换、断点续跑、
-  22 语言、完整测试。我们该做的是在它上面叠 IP / 选题 / 事实核验，
-  而不是重造一遍它的视频提交层。
+  v2 全部修掉：全程写日志、start.bat 开在自己的窗口里（/k 不会消失）、
+  装完主动探测端口并把地址打出来、结束前清空键盘缓冲。
 #>
 
 $ErrorActionPreference = "Stop"
@@ -25,12 +25,26 @@ try { $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catc
 
 $Version = "v7.0.4"
 $Zip     = "https://github.com/lcy362/agnes-video-generator/archive/refs/tags/$Version.zip"
-$Line    = "=" * 60
+$Url     = "http://localhost:8765"
+$Line    = "=" * 62
 
-function Say  ($t) { Write-Host $t }
-function Ok   ($t) { Write-Host $t -ForegroundColor Green }
-function Warn ($t) { Write-Host $t -ForegroundColor Yellow }
-function Bad  ($t) { Write-Host $t -ForegroundColor Red }
+$root = if ($ScriptDir) { $ScriptDir } elseif ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
+$Log  = Join-Path $root "安装日志.txt"
+
+function Say  ($t) { Write-Host $t;                        Add-Content -Path $Log -Value $t -Encoding UTF8 }
+function Ok   ($t) { Write-Host $t -ForegroundColor Green; Add-Content -Path $Log -Value $t -Encoding UTF8 }
+function Warn ($t) { Write-Host $t -ForegroundColor Yellow;Add-Content -Path $Log -Value $t -Encoding UTF8 }
+function Bad  ($t) { Write-Host $t -ForegroundColor Red;   Add-Content -Path $Log -Value $t -Encoding UTF8 }
+
+# 结束前清空键盘缓冲：否则用户多敲的回车会被外层 pause 吃掉，窗口秒关
+function Finish {
+    Say ""
+    Say "（完整日志：$Log）"
+    try { $Host.UI.RawUI.FlushInputBuffer() } catch {}
+}
+
+"" | Set-Content -Path $Log -Encoding UTF8
+Say "AniFlow 视频工作台安装 —— $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
 
 Write-Host ""
 Write-Host $Line -ForegroundColor Cyan
@@ -38,78 +52,82 @@ Write-Host "  AniFlow 视频工作台 - 一键安装" -ForegroundColor Cyan
 Write-Host $Line -ForegroundColor Cyan
 Write-Host ""
 
+try {
+
 # ---------------------------------------------------------------- Python
 Say "[1/5] 检查 Python ..."
 $py = $null
 foreach ($c in @("python", "py")) {
     try {
-        $v = & $c --version 2>&1
+        $v = (& $c --version 2>&1 | Out-String).Trim()
+        Add-Content -Path $Log -Value "      探测 $c -> $v" -Encoding UTF8
         if ($v -match "Python 3\.(\d+)") {
-            if ([int]$Matches[1] -ge 10) { $py = $c; break }
-            else { Warn "      找到 $v，但这个项目需要 3.10 以上" }
+            if ([int]$Matches[1] -ge 10) { $py = $c; Ok "      $v"; break }
+            else { Warn "      找到 $v，但需要 3.10 以上" }
         }
-    } catch {}
+    } catch {
+        Add-Content -Path $Log -Value "      探测 $c 失败: $($_.Exception.Message)" -Encoding UTF8
+    }
 }
 if (-not $py) {
     Bad "      没找到 Python 3.10 以上。"
     Say ""
-    Say "      请先装 Python，只用装一次："
-    Say "        https://www.python.org/downloads/"
-    Say ""
-    Warn "      装的时候务必勾选最下面那个 'Add python.exe to PATH'，"
-    Warn "      否则装完还是找不到。装完重新双击本文件即可。"
-    return
+    Say "      请先装一次 Python：https://www.python.org/downloads/"
+    Warn "      安装时务必勾选最下面的 'Add python.exe to PATH'，否则装完还是找不到。"
+    Say "      装完重新双击本文件即可。"
+    Finish; return
 }
-Ok  "      $(& $py --version 2>&1)"
 
 # ---------------------------------------------------------------- 下载
-$root = if ($ScriptDir) { $ScriptDir } elseif ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
 $dest = Join-Path $root "video-studio"
 $app  = Join-Path $dest "agnes-video-generator-$($Version.TrimStart('v'))"
 
 Say ""
 Say "[2/5] 下载视频工作台 $Version ..."
-if (Test-Path $app) {
+if (Test-Path (Join-Path $app "start.bat")) {
     Ok "      已存在，跳过下载"
 } else {
     New-Item -ItemType Directory -Force -Path $dest | Out-Null
     $tmp = Join-Path $env:TEMP "avg-$Version.zip"
-    Say "      从 GitHub 拉取（约 20 MB，取决于网速）..."
+    Say "      从 GitHub 拉取（约 20 MB）..."
     try {
         Invoke-WebRequest -Uri $Zip -OutFile $tmp -UseBasicParsing -TimeoutSec 600
+        Expand-Archive -Path $tmp -DestinationPath $dest -Force
+        Remove-Item $tmp -ErrorAction SilentlyContinue
+        Ok "      已解压"
     } catch {
         Bad "      下载失败：$($_.Exception.Message)"
-        Say ""
-        Say "      如果是网络问题，可以手动下载这个链接，"
-        Say "      解压到 $dest 下面，再重新双击本文件："
+        Say "      可手动下载后解压到 $dest，再重新双击本文件："
         Say "        $Zip"
-        return
+        Finish; return
     }
-    Expand-Archive -Path $tmp -DestinationPath $dest -Force
-    Remove-Item $tmp -ErrorAction SilentlyContinue
-    Ok "      已解压到 video-studio\"
+}
+if (-not (Test-Path (Join-Path $app "start.bat"))) {
+    Bad "      解压后找不到 start.bat。实际解压出来的是："
+    Get-ChildItem $dest -ErrorAction SilentlyContinue | ForEach-Object { Say "        $($_.Name)" }
+    Finish; return
 }
 
 # ---------------------------------------------------------------- 打补丁
 Say ""
 Say "[3/5] 打上队列优化补丁 ..."
-
 $target = Join-Path $app "core\api\agnes_video.py"
-if (-not (Test-Path $target)) { Bad "      找不到 $target，安装包结构可能变了"; return }
-
-$src = [IO.File]::ReadAllText($target, [Text.Encoding]::UTF8)
-
-$initAnchor = "        queue_retries = 0"
-$initAdd    = "        queue_retries = 0`r`n        # 本轮退避前已经换过几个 Key（每次 sleep 后归零）`r`n        queue_rotations = 0"
-
-$delayAnchor = "                        delay = _QUEUE_RETRY_BASE_DELAY + random.uniform(0, _QUEUE_RETRY_JITTER)"
-$rotateAdd = @"
+if (-not (Test-Path $target)) {
+    Bad "      找不到 $target，上游结构可能变了。跳过补丁，不影响使用。"
+} else {
+    $src = [IO.File]::ReadAllText($target, [Text.Encoding]::UTF8)
+    $initAnchor  = "        queue_retries = 0"
+    $delayAnchor = "                        delay = _QUEUE_RETRY_BASE_DELAY + random.uniform(0, _QUEUE_RETRY_JITTER)"
+    if ($src.Contains("queue_rotations")) {
+        Ok "      已经打过，跳过"
+    } elseif (-not $src.Contains($initAnchor) -or -not $src.Contains($delayAnchor)) {
+        Bad "      补丁锚点对不上，上游代码已改。跳过补丁，不影响使用。"
+    } else {
+        $initAdd = "        queue_retries = 0`n        # 本轮退避前已换过几个 Key（每次 sleep 后归零）`n        queue_rotations = 0"
+        $rotateAdd = @"
                         # 队列满先把其余账号试一遍，再退避。
                         # 429 早就是这么做的，队列满却漏了：原来命中 503 直接
-                        # sleep 30~60s，9 个账号轮完一圈要 4.5~9 分钟。若队列按
-                        # 账户隔离，那几分钟里其余账号可能全是空的。
-                        # 视频提交桶的 burst 本就是 1 x Key 数，连续换 Key 用的
-                        # 正是它预留的配额。
+                        # sleep 30~60s，9 个账号轮完一圈要 4.5~9 分钟。
                         if ring.has_multiple() and queue_rotations < len(ring) - 1:
                             queue_rotations += 1
                             ring.rotate()
@@ -122,15 +140,7 @@ $rotateAdd = @"
 
 $delayAnchor
 "@
-
-if ($src.Contains("queue_rotations")) {
-    Ok "      补丁已经打过了，跳过"
-} else {
-    if (-not $src.Contains($initAnchor))  { Bad "      补丁锚点 1 对不上，上游代码可能改了。已跳过打补丁。"; }
-    elseif (-not $src.Contains($delayAnchor)) { Bad "      补丁锚点 2 对不上，上游代码可能改了。已跳过打补丁。"; }
-    else {
-        $src = $src.Replace($initAnchor, $initAdd)
-        $src = $src.Replace($delayAnchor, $rotateAdd.Replace("`r`n", "`n"))
+        $src = $src.Replace($initAnchor, $initAdd).Replace($delayAnchor, $rotateAdd.Replace("`r`n", "`n"))
         [IO.File]::WriteAllText($target, $src, (New-Object Text.UTF8Encoding $false))
         Ok "      已打上：队列满时先换账号，全被拒才退避"
     }
@@ -138,15 +148,15 @@ if ($src.Contains("queue_rotations")) {
 
 # ---------------------------------------------------------------- 写 Key
 Say ""
-Say "[4/5] 配置你的 Agnes 账号 ..."
-
+Say "[4/5] 配置 Agnes 账号 ..."
 $envFile = Join-Path $app ".env"
 if (Test-Path $envFile) {
-    Warn "      .env 已存在，不覆盖。要重填就先删掉它。"
+    $n = (Select-String -Path $envFile -Pattern "^AGNES_API_KEY" -ErrorAction SilentlyContinue).Count
+    Ok "      .env 已存在（$n 个账号），不覆盖。要重填就先删掉它。"
 } else {
     Say ""
-    Say "      粘贴你的 Agnes API Key —— 一行一条，或一行里用逗号隔开。"
-    Say "      粘完按两次回车。多几条就多几倍产能。"
+    Say "      粘贴 Agnes API Key —— 一行一条，或一行里用逗号隔开。"
+    Say "      粘完按一次回车留空行结束。"
     Say ""
     $raw = New-Object System.Collections.Generic.List[string]
     while ($true) {
@@ -161,28 +171,61 @@ if (Test-Path $envFile) {
     $keys = @($keys | Select-Object -Unique)
 
     if ($keys.Count -eq 0) {
-        Warn "      一条都没收到。稍后可以自己编辑 $envFile"
+        Warn "      一条都没收到。可稍后手动编辑 $envFile"
     } else {
         $lines = @("# 由 AniFlow 安装器生成", "AGNES_API_KEY=$($keys[0])")
         for ($i = 1; $i -lt $keys.Count; $i++) { $lines += "AGNES_API_KEY_$($i + 1)=$($keys[$i])" }
         [IO.File]::WriteAllLines($envFile, $lines, (New-Object Text.UTF8Encoding $false))
-        Ok "      已写入 $($keys.Count) 个账号（存在本机 .env，不会上传）"
+        Ok "      已写入 $($keys.Count) 个账号（只存本机，不上传）"
     }
 }
 
 # ---------------------------------------------------------------- 启动
 Say ""
-Say "[5/5] 启动 ..."
+Say "[5/5] 启动服务 ..."
 Say ""
-Warn "      第一次启动要装依赖，可能要几分钟，别关窗口。"
-Warn "      启动完会自动打开浏览器；以后想再用，双击 video-studio 里的 start.bat 即可。"
+Warn "      会另外弹出一个黑窗口，那个才是服务本体。"
+Warn "      第一次要装依赖，大概 3~10 分钟，中间看起来没反应是正常的。"
+Warn "      那个窗口不要关，关了服务就停了。"
 Say ""
 
-$start = Join-Path $app "start.bat"
-if (Test-Path $start) {
-    Push-Location $app
-    & cmd /c "start.bat"
-    Pop-Location
-} else {
-    Bad "      找不到 start.bat，请手动进 $app 运行"
+# 关键：开在自己的窗口里，用 /k 让它失败也不会消失
+Start-Process -FilePath "cmd.exe" -ArgumentList "/k", "start.bat" -WorkingDirectory $app | Out-Null
+Ok "      已拉起服务窗口"
+
+Say ""
+Say "      正在等服务就绪（最多等 10 分钟）..."
+$ready = $false
+for ($i = 0; $i -lt 120; $i++) {
+    Start-Sleep -Seconds 5
+    try {
+        $r = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 3
+        if ($r.StatusCode -ge 200 -and $r.StatusCode -lt 500) { $ready = $true; break }
+    } catch {}
+    if ($i % 12 -eq 11) { Say "      还在装依赖...（已等 $([int](($i+1)*5/60)) 分钟）" }
 }
+
+Say ""
+Write-Host $Line -ForegroundColor Cyan
+if ($ready) {
+    Ok "  服务已就绪"
+    Say ""
+    Say "  在浏览器里打开： $Url"
+    try { Start-Process $Url } catch {}
+} else {
+    Warn "  等了 10 分钟还没起来。"
+    Say ""
+    Say "  去看那个黑窗口里最后几行写了什么，截图发我。"
+    Say "  也可以先自己试试打开： $Url"
+}
+Write-Host $Line -ForegroundColor Cyan
+
+} catch {
+    Bad ""
+    Bad "出错了：$($_.Exception.Message)"
+    Add-Content -Path $Log -Value ($_ | Out-String) -Encoding UTF8
+    Say ""
+    Say "把 安装日志.txt 发我就行。"
+}
+
+Finish
