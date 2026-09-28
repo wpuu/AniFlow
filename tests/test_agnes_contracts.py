@@ -110,3 +110,77 @@ async def test_video_25_flash_retrieval_always_includes_model_name_for_keyframe_
         "model_name": "agnes-video-2.5-flash",
     }
     assert result.video_url == "https://example.com/result.mp4"
+
+
+@pytest.mark.asyncio
+async def test_video_retrieve_reads_top_level_url_per_official_contract():
+    """Regression: the official completed payload exposes `url` at the TOP LEVEL.
+
+    The previous implementation read `metadata.url`, which does not exist in the
+    documented response, so every completed video raised
+    "Video completed but metadata.url is missing". The video pipeline could
+    never have produced a single clip.
+
+    Payload below is copied from the official Agnes Video 2.5 Flash docs.
+    """
+    settings = Settings()
+    http = CaptureHttp(
+        {
+            "completed_at": 1790062857,
+            "created_at": 1790062812,
+            "error": None,
+            "expires_at": None,
+            "id": "task_YOUR_TASK_ID",
+            "internal_progress": 0,
+            "internal_status": "pending",
+            "object": "video",
+            "progress": 100,
+            "quality": "standard",
+            "remixed_from_video_id": None,
+            "seconds": "4",
+            "size": "720P",
+            "started_at": 1790062812,
+            "status": "completed",
+            "url": "https://example.com/generated/video.mp4",
+        }
+    )
+    client = AgnesVideoClient(settings, http)
+
+    result = await client.retrieve(api_key="k", video_id="video_1")
+
+    assert result.status == "completed"
+    assert result.video_url == "https://example.com/generated/video.mp4"
+
+
+@pytest.mark.asyncio
+async def test_video_retrieve_ignores_internal_status_fields():
+    """Docs: use `status`/`progress`; `internal_*` may stay pending/0 forever."""
+    settings = Settings()
+    http = CaptureHttp(
+        {
+            "status": "completed",
+            "progress": 100,
+            "internal_status": "pending",
+            "internal_progress": 0,
+            "url": "https://example.com/v.mp4",
+        }
+    )
+    client = AgnesVideoClient(settings, http)
+
+    result = await client.retrieve(api_key="k", video_id="v")
+
+    assert result.status == "completed"
+    assert result.video_url == "https://example.com/v.mp4"
+
+
+@pytest.mark.asyncio
+async def test_video_retrieve_still_accepts_legacy_metadata_url():
+    settings = Settings()
+    http = CaptureHttp(
+        {"status": "completed", "metadata": {"url": "https://example.com/legacy.mp4"}}
+    )
+    client = AgnesVideoClient(settings, http)
+
+    result = await client.retrieve(api_key="k", video_id="v")
+
+    assert result.video_url == "https://example.com/legacy.mp4"

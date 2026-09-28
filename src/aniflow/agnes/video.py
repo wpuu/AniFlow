@@ -61,9 +61,18 @@ class AgnesVideoClient:
             api_key=api_key,
             params={"video_id": video_id, "model_name": self.settings.agnes_video_model},
         )
+        # Official contract (wiki.agnes-ai.com/en/docs/agnes-video-25-flash):
+        # the completed retrieve response exposes the playable address as a
+        # TOP-LEVEL `url` field. There is no `metadata` object in the documented
+        # payload. Reading `metadata.url` made every completed task look broken.
+        # `metadata.url` is kept only as a defensive fallback.
         status = str(data.get("status") or "unknown")
-        metadata = data.get("metadata") if isinstance(data.get("metadata"), dict) else {}
-        url = metadata.get("url") if isinstance(metadata, dict) else None
+        url = data.get("url")
+        if not isinstance(url, str) or not url:
+            metadata = data.get("metadata")
+            url = metadata.get("url") if isinstance(metadata, dict) else None
+        if not isinstance(url, str) or not url:
+            url = None
         return VideoResult(video_id=video_id, status=status, video_url=url, raw=data)
 
     async def wait_for_result(
@@ -79,7 +88,7 @@ class AgnesVideoClient:
             result = await self.retrieve(api_key=api_key, video_id=video_id)
             if result.status == "completed":
                 if not result.video_url:
-                    raise AgnesApiError("Video completed but metadata.url is missing")
+                    raise AgnesApiError("Video completed but no top-level `url` was returned")
                 return result
             if result.status == "failed":
                 error = result.raw.get("error") or {}
