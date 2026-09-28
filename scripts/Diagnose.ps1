@@ -37,26 +37,45 @@ if (-not $found) {
     Inf "装一次：https://www.python.org/downloads/ （勾选 Add python.exe to PATH）"
 }
 
+# 放哪都能找到：从当前位置向上找 4 层，每层看自己和 video-studio 子目录，
+# 认准「含 start.bat 且含 core\api\agnes_video.py」的那个目录。
+function Find-App {
+    param([string]$From)
+    $seen = New-Object System.Collections.Generic.List[string]
+    $d = $null
+    try { $d = Get-Item -LiteralPath $From -ErrorAction Stop } catch { return $null }
+    for ($i = 0; $i -lt 4 -and $d; $i++) {
+        $seen.Add($d.FullName)
+        $seen.Add((Join-Path $d.FullName "video-studio"))
+        $d = $d.Parent
+    }
+    foreach ($base in $seen) {
+        if (-not (Test-Path -LiteralPath $base)) { continue }
+        $probe = @(Get-Item -LiteralPath $base) +
+                 @(Get-ChildItem -LiteralPath $base -Directory -ErrorAction SilentlyContinue)
+        foreach ($p in $probe) {
+            if ((Test-Path (Join-Path $p.FullName "start.bat")) -and
+                (Test-Path (Join-Path $p.FullName "core\api\agnes_video.py"))) {
+                return $p
+            }
+        }
+    }
+    return $null
+}
+
 # 2. 安装目录
 Write-Host ""
 Write-Host "2) 安装目录" -ForegroundColor White
 Inf "本文件所在：$root"
-$dest = Join-Path $root "video-studio"
-if (Test-Path $dest) {
-    Ok "video-studio 存在"
-    Get-ChildItem $dest -Directory -ErrorAction SilentlyContinue | ForEach-Object { Inf "  └ $($_.Name)" }
-} else {
-    No "没有 video-studio 文件夹（说明下载或解压那步没成功）"
-}
 
-$app = Get-ChildItem $dest -Directory -ErrorAction SilentlyContinue |
-       Where-Object { Test-Path (Join-Path $_.FullName "start.bat") } |
-       Select-Object -First 1
+$app = Find-App -From $root
 
 if ($app) {
-    Ok "找到 start.bat：$($app.FullName)"
+    Ok "找到工作台：$($app.FullName)"
 } else {
-    No "找不到 start.bat"
+    No "上下找了 4 层都没找到工作台"
+    Inf "要找的是同时含 start.bat 和 core\api\agnes_video.py 的目录"
+    Inf "把本文件放到 video-studio 旁边，或放进 agnes-video-generator-x.y.z 里都行"
 }
 
 # 3. 配置与补丁
