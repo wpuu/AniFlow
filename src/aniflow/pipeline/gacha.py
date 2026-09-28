@@ -100,6 +100,12 @@ class RateLimiter:
 
     Agnes-family tooling reports a ~16 req/min ceiling. Spacing requests is
     friendlier than bursting and then backing off.
+
+    IMPORTANT: one instance of this must exist PER API KEY, never one shared
+    globally. Rate limits are enforced per account, so a single global limiter
+    across N independent accounts throws away (N-1)/N of the owner's capacity.
+    With 9 accounts a global 16/min cap would waste 8/9 of the available
+    throughput.
     """
 
     def __init__(self, max_per_minute: int) -> None:
@@ -116,6 +122,21 @@ class RateLimiter:
             self._next_at = max(now, self._next_at) + self._interval
         if wait > 0:
             await asyncio.sleep(wait)
+
+
+def is_queue_full(error: BaseException) -> bool:
+    """Detect Agnes' shared free-tier saturation signal.
+
+    Verified live on 2026-09-28: creating a video while the free queue is
+    saturated returns HTTP 503 with body
+        {"code": "video_queue_full", "message": "video queue is full, ...'}
+
+    This is NOT a client error and NOT a permanent failure - the request was
+    never enqueued and never billed. It must be retried on a long horizon
+    (minutes), not the short horizon used for network blips.
+    """
+    text = str(error).lower()
+    return "queue_full" in text or "queue is full" in text or "503" in text
 
 
 class GachaLedger:
@@ -172,7 +193,9 @@ class VideoGachaEngine:
         draws_per_shot: int = 5,
         max_requests_per_minute: int = 16,
         max_concurrent_per_key: int = 2,
-        create_attempts: int = 3,
+        create_attempts: int = 6,
+        queue_full_backoff_seconds: float = 45.0,
+        max_backoff_seconds: float = 120.0,
         poll_seconds: float = 1.5,
         poll_timeout_seconds: float = 900.0,
     ) -> None:
@@ -181,9 +204,16 @@ class VideoGachaEngine:
         self.ledger = ledger or GachaLedger()
         self.draws_per_shot = draws_per_shot
         self.create_attempts = create_attempts
+        self.queue_full_backoff_seconds = queue_full_backoff_seconds
+        self.max_backoff_seconds = max_backoff_seconds
         self.poll_seconds = poll_seconds
         self.poll_timeout_seconds = poll_timeout_seconds
-        self._limiter = RateLimiter(max_requests_per_minute)
+        # One limiter and one semaphore PER KEY. Independent accounts have
+        # independent quotas; sharing either would serialise 9 accounts into 1.
+        self._limiters = {
+            slot.index: RateLimiter(max_requests_per_minute)
+            for slot in key_pool.all_slots()
+        }
         self._key_locks = {
             slot.index: asyncio.Semaphore(max_concurrent_per_key)
             for slot in key_pool.all_slots()
@@ -224,7 +254,7 @@ class VideoGachaEngine:
         for attempt in range(1, self.create_attempts + 1):
             try:
                 async with self._key_locks[slot.index]:
-                    await self._limiter.acquire()
+                    await self._limiters[slot.index].acquire()
                     task = await self.video_client.create_keyframe_task(
                         api_key=slot.api_key,
                         prompt=shot.prompt,
@@ -242,9 +272,22 @@ class VideoGachaEngine:
             except Exception as exc:  # noqa: BLE001 - recorded, not swallowed
                 last_error = exc
                 if attempt < self.create_attempts:
-                    await asyncio.sleep(min(2.0 * attempt, 8.0))
+                    if is_queue_full(exc):
+                        # Shared free-tier saturation: the task was never
+                        # enqueued or billed. Wait on a minutes horizon.
+                        delay = min(
+                            self.queue_full_backoff_seconds * attempt,
+                            self.max_backoff_seconds,
+                        )
+                    else:
+                        delay = min(2.0 * attempt, 8.0)
+                    await asyncio.sleep(delay)
         draw.status = FAILED
         draw.error = f"create failed after {self.create_attempts} attempts: {last_error}"
+        if last_error is not None and is_queue_full(last_error):
+            # Distinguish "Agnes was busy" from "this shot is broken" so the
+            # caller can retry later instead of rewriting the prompt.
+            draw.error = f"queue_full after {self.create_attempts} attempts: {last_error}"
 
     async def _poll_one(self, draw: Draw) -> None:
         if draw.status != CREATED or not draw.video_id:

@@ -233,3 +233,94 @@ def test_single_frame_shots_are_valid():
     # Official contract: keyframe needs at least ONE of first/last, not both.
     ShotSpec("s", "p", first_frame_url="https://x/a.png").validate()
     ShotSpec("s", "p", last_frame_url="https://x/b.png").validate()
+
+
+# --- Live-API-informed behaviour (verified against Agnes on 2026-09-28) ---
+
+
+def test_each_key_gets_its_own_rate_limiter():
+    """9 independent accounts must not be serialised behind one global limiter."""
+    client = FakeVideoClient()
+    engine = VideoGachaEngine(
+        key_pool=KeyPool([f"k{i}" for i in range(9)]),
+        video_client=client,
+        max_requests_per_minute=16,
+        draws_per_shot=9,
+    )
+    assert len(engine._limiters) == 9
+    assert len({id(v) for v in engine._limiters.values()}) == 9
+
+
+def test_nine_accounts_are_all_used():
+    client = FakeVideoClient()
+    engine = VideoGachaEngine(
+        key_pool=KeyPool([f"k{i}" for i in range(9)]),
+        video_client=client,
+        max_requests_per_minute=0,
+        draws_per_shot=9,
+    )
+    report = asyncio.run(engine.draw_shot(SHOT))
+    assert len(report.completed) == 9
+    assert {c["api_key"] for c in client.created} == {f"k{i}" for i in range(9)}
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "Agnes API HTTP 503: video queue is full, please retry later",
+        "video_queue_full",
+        "Agnes API HTTP 503",
+    ],
+)
+def test_queue_full_is_recognised(message):
+    from aniflow.pipeline.gacha import is_queue_full
+
+    assert is_queue_full(RuntimeError(message))
+
+
+@pytest.mark.parametrize(
+    "message",
+    ["Agnes API HTTP 400: size must be 720P", "connection reset", "invalid api key"],
+)
+def test_non_queue_errors_are_not_treated_as_saturation(message):
+    from aniflow.pipeline.gacha import is_queue_full
+
+    assert not is_queue_full(RuntimeError(message))
+
+
+def test_queue_full_uses_long_backoff_and_is_labelled():
+    """Saturation must be reported as queue_full, not as a broken shot."""
+    slept: list[float] = []
+
+    class QueueFullClient(FakeVideoClient):
+        async def create_keyframe_task(self, **kw):
+            raise RuntimeError("Agnes API HTTP 503: video queue is full, please retry later")
+
+    async def run():
+        import aniflow.pipeline.gacha as g
+
+        real_sleep = asyncio.sleep
+
+        async def fake_sleep(d):
+            slept.append(d)
+            await real_sleep(0)
+
+        g.asyncio.sleep = fake_sleep
+        try:
+            engine = VideoGachaEngine(
+                key_pool=KeyPool(["k1"]),
+                video_client=QueueFullClient(),
+                max_requests_per_minute=0,
+                draws_per_shot=1,
+                create_attempts=3,
+                queue_full_backoff_seconds=45.0,
+            )
+            return await engine.draw_shot(SHOT)
+        finally:
+            g.asyncio.sleep = real_sleep
+
+    report = asyncio.run(run())
+    assert len(report.failed) == 1
+    assert "queue_full" in report.failed[0].error
+    # Minutes-horizon backoff, not the 8s network-blip horizon.
+    assert slept == [45.0, 90.0]
