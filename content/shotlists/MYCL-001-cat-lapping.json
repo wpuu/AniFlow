@@ -1,0 +1,130 @@
+{
+  "episode_id": "MYCL-001",
+  "title": "喵有此理 · 猫喝完水，下巴为什么是干的",
+  "character": "needle-felted American Shorthair cat, silver tabby with dark classic swirl markings, round amber eyes, tiny white lab coat with two buttons, visible wool fiber texture, handmade miniature puppet",
+  "style": "handmade needle-felt stop-motion miniature diorama, visible wool fiber texture, soft warm studio light, shallow depth of field, tactile handmade feel",
+  "aspect_ratio": "9:16",
+  "shots": [
+    {
+      "shot_id": "1",
+      "seconds": 5,
+      "narration": "你有没有发现，猫喝完水，下巴是干的？",
+      "camera": "slow push in",
+      "motion": "the felt cat sits still beside the bowl, blinks once slowly, then tilts its head toward the camera",
+      "first_frame": {
+        "composition": "medium shot, cat centered, bowl in lower third",
+        "subject_state": "sitting upright beside a small ceramic water bowl, looking straight at camera, ears forward",
+        "environment": "miniature felt kitchen counter, tiny felt window with warm morning light behind"
+      },
+      "last_frame": {
+        "composition": "medium shot, same framing, slightly closer",
+        "subject_state": "head tilted to one side, eyes half closed mid-blink, chin visibly dry and clean",
+        "environment": "same felt kitchen counter, same warm light"
+      }
+    },
+    {
+      "shot_id": "2",
+      "seconds": 5,
+      "narration": "狗喝水像拿勺子舀，溅得到处都是。猫不是。",
+      "camera": "locked off",
+      "motion": "a felt dog scoops water with a cupped tongue, water splashes outward onto the floor",
+      "first_frame": {
+        "composition": "medium shot, dog on the left, bowl on the right",
+        "subject_state": "a needle-felted golden retriever lowering its head into a water bowl, tongue curled upward like a ladle",
+        "environment": "miniature felt kitchen floor, felt water droplets scattered around the bowl"
+      },
+      "last_frame": {
+        "composition": "same framing",
+        "subject_state": "the felt dog lifting its head, muzzle and chest soaked, felt water droplets flying outward",
+        "environment": "same felt kitchen floor, a wet patch of darker wool spreading around the bowl"
+      },
+      "character_override": "needle-felted golden retriever puppet, shaggy honey-coloured wool, floppy ears, visible wool fiber texture, handmade miniature"
+    },
+    {
+      "shot_id": "3",
+      "seconds": 8,
+      "narration": "猫的舌头根本不伸进水里，只有舌头背面碰一下水面，然后高速往回抽。",
+      "camera": "macro, slight downward angle",
+      "motion": "the cat's tongue extends downward, curls backward so only its upper surface touches the water, then begins to retract",
+      "first_frame": {
+        "composition": "extreme close-up, profile, water surface along the lower third",
+        "subject_state": "the felt cat's head lowered, tongue extending straight down toward the water, tongue tip curled backward",
+        "environment": "surface of water in a small ceramic bowl, rendered as smooth translucent resin with felt texture beneath"
+      },
+      "last_frame": {
+        "composition": "same extreme close-up",
+        "subject_state": "the upper surface of the tongue just kissing the water surface, no part of the tongue submerged, a dimple forming on the surface",
+        "environment": "same bowl, a shallow dimple where the tongue touches"
+      }
+    },
+    {
+      "shot_id": "4",
+      "seconds": 5,
+      "narration": "水被惯性拽着跟上来，立成一根柱子。",
+      "camera": "macro, hold",
+      "motion": "the tongue pulls up fast and a slender column of water follows it upward, stretching thinner as it rises",
+      "first_frame_from_previous": true,
+      "last_frame": {
+        "composition": "extreme close-up, vertical emphasis",
+        "subject_state": "the tongue high above the surface, a thin glassy column of water stretched between tongue and bowl",
+        "environment": "same bowl below, the column catching the warm light"
+      }
+    },
+    {
+      "shot_id": "5",
+      "seconds": 6,
+      "narration": "就在重力把这根柱子扯断的前一刹那——嘴，合上。",
+      "camera": "macro, tiny snap of motion",
+      "motion": "the mouth closes over the top of the water column, the lower part of the column breaks and falls back into the bowl",
+      "first_frame_from_previous": true,
+      "last_frame": {
+        "composition": "extreme close-up pulling back slightly",
+        "subject_state": "mouth closed, chin and whiskers completely dry, a single felt droplet falling back toward the bowl",
+        "environment": "same bowl, ripple spreading where the droplet lands"
+      }
+    },
+    {
+      "shot_id": "6",
+      "seconds": 7,
+      "narration": "每秒 3.5 次，舌尖 78 厘米每秒，一次 0.14 毫升。",
+      "camera": "pull back to medium",
+      "motion": "the cat sits up beside a small felt chalkboard as three handwritten figures appear on it one by one",
+      "first_frame": {
+        "composition": "medium shot, cat on the left, chalkboard on the right",
+        "subject_state": "the felt cat sitting upright in its lab coat, one paw raised toward a miniature chalkboard",
+        "environment": "miniature felt laboratory corner, tiny felt beakers on a shelf, warm light"
+      },
+      "last_frame": {
+        "composition": "same framing",
+        "subject_state": "the cat holding the pose, looking at the board with a satisfied expression",
+        "environment": "the chalkboard now covered in three lines of chalk figures and a small sketch of a tongue and water column"
+      }
+    },
+    {
+      "shot_id": "7",
+      "seconds": 5,
+      "narration": "一次都不多，一次都不少。",
+      "camera": "slow push in",
+      "motion": "the cat turns from the board toward the camera and gives one small precise nod",
+      "first_frame_from_previous": true,
+      "last_frame": {
+        "composition": "medium close-up, cat centered",
+        "subject_state": "facing camera, one slow deliberate nod completed, eyes steady and confident",
+        "environment": "the felt laboratory corner softly out of focus behind"
+      }
+    },
+    {
+      "shot_id": "8",
+      "seconds": 5,
+      "narration": "别说，竟然喵有此理！",
+      "camera": "hold, tiny push in",
+      "motion": "the cat leans slightly toward the camera and its whiskers lift into a small satisfied expression",
+      "first_frame_from_previous": true,
+      "last_frame": {
+        "composition": "medium close-up, cat centered, space at the top for a title card",
+        "subject_state": "leaning toward camera, whiskers raised, a small pleased expression, chin still perfectly dry",
+        "environment": "the felt laboratory corner behind, warm light, soft vignette"
+      }
+    }
+  ]
+}

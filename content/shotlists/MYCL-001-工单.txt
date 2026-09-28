@@ -1,0 +1,56 @@
+《喵有此理 · 猫喝完水，下巴为什么是干的》  MYCL-001
+共 8 个镜头，46 秒，画幅 9:16
+================================================================
+每个镜头：先按首帧/尾帧提示词生成两张图，再用这两张图做首尾帧生成视频。
+
+── 镜头 1  5 秒 ──────────────────────────────
+  旁白（3.3 秒）：你有没有发现，猫喝完水，下巴是干的？
+  首帧提示词：handmade needle-felt stop-motion miniature diorama, visible wool fiber texture, soft warm studio light, shallow depth of field, tactile handmade feel, needle-felted American Shorthair cat, silver tabby with dark classic swirl markings, round amber eyes, tiny white lab coat with two buttons, handmade miniature puppet, sitting upright beside a small ceramic water bowl, looking straight at camera, ears forward, medium shot, cat centered, bowl in lower third, miniature felt kitchen counter, tiny felt window with warm morning light behind
+  尾帧提示词：handmade needle-felt stop-motion miniature diorama, visible wool fiber texture, soft warm studio light, shallow depth of field, tactile handmade feel, needle-felted American Shorthair cat, silver tabby with dark classic swirl markings, round amber eyes, tiny white lab coat with two buttons, handmade miniature puppet, head tilted to one side, eyes half closed mid-blink, chin visibly dry and clean, medium shot, same framing, slightly closer, same felt kitchen counter, same warm light
+  视频提示词：the felt cat sits still beside the bowl, blinks once slowly, then tilts its head toward the camera，slow push in
+
+── 镜头 2  5 秒 ──────────────────────────────
+  旁白（3.8 秒）：狗喝水像拿勺子舀，溅得到处都是。猫不是。
+  首帧提示词：handmade needle-felt stop-motion miniature diorama, visible wool fiber texture, soft warm studio light, shallow depth of field, tactile handmade feel, needle-felted golden retriever puppet, shaggy honey-coloured wool, floppy ears, handmade miniature, a needle-felted golden retriever lowering its head into a water bowl, tongue curled upward like a ladle, medium shot, dog on the left, bowl on the right, miniature felt kitchen floor, felt water droplets scattered around the bowl
+  尾帧提示词：handmade needle-felt stop-motion miniature diorama, visible wool fiber texture, soft warm studio light, shallow depth of field, tactile handmade feel, needle-felted golden retriever puppet, shaggy honey-coloured wool, floppy ears, handmade miniature, the felt dog lifting its head, muzzle and chest soaked, felt water droplets flying outward, same framing, same felt kitchen floor, a wet patch of darker wool spreading around the bowl
+  视频提示词：a felt dog scoops water with a cupped tongue, water splashes outward onto the floor，locked off
+
+── 镜头 3  8 秒 ──────────────────────────────
+  旁白（6.4 秒）：猫的舌头根本不伸进水里，只有舌头背面碰一下水面，然后高速往回抽。
+  首帧提示词：handmade needle-felt stop-motion miniature diorama, visible wool fiber texture, soft warm studio light, shallow depth of field, tactile handmade feel, needle-felted American Shorthair cat, silver tabby with dark classic swirl markings, round amber eyes, tiny white lab coat with two buttons, handmade miniature puppet, the felt cat's head lowered, tongue extending straight down toward the water, tongue tip curled backward, extreme close-up, profile, water surface along the lower third, surface of water in a small ceramic bowl, rendered as smooth translucent resin with felt texture beneath
+  尾帧提示词：handmade needle-felt stop-motion miniature diorama, visible wool fiber texture, soft warm studio light, shallow depth of field, tactile handmade feel, needle-felted American Shorthair cat, silver tabby with dark classic swirl markings, round amber eyes, tiny white lab coat with two buttons, handmade miniature puppet, the upper surface of the tongue just kissing the water surface, no part of the tongue submerged, a dimple forming on the surface, same extreme close-up, same bowl, a shallow dimple where the tongue touches
+  视频提示词：the cat's tongue extends downward, curls backward so only its upper surface touches the water, then begins to retract，macro, slight downward angle
+
+── 镜头 4  5 秒 ──────────────────────────────
+  旁白（3.3 秒）：水被惯性拽着跟上来，立成一根柱子。
+  首帧图：直接用上一镜的尾帧图，不要重新生成
+          （角色一致性靠这条链维持，重新生成就断了）
+  尾帧提示词：handmade needle-felt stop-motion miniature diorama, visible wool fiber texture, soft warm studio light, shallow depth of field, tactile handmade feel, needle-felted American Shorthair cat, silver tabby with dark classic swirl markings, round amber eyes, tiny white lab coat with two buttons, handmade miniature puppet, the tongue high above the surface, a thin glassy column of water stretched between tongue and bowl, extreme close-up, vertical emphasis, same bowl below, the column catching the warm light
+  视频提示词：the tongue pulls up fast and a slender column of water follows it upward, stretching thinner as it rises，macro, hold
+
+── 镜头 5  6 秒 ──────────────────────────────
+  旁白（4.2 秒）：就在重力把这根柱子扯断的前一刹那——嘴，合上。
+  首帧图：直接用上一镜的尾帧图，不要重新生成
+          （角色一致性靠这条链维持，重新生成就断了）
+  尾帧提示词：handmade needle-felt stop-motion miniature diorama, visible wool fiber texture, soft warm studio light, shallow depth of field, tactile handmade feel, needle-felted American Shorthair cat, silver tabby with dark classic swirl markings, round amber eyes, tiny white lab coat with two buttons, handmade miniature puppet, mouth closed, chin and whiskers completely dry, a single felt droplet falling back toward the bowl, extreme close-up pulling back slightly, same bowl, ripple spreading where the droplet lands
+  视频提示词：the mouth closes over the top of the water column, the lower part of the column breaks and falls back into the bowl，macro, tiny snap of motion
+
+── 镜头 6  7 秒 ──────────────────────────────
+  旁白（4.4 秒）：每秒 3.5 次，舌尖 78 厘米每秒，一次 0.14 毫升。
+  首帧提示词：handmade needle-felt stop-motion miniature diorama, visible wool fiber texture, soft warm studio light, shallow depth of field, tactile handmade feel, needle-felted American Shorthair cat, silver tabby with dark classic swirl markings, round amber eyes, tiny white lab coat with two buttons, handmade miniature puppet, the felt cat sitting upright in its lab coat, one paw raised toward a miniature chalkboard, medium shot, cat on the left, chalkboard on the right, miniature felt laboratory corner, tiny felt beakers on a shelf, warm light
+  尾帧提示词：handmade needle-felt stop-motion miniature diorama, visible wool fiber texture, soft warm studio light, shallow depth of field, tactile handmade feel, needle-felted American Shorthair cat, silver tabby with dark classic swirl markings, round amber eyes, tiny white lab coat with two buttons, handmade miniature puppet, the cat holding the pose, looking at the board with a satisfied expression, same framing, the chalkboard now covered in three lines of chalk figures and a small sketch of a tongue and water column
+  视频提示词：the cat sits up beside a small felt chalkboard as three handwritten figures appear on it one by one，pull back to medium
+
+── 镜头 7  5 秒 ──────────────────────────────
+  旁白（2.2 秒）：一次都不多，一次都不少。
+  首帧图：直接用上一镜的尾帧图，不要重新生成
+          （角色一致性靠这条链维持，重新生成就断了）
+  尾帧提示词：handmade needle-felt stop-motion miniature diorama, visible wool fiber texture, soft warm studio light, shallow depth of field, tactile handmade feel, needle-felted American Shorthair cat, silver tabby with dark classic swirl markings, round amber eyes, tiny white lab coat with two buttons, handmade miniature puppet, facing camera, one slow deliberate nod completed, eyes steady and confident, medium close-up, cat centered, the felt laboratory corner softly out of focus behind
+  视频提示词：the cat turns from the board toward the camera and gives one small precise nod，slow push in
+
+── 镜头 8  5 秒 ──────────────────────────────
+  旁白（1.8 秒）：别说，竟然喵有此理！
+  首帧图：直接用上一镜的尾帧图，不要重新生成
+          （角色一致性靠这条链维持，重新生成就断了）
+  尾帧提示词：handmade needle-felt stop-motion miniature diorama, visible wool fiber texture, soft warm studio light, shallow depth of field, tactile handmade feel, needle-felted American Shorthair cat, silver tabby with dark classic swirl markings, round amber eyes, tiny white lab coat with two buttons, handmade miniature puppet, leaning toward camera, whiskers raised, a small pleased expression, chin still perfectly dry, medium close-up, cat centered, space at the top for a title card, the felt laboratory corner behind, warm light, soft vignette
+  视频提示词：the cat leans slightly toward the camera and its whiskers lift into a small satisfied expression，hold, tiny push in

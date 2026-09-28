@@ -481,6 +481,43 @@ def factcheck(
     raise typer.Exit(code=0 if report.publishable else 1)
 
 
+@app.command("shots")
+def shots(
+    shotlist_file: Path = typer.Argument(..., help="镜头表 json"),
+    pack_file: Path = typer.Option(None, "--pack", help="一并做事实审查"),
+    out: Path = typer.Option(None, "--out", help="把工单写到文件"),
+) -> None:
+    """把镜头表打印成人照着往界面里粘的工单。
+
+    带 --pack 时，旁白里的每个数字也要能在事实包里找到出处。
+    """
+    from aniflow.factpack import FactPack
+    from aniflow.shotlist import ShotList, check_episode, render_worksheet, validate_shotlist
+
+    sl = ShotList.model_validate_json(shotlist_file.read_text(encoding="utf-8"))
+
+    if pack_file:
+        raw = json.loads(pack_file.read_text(encoding="utf-8"))
+        raw.pop("_notes", None)
+        report = check_episode(sl, FactPack.model_validate(raw))
+    else:
+        from aniflow.factpack import AuditReport
+        report = AuditReport(episode_id=sl.episode_id, issues=validate_shotlist(sl))
+
+    typer.echo(report.render())
+    typer.echo("")
+    if not report.publishable:
+        typer.echo("先把上面的问题改掉，再出工单。")
+        raise typer.Exit(code=1)
+
+    sheet = render_worksheet(sl)
+    if out:
+        out.write_text(sheet, encoding="utf-8")
+        typer.echo(f"工单已写入 {out}")
+    else:
+        typer.echo(sheet)
+
+
 if __name__ == "__main__":
     app()
 
