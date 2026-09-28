@@ -462,6 +462,25 @@ def queue_probe(
 
 
 
+@app.command("factcheck")
+def factcheck(
+    pack_file: Path = typer.Argument(..., help="Fact Pack 的 json 文件"),
+    script_file: Path = typer.Argument(..., help="待审的脚本（纯文本）"),
+) -> None:
+    """发布前的事实闸门。生成成功不等于可以发布。
+
+    退出码 0 表示可以发布，1 表示被拦下 —— 方便以后接进自动流程。
+    """
+    from aniflow.factpack import FactPack, gate
+
+    pack = FactPack.model_validate_json(pack_file.read_text(encoding="utf-8"))
+    report = gate(pack, script_file.read_text(encoding="utf-8"))
+    typer.echo(report.render())
+    if report.warnings and report.publishable:
+        typer.echo("\n（有提醒但不阻断，自己判断。）")
+    raise typer.Exit(code=0 if report.publishable else 1)
+
+
 if __name__ == "__main__":
     app()
 

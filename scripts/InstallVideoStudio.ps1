@@ -157,10 +157,27 @@ if (Test-Path $envFile) {
         $raw.Add($l)
     }
     $keys = @()
+    $rawCount = 0
     foreach ($l in $raw) {
-        foreach ($p in ($l -split '[,;\s]+')) { if ($p.Trim().Length -gt 10) { $keys += $p.Trim() } }
+        foreach ($p in ($l -split '[,;\s]+')) {
+            $t = $p.Trim()
+            if ($t.Length -eq 0) { continue }
+            $rawCount++
+            if ($t.Length -gt 10) { $keys += $t }
+            else { Warn "      忽略太短的一条（$($t.Length) 个字符）：$t" }
+        }
     }
     $keys = @($keys | Select-Object -Unique)
+
+    # 收到几条、最后写进去几条，必须说清楚。
+    # v1 悄悄去重，用户填 5 条只写进 4 条，事后毫无提示。
+    if ($rawCount -ne $keys.Count) {
+        Warn "      注意：收到 $rawCount 条，去重后剩 $($keys.Count) 条"
+        Warn "      少掉的是重复粘贴的。如果你确定 5 条各不相同，"
+        Warn "      说明有一条粘漏了，装完请检查 .env"
+    } else {
+        Say "      收到 $rawCount 条，全部有效"
+    }
 
     if ($keys.Count -eq 0) {
         Warn "      一条都没收到。可稍后手动编辑 $envFile"
