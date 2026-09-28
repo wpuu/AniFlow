@@ -3,8 +3,10 @@ from __future__ import annotations
 import asyncio
 import json
 import shutil
+import time
 from pathlib import Path
 
+import httpx
 import typer
 
 from aniflow.agnes.http import AgnesHttpClient
@@ -342,5 +344,124 @@ def run_daily(
     typer.echo(json.dumps(asyncio.run(_run()), ensure_ascii=False, indent=2))
 
 
+@app.command("queue-probe")
+def queue_probe(
+    rounds: int = typer.Option(3, min=1, help="发射轮数"),
+    interval: float = typer.Option(20.0, min=1.0, help="每轮间隔秒数"),
+    watch: bool = typer.Option(False, "--watch", help="持续挂机直到测出结论"),
+    seconds: int = typer.Option(8, min=4, max=12, help="测试视频时长"),
+    download: bool = typer.Option(True, help="抢到位后下载视频并检测是否自带音轨"),
+    out_dir: Path = typer.Option(Path("output/queue-probe"), help="视频保存目录"),
+) -> None:
+    """探测 Agnes 视频队列是【按账户】还是【全平台共享】。
+
+    用 text 模式发射，不需要图片、不需要 R2。只要 .env 里有 AGNES_API_KEYS 就能跑。
+    """
+    from aniflow.queue_probe import (
+        CAPACITY_AVAILABLE,
+        INCONCLUSIVE_SATURATED,
+        NO_KEYS,
+        PER_ACCOUNT,
+        VERDICT_TEXT,
+        decide,
+        resolve_and_download,
+        run_round,
+    )
+
+    settings = get_settings()
+    keys = settings.api_keys
+    line = "=" * 58
+
+    typer.echo(line)
+    typer.echo(" AniFlow 视频队列探测")
+    typer.echo(line)
+    if not keys:
+        head, body = VERDICT_TEXT[NO_KEYS]
+        typer.echo(f" 结论: {head}\n {body}")
+        raise typer.Exit(code=1)
+
+    typer.echo(f" 模型     : {settings.agnes_video_model}")
+    typer.echo(f" 账户数   : {len(keys)}")
+    typer.echo(f" 模式     : {'持续挂机' if watch else f'{rounds} 轮'}   间隔 {interval:g} 秒")
+    typer.echo(f" 时长     : {seconds} 秒   画幅 {settings.aniflow_aspect_ratio}")
+    typer.echo(line)
+
+    async def _run() -> int:
+        collected: list = []
+        won: tuple[str, str] | None = None  # (api_key, video_id)
+
+        async with httpx.AsyncClient(timeout=httpx.Timeout(120.0)) as client:
+            index = 0
+            while True:
+                index += 1
+                rnd = await run_round(
+                    client,
+                    base_url=settings.agnes_v1_url,
+                    keys=keys,
+                    model=settings.agnes_video_model,
+                    seconds=seconds,
+                    aspect_ratio=settings.aniflow_aspect_ratio,
+                    index=index,
+                )
+                collected.append(rnd)
+
+                typer.echo(f"\n第 {index} 轮   {time.strftime('%H:%M:%S')}")
+                for a in rnd.attempts:
+                    if a.accepted:
+                        typer.echo(f"   {a.account_label:<11} 已入队   {a.video_id}")
+                        if won is None:
+                            slot = keys[int(a.account_label.split('-')[1]) - 1]
+                            won = (slot, a.video_id or "")
+                    else:
+                        reason = a.code or a.detail or f"HTTP {a.http_status}"
+                        typer.echo(f"   {a.account_label:<11} 被拒     {reason}")
+                ok, no = len(rnd.accepted), len(rnd.rejected)
+                flag = "   <<< 混合结果，已可定论" if rnd.is_mixed else ""
+                typer.echo(f"   小结: {ok} 成功 / {no} 被拒{flag}")
+
+                verdict = decide(collected)
+                done = verdict == PER_ACCOUNT or (not watch and index >= rounds)
+                if done:
+                    break
+                await asyncio.sleep(interval)
+
+            verdict = decide(collected)
+            typer.echo("\n" + line)
+            head, body = VERDICT_TEXT[verdict]
+            typer.echo(f" 结论: {head}")
+            typer.echo(f"  {body}")
+            typer.echo(line)
+
+            if won and download:
+                api_key, video_id = won
+                typer.echo(f"\n 抢到队列位，正在等待出片: {video_id}")
+                typer.echo(" （顺便回答第二个问题：视频是否自带音轨）")
+                info = await resolve_and_download(
+                    client,
+                    api_root=settings.agnes_api_root.rstrip("/"),
+                    api_key=api_key,
+                    video_id=video_id,
+                    model=settings.agnes_video_model,
+                    out_dir=out_dir,
+                )
+                typer.echo("")
+                if info.get("ok"):
+                    audio = info.get("has_audio")
+                    audio_text = {True: "是 ✅", False: "否 ❌", None: "无法判断"}[audio]
+                    typer.echo(f"   已保存   : {info['path']}")
+                    typer.echo(f"   大小     : {info['bytes'] / 1024:.0f} KB")
+                    typer.echo(f"   时长/画质: {info.get('seconds')}s / {info.get('size')}")
+                    typer.echo(f"   自带音轨 : {audio_text}")
+                    typer.echo("\n 请自己看一遍这条视频，确认毛毡风格在动态下是否稳定。")
+                else:
+                    typer.echo(f"   未能取回: {info.get('reason')}")
+
+            return 0 if verdict in (PER_ACCOUNT, CAPACITY_AVAILABLE) else 2
+
+    raise typer.Exit(code=asyncio.run(_run()))
+
+
+
 if __name__ == "__main__":
     app()
+

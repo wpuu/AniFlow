@@ -96,6 +96,7 @@ Available commands include:
 
 ```text
 aniflow doctor
+aniflow queue-probe      # 探测视频队列是按账户还是全平台共享
 aniflow bridge
 aniflow preflight
 aniflow character
