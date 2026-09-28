@@ -1,0 +1,184 @@
+diff --git a/core/api/agnes_video.py b/core/api/agnes_video.py
+index 53289c1..747f7f9 100644
+--- a/core/api/agnes_video.py
++++ b/core/api/agnes_video.py
+@@ -609,6 +609,8 @@ class AgnesVideoAPI:
+         queue_started = None   # 首次命中时的时间戳（time.monotonic）
+         queue_deadline = None  # queue_started + 预算秒数
+         queue_retries = 0
++        # 本轮退避前已经换过几个 Key（每次 sleep 后归零）
++        queue_rotations = 0
+         while attempt < self.max_retries:
+             if self.shutdown_event and self.shutdown_event.is_set():
+                 raise VideoTaskCancelled("Video generation cancelled by user")
+@@ -701,6 +703,22 @@ class AgnesVideoAPI:
+                             raise AgnesQueueFullError(
+                                 status=resp.status_code, code=code, waited_s=int(waited),
+                             )
++                        # 队列满先把其余账号试一遍，再退避。
++                        # 429 早就是这么做的，队列满却漏了：原来命中 503 直接
++                        # sleep 30~60s，9 个账号轮完一圈要 4.5~9 分钟。若队列按
++                        # 账户隔离，那几分钟里其余账号可能全是空的。
++                        # 视频提交桶的 burst 本就是 1 x Key 数，连续换 Key 用的
++                        # 正是它预留的配额。
++                        if ring.has_multiple() and queue_rotations < len(ring) - 1:
++                            queue_rotations += 1
++                            ring.rotate()
++                            logger.warning(
++                                f"[KeyRotation] queue full ({code}), 换账号立即重试 "
++                                f"({queue_rotations}/{len(ring) - 1})"
++                            )
++                            continue
++                        queue_rotations = 0
++
+                         delay = _QUEUE_RETRY_BASE_DELAY + random.uniform(0, _QUEUE_RETRY_JITTER)
+                         queue_retries += 1
+                         logger.warning(
+diff --git a/tests/test_upstream_error_handling.py b/tests/test_upstream_error_handling.py
+index b03c2fd..330dca4 100644
+--- a/tests/test_upstream_error_handling.py
++++ b/tests/test_upstream_error_handling.py
+@@ -434,3 +434,143 @@ def test_wait_for_video_enables_rotation_for_v25_when_switch_on(monkeypatch):
+         av.AgnesVideoAPI(api_key="k1", model="agnes-video-v2.0").wait_for_video("vid")
+     )
+     assert out20.fix_rotation is False  # 非 2.5 系列不校正
++
++
++# ── 队列满时先换账号，再退避 ────────────────────────────────────────
++#
++# 原实现命中 503 直接 sleep 30~60s，靠下一轮的 ring.next() 才换到别的账号，
++# 9 个账号轮一圈要 4.5~9 分钟。若队列按账户隔离，那几分钟里其余账号可能全空着。
++
++
++def _multi_key_api(monkeypatch, keys):
++    """与 api fixture 相同，但挂多 Key 的 KeyRing，并记录实际用到的 Key。"""
++    ring = FakeRing(keys)
++    monkeypatch.setattr(av, "get_video_submit_limiter", lambda: FakeLimiter())
++    monkeypatch.setattr(av, "get_rate_limiter", lambda: FakeLimiter())
++    monkeypatch.setattr(av, "collect_error", lambda *a, **k: None)
++    monkeypatch.setattr(av, "collect_error_from_exception", lambda *a, **k: None)
++    monkeypatch.setattr(av, "_QUEUE_RETRY_BASE_DELAY", 0.0)
++    monkeypatch.setattr(av, "_QUEUE_RETRY_JITTER", 0.0)
++    monkeypatch.setattr(av, "get_key_ring", lambda: ring)
++    return av.AgnesVideoAPI(api_key=keys[0], max_retries=3, retry_base_delay=0.001), ring
++
++
++async def test_queue_full_tries_every_account_before_backing_off(monkeypatch):
++    """前两个账号队列满、第三个有空位时，必须当场换过去，不能先睡 30~60s。"""
++    api, _ = _multi_key_api(monkeypatch, ["k1", "k2", "k3"])
++    used, progress, slept = [], [], []
++
++    def fake_post(url, headers=None, json=None, timeout=None):
++        used.append(headers["Authorization"])
++        # k3 有空位，其余排不上
++        if headers["Authorization"].endswith("k3"):
++            return FakeResponse(status_code=200, json_data={"video_id": "vid-ok"})
++        return _queue_full_response()
++
++    monkeypatch.setattr(av.requests, "post", fake_post)
++
++    async def no_sleep(d):
++        slept.append(d)
++
++    monkeypatch.setattr(av.asyncio, "sleep", no_sleep)
++
++    vid = await api._submit_with_retry(
++        {"prompt": "x"}, "t2v",
++        progress_callback=lambda stage, data: progress.append((stage, data)),
++    )
++
++    assert vid == "vid-ok"
++    # 三个账号各试一次就拿到位置
++    assert len(used) == 3
++    assert [u[-2:] for u in used] == ["k1", "k2", "k3"]
++    # 关键：一次都没退避。原实现这里会睡两轮
++    assert slept == []
++    # 换账号不是「排队重试」，不该污染给用户看的队列进度
++    assert progress == []
++
++
++async def test_queue_full_backs_off_only_after_every_account_refused(monkeypatch):
++    """所有账号都排不上，才回到原来的退避节奏，退避预算的语义不变。"""
++    api, _ = _multi_key_api(monkeypatch, ["k1", "k2", "k3"])
++    used, progress, slept = [], [], []
++
++    def fake_post(url, headers=None, json=None, timeout=None):
++        used.append(headers["Authorization"])
++        # 试满 2 圈（每圈 3 个账号）后才放行
++        if len(used) > 6:
++            return FakeResponse(status_code=200, json_data={"video_id": "vid-ok"})
++        return _queue_full_response()
++
++    monkeypatch.setattr(av.requests, "post", fake_post)
++
++    async def no_sleep(d):
++        slept.append(d)
++
++    monkeypatch.setattr(av.asyncio, "sleep", no_sleep)
++
++    vid = await api._submit_with_retry(
++        {"prompt": "x"}, "t2v",
++        progress_callback=lambda stage, data: progress.append((stage, data)),
++    )
++
++    assert vid == "vid-ok"
++    assert len(used) == 7
++    # 3 个账号 = 每圈 1 次退避，两圈共 2 次
++    assert len(slept) == 2
++    # 只有真正退避才上报队列进度，计数连续
++    assert [s for s, _ in progress] == ["queue_full"] * 2
++    assert [d["attempt"] for _, d in progress] == [1, 2]
++
++
++async def test_single_account_behaviour_is_unchanged(monkeypatch):
++    """只有一个 Key 时没什么可换的，必须完全维持原来的退避行为。"""
++    api, _ = _multi_key_api(monkeypatch, ["only"])
++    calls, progress, slept = [], [], []
++
++    def fake_post(url, headers=None, json=None, timeout=None):
++        calls.append(1)
++        if len(calls) <= 3:
++            return _queue_full_response()
++        return FakeResponse(status_code=200, json_data={"video_id": "vid-ok"})
++
++    monkeypatch.setattr(av.requests, "post", fake_post)
++
++    async def no_sleep(d):
++        slept.append(d)
++
++    monkeypatch.setattr(av.asyncio, "sleep", no_sleep)
++
++    vid = await api._submit_with_retry(
++        {"prompt": "x"}, "t2v",
++        progress_callback=lambda stage, data: progress.append((stage, data)),
++    )
++
++    assert vid == "vid-ok"
++    assert len(slept) == 3          # 每次被拒都退避，和原来一样
++    assert [s for s, _ in progress] == ["queue_full"] * 3
++
++
++async def test_rotation_does_not_consume_the_queue_budget(monkeypatch):
++    """换账号不能偷偷吃掉 15 分钟的排队预算，否则多账号反而更早放弃。"""
++    api, _ = _multi_key_api(monkeypatch, ["k1", "k2", "k3", "k4"])
++    used, slept = [], []
++
++    def fake_post(url, headers=None, json=None, timeout=None):
++        used.append(1)
++        if len(used) > 8:   # 两圈全拒后才放行
++            return FakeResponse(status_code=200, json_data={"video_id": "vid-ok"})
++        return _queue_full_response()
++
++    monkeypatch.setattr(av.requests, "post", fake_post)
++
++    async def no_sleep(d):
++        slept.append(d)
++
++    monkeypatch.setattr(av.asyncio, "sleep", no_sleep)
++
++    vid = await api._submit_with_retry({"prompt": "x"}, "t2v")
++
++    assert vid == "vid-ok"
++    # 4 个账号 × 2 圈 = 8 次被拒，但只退避 2 次
++    assert len(used) == 9
++    assert len(slept) == 2

@@ -1,0 +1,36 @@
+diff --git a/core/api/agnes_video.py b/core/api/agnes_video.py
+index 53289c1..747f7f9 100644
+--- a/core/api/agnes_video.py
++++ b/core/api/agnes_video.py
+@@ -609,6 +609,8 @@ class AgnesVideoAPI:
+         queue_started = None   # 首次命中时的时间戳（time.monotonic）
+         queue_deadline = None  # queue_started + 预算秒数
+         queue_retries = 0
++        # 本轮退避前已经换过几个 Key（每次 sleep 后归零）
++        queue_rotations = 0
+         while attempt < self.max_retries:
+             if self.shutdown_event and self.shutdown_event.is_set():
+                 raise VideoTaskCancelled("Video generation cancelled by user")
+@@ -701,6 +703,22 @@ class AgnesVideoAPI:
+                             raise AgnesQueueFullError(
+                                 status=resp.status_code, code=code, waited_s=int(waited),
+                             )
++                        # 队列满先把其余账号试一遍，再退避。
++                        # 429 早就是这么做的，队列满却漏了：原来命中 503 直接
++                        # sleep 30~60s，9 个账号轮完一圈要 4.5~9 分钟。若队列按
++                        # 账户隔离，那几分钟里其余账号可能全是空的。
++                        # 视频提交桶的 burst 本就是 1 x Key 数，连续换 Key 用的
++                        # 正是它预留的配额。
++                        if ring.has_multiple() and queue_rotations < len(ring) - 1:
++                            queue_rotations += 1
++                            ring.rotate()
++                            logger.warning(
++                                f"[KeyRotation] queue full ({code}), 换账号立即重试 "
++                                f"({queue_rotations}/{len(ring) - 1})"
++                            )
++                            continue
++                        queue_rotations = 0
++
+                         delay = _QUEUE_RETRY_BASE_DELAY + random.uniform(0, _QUEUE_RETRY_JITTER)
+                         queue_retries += 1
+                         logger.warning(
