@@ -248,7 +248,11 @@ if ($won) {
     if ($url) {
         $desk = [Environment]::GetFolderPath("Desktop")
         if ([string]::IsNullOrWhiteSpace($desk) -and $env:USERPROFILE) { $desk = Join-Path $env:USERPROFILE "Desktop" }
-        if ([string]::IsNullOrWhiteSpace($desk) -or -not (Test-Path $desk)) { $desk = $PSScriptRoot }
+        if ([string]::IsNullOrWhiteSpace($desk) -or -not (Test-Path $desk)) {
+            $desk = if ($ScriptDir) { $ScriptDir }
+                    elseif ($PSScriptRoot) { $PSScriptRoot }
+                    else { (Get-Location).Path }
+        }
         $dir = Join-Path $desk "AniFlow测试视频"
         New-Item -ItemType Directory -Force -Path $dir | Out-Null
         $file = Join-Path $dir ("test_{0}.mp4" -f (Get-Date -Format 'HHmmss'))
