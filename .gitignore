@@ -9,3 +9,5 @@ build/
 output/
 data/runtime/
 .DS_Store
+AniFlow测试视频/
+output/
