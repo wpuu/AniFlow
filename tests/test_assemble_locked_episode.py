@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -46,6 +47,8 @@ class LockedAssemblyTests(unittest.TestCase):
         self.fp.write_text(json.dumps(self.facts, ensure_ascii=False), encoding="utf-8")
 
     def build_media(self, *, missing: str | None = None, broken: str | None = None, audio_seconds=31):
+        if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
+            self.skipTest("Real FFmpeg/FFprobe are not installed in this environment")
         # Very small non-commercial sample, not a provider output.
         colors = ["red", "blue", "green", "white", "orange", "yellow", "purple", "black"]
         for i, sec in enumerate(self.seconds, start=1):
@@ -164,7 +167,10 @@ class LockedAssemblyTests(unittest.TestCase):
         self.build_media()
         old=self.clips/"scene_4.mp4"
         old.unlink()
-        old.symlink_to(self.clips/"scene_3.mp4")
+        try:
+            old.symlink_to(self.clips/"scene_3.mp4")
+        except (OSError, NotImplementedError):
+            self.skipTest("Filesystem does not permit unprivileged symlink creation")
         with self.assertRaisesRegex(assembly.AssemblyError,"regular file"):
             assembly.render(**self.kwargs())
 
