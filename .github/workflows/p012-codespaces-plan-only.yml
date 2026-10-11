@@ -50,3 +50,64 @@ jobs:
               grep -q PLAN_ONLY_NO_REQUESTS /tmp/aniflow-preview.json
               python -m pytest -q -p no:cacheprovider tests/test_one_agnes_real_shot.py
             '
+
+      - name: Verify rebuild-persistent single-submission guard across independent containers
+        run: |
+          set -euo pipefail
+          # Two separate containers emulate a Codespaces container rebuild
+          # while mounting the same private /workspaces sibling directory.
+          guard_volume="$RUNNER_TEMP/aniflow-p012-persistent-guard"
+          mkdir -p "$guard_volume"
+          sudo chown 1000:1000 "$guard_volume"
+
+          docker run --rm \
+            --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --tmpfs /tmp:rw,nosuid,nodev,size=64m \
+            -e CODESPACES=true \
+            -e PYTHONDONTWRITEBYTECODE=1 \
+            -e ANIFLOW_SINGLE_SHOT_API_KEY="" \
+            --mount type=bind,src="$GITHUB_WORKSPACE",dst=/workspaces/AniFlow,readonly \
+            --mount type=bind,src="$guard_volume",dst=/workspaces/.aniflow-private \
+            --workdir /workspaces/AniFlow \
+            aniflow-p012-no-key \
+            python -c '
+          import sys
+          sys.path.insert(0, "scripts")
+          import one_agnes_real_shot as shot
+          assert shot._once_root().as_posix().startswith("/workspaces/")
+          shot._reserve_one_submission(
+              {"request_sha256": "a" * 64, "domain": "global"},
+              shot._once_root().parent / "test-only",
+          )
+          print("FIRST_CONTAINER_RESERVED_NO_API_CALL")
+          '
+
+          docker run --rm \
+            --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --tmpfs /tmp:rw,nosuid,nodev,size=64m \
+            -e CODESPACES=true \
+            -e PYTHONDONTWRITEBYTECODE=1 \
+            -e ANIFLOW_SINGLE_SHOT_API_KEY="" \
+            --mount type=bind,src="$GITHUB_WORKSPACE",dst=/workspaces/AniFlow,readonly \
+            --mount type=bind,src="$guard_volume",dst=/workspaces/.aniflow-private \
+            --workdir /workspaces/AniFlow \
+            aniflow-p012-no-key \
+            python -c '
+          import sys
+          sys.path.insert(0, "scripts")
+          import one_agnes_real_shot as shot
+          guard = shot._once_root() / "MYCL-001-shot-1.once.json"
+          assert guard.is_file(), "Guard was lost during container recreation"
+          try:
+              shot._reserve_one_submission(
+                  {"request_sha256": "a" * 64, "domain": "global"},
+                  shot._once_root().parent / "a-different-folder",
+              )
+          except shot.ShotError as exc:
+              assert "already reserved" in str(exc)
+              print("SECOND_CONTAINER_REJECTED_DUPLICATE_NO_API_CALL")
+          else:
+              raise AssertionError("Duplicate submission guard failed")
+          '
