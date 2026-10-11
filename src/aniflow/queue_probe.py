@@ -225,6 +225,7 @@ def has_audio_track(path: Path) -> bool | None:
                 capture_output=True,
                 text=True,
                 timeout=60,
+                check=False,
             )
         except (OSError, subprocess.TimeoutExpired):
             out = None
