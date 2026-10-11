@@ -98,6 +98,7 @@ function apiError(data: Record<string, unknown> | null, fallback: string): Error
   const message =
     (data?.error as { message?: string } | undefined)?.message ||
     (data?.message as string | undefined) ||
+    (typeof data?.detail === 'string' ? data.detail : undefined) ||
     fallback;
   return new Error(message);
 }
