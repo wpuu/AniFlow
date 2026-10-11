@@ -1,31 +1,9 @@
-"""Agnes video queue probe.
+"""Legacy multi-key video queue observation, NOT proof of quota isolation.
 
-Answers one question that decides AniFlow's whole capacity model:
-
-    Is the free video queue shared across the whole platform,
-    or is it enforced per account?
-
-If it is per-account, the owner's 9 independent Agnes accounts multiply video
-throughput by 9 and the multi-key gacha strategy is the core advantage.
-If it is global, extra accounts do nothing for video (they still help text and
-image), and the production plan has to be rebuilt around scarce queue slots.
-
-Method
-------
-Fire one video-create request from EVERY key at the same instant, repeatedly.
-
-    - A round that returns a MIX of accepted and queue_full at the same instant
-      proves the limit is per-account. This is the only definitive signal.
-    - Rounds that are uniformly rejected cannot distinguish the two cases: the
-      platform may be globally saturated, or every account may be individually
-      saturated at once.
-    - Rounds that are uniformly accepted just mean there was spare capacity.
-
-Deliberately uses `mode: "text"`, which needs no `first_frame` and therefore no
-public media layer. The probe runs with nothing configured but API keys.
-
-A won slot is carried through to completion so the run also answers the second
-open question: does Agnes video output contain a native audio track?
+A mixture of accepted and queue-full responses is compatible with both global
+and per-account capacity: a shared global queue may have only one free slot.
+Do not infer 9x throughput or business economics from this signal.
+This helper can generate real billable video tasks; the CLI is gated.
 """
 
 from __future__ import annotations
@@ -76,13 +54,14 @@ class Round:
 
     @property
     def is_mixed(self) -> bool:
-        """The definitive per-account signal."""
+        """A mixed observation, not evidence of per-account quota isolation."""
         return bool(self.accepted) and any(a.is_queue_full for a in self.rejected)
 
 
 # --- verdicts -------------------------------------------------------------
 
-PER_ACCOUNT = "per_account"
+PER_ACCOUNT = "per_account"  # Retained for historical compatibility; never inferred.
+MIXED_OBSERVED = "mixed_observed_inconclusive"
 INCONCLUSIVE_SATURATED = "inconclusive_saturated"
 CAPACITY_AVAILABLE = "capacity_available"
 NO_KEYS = "no_keys"
@@ -92,28 +71,28 @@ def decide(rounds: list[Round]) -> str:
     if not rounds:
         return NO_KEYS
     if any(r.is_mixed for r in rounds):
-        return PER_ACCOUNT
+        return MIXED_OBSERVED
     if any(r.accepted for r in rounds):
         return CAPACITY_AVAILABLE
     return INCONCLUSIVE_SATURATED
 
 
 VERDICT_TEXT = {
-    PER_ACCOUNT: (
-        "队列按【账户】隔离  ✅",
-        "同一瞬间有账户被拒、有账户成功 —— 这只可能是按账户限制。\n" +
-        "  → 你的 9 个账户对视频【有效】，多 Key 抽卡策略成立，产能可叠加。",
+    MIXED_OBSERVED: (
+        "观察到部分入队、部分队列满——【无法判断】限额模型",
+        "共享队列剩余少量名额时也会出现混合结果；不能证明按账户隔离，" +
+        "更不能据此推断 9 倍产能。应以实际可交付视频/时长/成本衡量。",
     ),
     CAPACITY_AVAILABLE: (
         "队列当前有空位（未能区分模型）  ⚠️",
         "所有账户都成功了，说明此刻不缺容量，但无法区分是按账户还是全平台共享。\n" +
-        "  → 请在队列繁忙时段再跑一次，那时才能看出差别。",
+        "  → 不应为了辨别队列模型而反复付费创建视频。",
     ),
     INCONCLUSIVE_SATURATED: (
         "全部被拒，无法区分  ⚠️",
         "所有账户同时被拒。可能是全平台共享队列满了，\n" +
         "  也可能是每个账户各自都满了 —— 这两种情况此刻长得一样。\n" +
-        "  → 建议用 --watch 持续挂机，等出现【部分成功】的那一刻即可定论。",
+        "  → 停止无上限重试；单镜头生产验收优先。",
     ),
     NO_KEYS: ("没有可用的 API Key  ❌", "请在 .env 里配置 AGNES_API_KEYS（英文逗号分隔）。"),
 }
