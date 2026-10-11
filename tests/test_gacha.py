@@ -9,7 +9,6 @@ from aniflow.models import VideoResult, VideoTask
 from aniflow.pipeline.gacha import (
     COMPLETED,
     CREATED,
-    FAILED,
     Draw,
     GachaLedger,
     RateLimiter,
