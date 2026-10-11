@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import tempfile
 from pathlib import Path
 
@@ -10,6 +11,8 @@ from aniflow.media.ffmpeg import download_video, extract_sample_frames
 from aniflow.media.store import PublicMediaStore
 from aniflow.models import CandidateEvaluation
 from aniflow.pipeline.candidates import GeneratedCandidate
+
+logger = logging.getLogger(__name__)
 
 
 class CandidateEvaluator:
@@ -68,8 +71,8 @@ class CandidateEvaluator:
             if object_keys:
                 try:
                     await self.media_store.delete_many(object_keys)
-                except Exception:
-                    pass
+                except Exception as exc:  # noqa: BLE001 - cleanup must not mask evaluation
+                    logger.warning("Transient QA sample cleanup failed (%s)", type(exc).__name__)
 
     async def evaluate_batch(
         self,
