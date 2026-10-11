@@ -59,8 +59,8 @@ export interface HistoryItem {
   modelKey?: VideoModelKey;
   modelName?: string;
   mode: GenMode | 'unknown';
-  ratio: Ratio;
-  resolution: ResolutionTier;
+  ratio: Ratio | 'unknown';
+  resolution: ResolutionTier | 'unknown';
   status: TaskStatus;
   progress: number;
   videoUrl: string | null;
