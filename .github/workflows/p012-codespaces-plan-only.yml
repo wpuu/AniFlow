@@ -1,8 +1,8 @@
 name: P0-012 Codespaces plan-only isolated image
 
 on:
-  pull_request:
-    branches: [main]
+  push:
+    branches: ["audit/**", "main"]
     paths:
       - ".devcontainer/**"
       - ".github/workflows/p012-codespaces-plan-only.yml"
