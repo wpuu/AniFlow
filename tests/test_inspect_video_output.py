@@ -6,8 +6,8 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
 from subprocess import CompletedProcess
+from unittest.mock import patch
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/inspect_video_output.py"
 SPEC = importlib.util.spec_from_file_location("inspect_video_output", SCRIPT)
@@ -84,9 +84,9 @@ class InspectVideoTests(unittest.TestCase):
             path = Path(tmp) / "test.mp4"
             path.write_bytes(b"fixture")
             fake = CompletedProcess(args=[], returncode=1, stdout="", stderr="private technical detail")
-            with patch.object(qa.subprocess, "run", return_value=fake):
-                with self.assertRaisesRegex(qa.ProbeError, "could not inspect"):
-                    qa.inspect_file(path, min_seconds=4, max_seconds=12, require_audio=False, min_short_side=0)
+            with (patch.object(qa.subprocess, "run", return_value=fake),
+                  self.assertRaisesRegex(qa.ProbeError, "could not inspect")):
+                qa.inspect_file(path, min_seconds=4, max_seconds=12, require_audio=False, min_short_side=0)
 
 
 if __name__ == "__main__":
