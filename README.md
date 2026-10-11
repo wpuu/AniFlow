@@ -1,5 +1,7 @@
 # AniFlow / 动画工厂
 
+> **P0-012 云端单镜头启动入口（2026-10-11）：** 已为当前隔离分支提供 [打开 GitHub Codespaces 创建页面](https://codespaces.new/wpuu/AniFlow/tree/audit/2026-10-11-v710-revalidation)。该云端环境预装 Python/FFmpeg，**无自动运行/生成 Hook**；可在 Codespaces 创建页可选填入账户个人加密密钥 `ANIFLOW_SINGLE_SHOT_API_KEY`，只能经明确指令生成一条五秒视频。创建 Codespace 可能消耗 GitHub 配额，先核实账户付费提示，绝不把 Key 放在 Issues、PR、CI 或聊天。完整低人工操作说明见 [P0-012 Codespaces 安全运行卡](docs/runbooks/2026-10-11-p012-codespaces-single-shot.md)。已用 GitHub Actions 验证无 Key、断网、只读项目目录的容器构建及 25 项测试；**还未在用户 Codespace 中用真实 Key 成功出片**。草稿 PR 继续不合并。
+
 > **P0-010 单条真实视频入口与队列结论纠偏（2026-10-11）：** 以前把“多账号同时提交时部分成功、部分队列满”解释为**账号级配额**是错误的——**共享队列仅剩少数空位同样产生混合结果**，不可据此声称九倍视频产能。旧 `queue-probe` 已被显式确认和次数上限保护，默认不再并发提交多个可能收费的任务。新增 [`scripts/one_agnes_real_shot.py`](scripts/one_agnes_real_shot.py) 以第一集第 1 镜头为唯一固定对象：默认只预览；仅明确批准当前计费并在可信电脑配置**一个单独环境变量 Key**后，才允许发送**一次** Agnes Video 2.5 Flash 视频创建请求，保存任务 ID，并可无新增 POST 续查；结果仍需实际观看横倒/角色质量。官方当前 Flash 720P 标价限时零费用，可能随时调整。**该程序在仓库中，不代表已持有 Key 或已生成真实 Agnes 视频**。详见 [Issue #5](https://github.com/wpuu/AniFlow/issues/5)；未获真实视频验证前 PR 保持草稿。
 
 > **P0-007 素材快照验收（2026-10-11）：** 本地合片程序已修复“预检后源视频或配音改变，但 FFmpeg 继续读原路径”的问题：执行 `--render` 时为所有来源文件创建隔离快照，复核 SHA-256 与媒体元数据，再以快照合成。新增 9 项快照测试，加上原 28 项专项回归，临时 Linux / FFmpeg 上 **37/37 通过**，其中实际走通合成 720×1280 正式画幅；**没有整仓库测试、Windows 实机或 Agnes 真视频证据**。临时快照会额外占用磁盘。见 [P0-007 记录](docs/reviews/2026-10-11-p0-007-immutable-input-snapshots.md)，PR #2 仍未合并。
