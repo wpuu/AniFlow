@@ -1,5 +1,7 @@
 # AniFlow / 动画工厂
 
+> **最新 P0-006（2026-10-11）：** 本分支 [`assemble_locked_episode.py`](scripts/assemble_locked_episode.py) 新增**逐镜头独立旁白**输入（`--scene-audio-dir`），对齐 MYCL-001 的 8 镜头时间段；保留旧 `--narration` 单音轨兼容模式。当前 28 项相关离线测试通过，实际 FFmpeg 合成视频中 8 条不同频率的音轨均被核对出现在正确镜头时间段；**没有真实 Agnes 视频、授权商用 TTS、字幕或 Windows 实机验收**。详见 [P0-006 报告](docs/reviews/2026-10-11-p0-006-per-shot-narration-assembly.md) 和 [Issue #5](https://github.com/wpuu/AniFlow/issues/5)。
+
 > **P0-005 源码级风险与备用合片路径（2026-10-11）：** 上游正式产物修改/批准链对 `creative:script` 会触发脚本产物重算，且未发现可单独写回 `narrations[0]` 的受支持产物入口。因此**不能声称人工检查点已确保已审核旁白在恢复后保持不变**。本分支增加 [`assemble_locked_episode.py`](scripts/assemble_locked_episode.py)：只读取已生成的 8 个本地镜头与合法音轨，按 MYCL-001 46 秒工单做预检，并在显式 `--render` 时本地 FFmpeg 拼接；默认绝不生成视频或上传素材。**新增加的 16 项离线用例已通过，含真实 FFmpeg 合成彩色假视频；没有 Agnes 真片、商业语音许可、字幕发布验收**。详见 [P0-005 技术结论](docs/reviews/2026-10-11-p0-005-creative-resume-and-local-assembly.md) 和 [Issue #5](https://github.com/wpuu/AniFlow/issues/5)。
 
 > **P0-004 新发现——原文不能被自动保证：** 上游 v7.1.0 的 Creative 创意模式虽然支持 8 镜头和指定秒数，但仍会由 AI 重新生成分镜及整条旁白。本分支新增 [`lock_upstream_creative_checkpoint.py`](scripts/lock_upstream_creative_checkpoint.py) 及 21 项离线测试，仅支持导出已审核原稿和只读检查人工检查点；**上游正式界面能否持久导入原文仍未实机验证**。加上此前 45 项测试，共 **66/66 离线通过**，不代表能够真实锁住创意模式中的配音或已经出片。见 [P0-004 交接](docs/reviews/2026-10-11-p0-004-creative-checkpoint-content-lock.md)、[Issue #4](https://github.com/wpuu/AniFlow/issues/4)。
