@@ -354,6 +354,16 @@ def test_full_single_shot_path_with_real_ffmpeg_metadata(
             client=client, poll_interval=0, max_polls=1,
             sleep_fn=lambda _: None,
         )
+        cached = shot.run_live(
+            planned, tmp_path / f"result-{size}-{duration_seconds}",
+            execute=False, resume=True, confirmed_price=False,
+            environ={}, client=client,
+        )
+    assert cached["result"] == expected_result
+    assert cached["already_recorded"] is True
+    assert cached["submissions"] == 0
+    assert cached["network_requests"] == 0
+    assert cached["mp4_sha256"] == hashlib.sha256(payload).hexdigest()
     assert events == ["POST", "GET", "GET"]
     assert result["result"] == expected_result
     assert result["submissions"] == 1
@@ -676,3 +686,133 @@ def test_timestamp_update_fails_closed_if_original_marker_tampered(planned, tmp_
             video_id="video_accepted",
         )
     assert json.loads(evidence.read_text(encoding="utf-8"))["request_sha256"] == "0" * 64
+
+
+def test_resume_after_crash_between_download_and_record_finalization(
+    planned, tmp_path, fake_inspection
+):
+    """Local MP4 with accepted ID must never be redownloaded or called 'verified'."""
+    out = tmp_path / "interrupted-after-video"
+    out.mkdir()
+    record = out / "MYCL-001-shot-1.attempt.json"
+    shot._save_attempt(record, planned, status="SUBMISSION_ATTEMPT_UNCONFIRMED")
+    shot._save_attempt(
+        record, planned, status="ACCEPTED_SINGLE_VIDEO", video_id="real_id_001",
+    )
+    before = record.read_bytes()
+    data = b"\x00\x00\x00\x18ftypmp42" + b"\x00" * 3000
+    (out / "MYCL-001-shot-1.mp4").write_bytes(data)
+    calls = []
+
+    def handler(request):
+        calls.append(request.method)
+        raise AssertionError("No network must be used when reconciling local MP4")
+
+    with httpx.Client(transport=httpx.MockTransport(handler), trust_env=False) as client:
+        result = shot.run_live(
+            planned, out, execute=False, resume=True, confirmed_price=False,
+            environ={}, client=client,
+        )
+    assert result["result"] == "LOCAL_MP4_NEEDS_ORIGIN_RECONCILIATION"
+    assert result["submissions"] == 0
+    assert result["network_requests"] == 0
+    assert result["provider_provenance_verified"] is False
+    assert result["mp4_sha256"] == hashlib.sha256(data).hexdigest()
+    assert result["attempt_record_unchanged"] is True
+    assert record.read_bytes() == before
+    assert calls == []
+
+
+def test_finished_video_resume_refuses_digest_mismatch_without_network(
+    planned, tmp_path, fake_inspection
+):
+    out = tmp_path / "recorded-finished"
+    out.mkdir()
+    record = out / "MYCL-001-shot-1.attempt.json"
+    shot._save_attempt(record, planned, status="SUBMISSION_ATTEMPT_UNCONFIRMED")
+    shot._save_attempt(
+        record, planned, status="ACCEPTED_SINGLE_VIDEO", video_id="video_001",
+    )
+    media = out / "MYCL-001-shot-1.mp4"
+    media.write_bytes(b"MOCK-MP4" * 400)
+    evidence = json.loads(record.read_text(encoding="utf-8"))
+    evidence["status"] = "MEDIA_REQUIRES_HUMAN_REVIEW"
+    evidence["mp4_bytes"] = media.stat().st_size
+    evidence["mp4_sha256"] = hashlib.sha256(media.read_bytes()).hexdigest()
+    shot._write_json(record, evidence, replace=True)
+
+    # Tampering after original acceptance cannot be hidden by a fresh retrieve.
+    media.write_bytes(b"CHANGED!" * 400)
+    with pytest.raises(shot.ShotError, match="SHA-256 or size differs"):
+        shot.run_live(
+            planned, out, execute=False, resume=True, confirmed_price=False,
+            environ={},
+        )
+
+
+def test_failed_task_is_replayed_locally_without_agnes_key(
+    planned, tmp_path, fake_inspection
+):
+    out = tmp_path / "failed-provider"
+    out.mkdir()
+    record = out / "MYCL-001-shot-1.attempt.json"
+    shot._save_attempt(record, planned, status="SUBMISSION_ATTEMPT_UNCONFIRMED")
+    shot._save_attempt(
+        record, planned, status="ACCEPTED_SINGLE_VIDEO", video_id="upstream_failed",
+    )
+    e = json.loads(record.read_text(encoding="utf-8"))
+    e["status"] = "FAILED_UPSTREAM"
+    e["error_code"] = "video_generation_failed"
+    e["elapsed_to_final_result_seconds"] = 132
+    shot._write_json(record, e, replace=True)
+    result = shot.run_live(
+        planned, out, execute=False, resume=True, confirmed_price=False,
+        environ={},
+    )
+    assert result["result"] == "FAILED_UPSTREAM"
+    assert result["submissions"] == 0
+    assert result["network_requests"] == 0
+    assert result["error_code"] == "video_generation_failed"
+    assert result["elapsed_to_final_result_seconds"] == 132
+
+
+def test_partial_video_requires_manual_inspection_without_a_get(
+    planned, tmp_path, fake_inspection
+):
+    out = tmp_path / "unfinished-download"
+    out.mkdir()
+    record = out / "MYCL-001-shot-1.attempt.json"
+    shot._save_attempt(record, planned, status="SUBMISSION_ATTEMPT_UNCONFIRMED")
+    shot._save_attempt(
+        record, planned, status="ACCEPTED_SINGLE_VIDEO", video_id="video_001",
+    )
+    (out / "MYCL-001-shot-1.part").write_bytes(b"partial-file")
+    with pytest.raises(shot.ShotError, match="Partial MP4 remains"):
+        shot.run_live(
+            planned, out, execute=False, resume=True, confirmed_price=False,
+            environ={},
+        )
+    assert (out / "MYCL-001-shot-1.part").read_bytes() == b"partial-file"
+
+
+def test_finalized_record_without_video_stops_before_any_network(
+    planned, tmp_path, fake_inspection
+):
+    out = tmp_path / "vanished-video"
+    out.mkdir()
+    record = out / "MYCL-001-shot-1.attempt.json"
+    shot._save_attempt(record, planned, status="SUBMISSION_ATTEMPT_UNCONFIRMED")
+    shot._save_attempt(
+        record, planned, status="ACCEPTED_SINGLE_VIDEO", video_id="video_001",
+    )
+    evidence = json.loads(record.read_text(encoding="utf-8"))
+    evidence["status"] = "MEDIA_QA_BLOCKED"
+    evidence["mp4_sha256"] = "1" * 64
+    evidence["mp4_bytes"] = 4096
+    shot._write_json(record, evidence, replace=True)
+    with pytest.raises(shot.ShotError, match="MP4 is missing"):
+        shot.run_live(
+            planned, out, execute=False, resume=True, confirmed_price=False,
+            environ={},
+        )
+
