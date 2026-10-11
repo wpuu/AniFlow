@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Literal
 from uuid import uuid4
 
+import httpx
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -14,6 +15,7 @@ from aniflow.agnes.http import AgnesHttpClient
 from aniflow.agnes.image import AgnesImageClient
 from aniflow.agnes.key_pool import KeyPool
 from aniflow.capcut.provider import CapCutSeedreamProvider, SubprocessCapCutRunner
+from aniflow.bridge.video_proxy import video_proxy_router
 from aniflow.config import Settings, get_settings
 from aniflow.image_provider import AgnesImageProvider
 from aniflow.media.images import persist_remote_image
@@ -74,9 +76,11 @@ def create_bridge_app(
     *,
     settings: Settings | None = None,
     media_store: PublicMediaStore | None = None,
+    video_transport: httpx.AsyncBaseTransport | None = None,
 ) -> FastAPI:
     cfg = settings or get_settings()
     app = FastAPI(title="AniFlow Local Bridge", version="0.1.0")
+    app.include_router(video_proxy_router(cfg, transport=video_transport))
     app.add_middleware(
         CORSMiddleware,
         allow_origins=DEV_FRONTEND_ORIGINS,
