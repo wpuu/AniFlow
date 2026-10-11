@@ -10,6 +10,7 @@ import { DEFAULT_PARAMS_BY_MODEL, VIDEO_MODELS } from './lib/constants';
 import { createVideoTask, getVideoResult } from './lib/api';
 import { DEFAULT_BRIDGE_URL, uploadDataUrlToBridge } from './lib/bridge';
 import { genId } from './lib/imageUtils';
+import { buildSafeTrialReport } from './lib/safeTrialReport';
 import {
   attachVideoId,
   isValidSubmissionGuards,
@@ -395,7 +396,11 @@ export default function App() {
             patch.error = taskErrorMessage(result.error);
           }
           updateTaskState(keyIndex, patch);
-          updateHistoryItem(historyId, patch as Partial<HistoryItem>);
+          const terminal = shouldReleaseVideoGuard(status, patch.videoUrl);
+          updateHistoryItem(historyId, {
+            ...patch,
+            ...(terminal ? { finishedAt: Date.now() } : {}),
+          } as Partial<HistoryItem>);
 
           if (status === 'completed' || status === 'failed') {
             if (shouldReleaseVideoGuard(status, patch.videoUrl)) finishVideoGuard(keyIndex, historyId);
@@ -681,7 +686,11 @@ export default function App() {
         if (shouldReleaseVideoGuard(status, patch.videoUrl)) {
           finishVideoGuard(item.keyIndex, item.id);
         }
-        updateHistoryItem(item.id, patch);
+        updateHistoryItem(item.id, {
+          ...patch,
+          ...(shouldReleaseVideoGuard(status, patch.videoUrl)
+            ? { finishedAt: item.finishedAt ?? Date.now() } : {}),
+        });
 
         if (activeHistoryIdByKey.current[item.keyIndex] === item.id) {
           updateTaskState(item.keyIndex, patch as Partial<TaskState>);
@@ -731,6 +740,22 @@ export default function App() {
     } else {
       notify('当前模型暂无已保存设置', 'error');
     }
+  }
+
+  function handleCopySafeReport() {
+    const report = buildSafeTrialReport(
+      apiKeys.slice(0, apiKeyCount).map((k) => Boolean(k?.trim())),
+      history,
+      Object.keys(submissionGuards).map(Number),
+      Date.now(),
+    );
+    if (!navigator.clipboard?.writeText) {
+      notify('当前浏览器不支持自动复制：请在可信桌面浏览器打开 AniFlow', 'error');
+      return;
+    }
+    void navigator.clipboard.writeText(report)
+      .then(() => notify('已复制9-Key安全摘要：不含任何 Key、提示词、视频 URL 或任务 ID'))
+      .catch(() => notify('复制未成功，请检查浏览器剪贴板权限', 'error'));
   }
 
   function handleClearHistory() {
@@ -787,6 +812,14 @@ export default function App() {
                 className="rounded-md border border-zinc-300 px-2.5 py-1.5 font-medium text-zinc-600 hover:bg-zinc-100"
               >
                 应用默认设置
+              </button>
+              <button
+                type="button"
+                onClick={handleCopySafeReport}
+                className="rounded-md border border-indigo-300 px-2.5 py-1.5 font-medium text-indigo-600 hover:bg-indigo-50"
+                title="复制不含 API Key、任务 ID、签名视频 URL、原始错误或提示词的测试摘要"
+              >
+                复制9-Key安全测试摘要
               </button>
               <button
                 type="button"

@@ -55,6 +55,7 @@ export interface HistoryItem {
   id: string;
   keyIndex: number;
   createdAt: number;
+  finishedAt?: number;
   promptPreview: string;
   modelKey?: VideoModelKey;
   modelName?: string;

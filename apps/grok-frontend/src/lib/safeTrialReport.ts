@@ -10,8 +10,9 @@ function safeStatus(value: unknown): TaskStatus | 'unknown' {
     ? (value as TaskStatus) : 'unknown';
 }
 
-function errorClass(value: string | null | undefined): string {
-  if (!value) return 'none';
+function errorClass(value: unknown): string {
+  if (value === null || value === undefined || value === '') return 'none';
+  if (typeof value !== 'string') return 'other';
   if (/queue[_ -]?full|video_queue_full|排队|队列/.test(value.toLowerCase())) return 'queue_full';
   if (/401|403|invalid.?key|unauthoriz|forbidden/.test(value.toLowerCase())) return 'auth';
   if (/timed? ?out|网络|network|断开|cors/.test(value.toLowerCase())) return 'network';
