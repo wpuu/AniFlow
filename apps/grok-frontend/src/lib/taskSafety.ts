@@ -16,9 +16,10 @@ export function isValidSubmissionGuards(value: unknown): value is SubmissionGuar
   return Object.entries(value).every(([index, guard]) => {
     if (!guard || typeof guard !== 'object' || Array.isArray(guard)) return false;
     const item = guard as Partial<SubmissionGuard>;
-    return Number.isInteger(item.keyIndex)
-      && item.keyIndex! >= 0
-      && item.keyIndex! <= 8
+    return typeof item.keyIndex === 'number'
+      && Number.isInteger(item.keyIndex)
+      && item.keyIndex >= 0
+      && item.keyIndex <= 8
       && index === String(item.keyIndex)
       && typeof item.attemptId === 'string'
       && item.attemptId.length > 0
