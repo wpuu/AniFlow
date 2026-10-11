@@ -8,6 +8,9 @@ import type {
 
 export const API_BASE = 'https://apihub.agnes-ai.com';
 
+// 8-shot/46s MYCL-001 is frozen; this only fills the already-approved first shot.
+export const MYCL001_SHOT1_FROZEN_PROMPT = "handmade needle-felt stop-motion miniature diorama, visible wool fiber texture, soft warm studio light, shallow depth of field, tactile handmade feel. needle-felted American Shorthair cat, silver tabby with dark classic swirl markings, round amber eyes, tiny white lab coat with two buttons, visible wool fiber texture, handmade miniature puppet. medium shot, cat centered, bowl in lower third; sitting upright beside a small ceramic water bowl, looking straight at camera, ears forward; miniature felt kitchen counter, tiny felt window with warm morning light behind. the felt cat sits still beside the bowl, blinks once slowly, then tilts its head toward the camera. slow push in. medium shot, same framing, slightly closer; head tilted to one side, eyes half closed mid-blink, chin visibly dry and clean; same felt kitchen counter, same warm light";
+
 export const VIDEO_MODELS: Record<
   VideoModelKey,
   { label: string; apiModel: string; description: string }
