@@ -28,7 +28,7 @@ jobs:
       - name: Install lint tool
         run: python -m pip install 'ruff>=0.9,<1'
       - name: Ruff (must be independently fixed, never disabled)
-        run: python -m ruff check src tests scripts/one_agnes_real_shot.py scripts/audit_wan_reference_assets.py
+        run: python -m ruff check src tests scripts/one_agnes_real_shot.py scripts/audit_wan_reference_assets.py scripts/build_nine_key_bundle.py
 
       - name: Read-only Wan first-frame PNG technical audit (no Key or requests)
         run: python scripts/audit_wan_reference_assets.py
@@ -53,6 +53,13 @@ jobs:
       - name: Type-check and build standalone frontend (no API/Key)
         working-directory: apps/grok-frontend
         run: npm run build
+      - name: Share public compiled frontend within this CI run
+        uses: actions/upload-artifact@v4
+        with:
+          name: internal-compiled-nine-key-ui
+          path: apps/grok-frontend/dist/index.html
+          retention-days: 1
+          if-no-files-found: error
 
   tests:
     name: Pytest + doctor (${{ matrix.os }})
@@ -87,3 +94,53 @@ jobs:
         run: python -m pytest -q
       - name: AniFlow doctor
         run: aniflow doctor
+
+
+  bundle:
+    name: Package existing nine-Key UI for Windows (no secrets)
+    needs: [lint, frontend, tests]
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch compiled frontend from this CI run
+        uses: actions/download-artifact@v4
+        with:
+          name: internal-compiled-nine-key-ui
+          path: apps/grok-frontend/dist
+      - name: Build strict public-source-only test bundle
+        shell: bash
+        run: |
+          python3 scripts/build_nine_key_bundle.py \
+            --output-dir bundle-out/AniFlow-9Key \
+            --source-commit "$(git rev-parse HEAD)"
+      - name: Upload temporary CI test artifact (not a deployment or release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: AniFlow-9Key-Windows-${{ github.event.pull_request.head.sha || github.sha }}
+          path: bundle-out/AniFlow-9Key/
+          if-no-files-found: error
+          retention-days: 14
+
+  windows_bundle_smoke:
+    name: Verify downloaded Node-free Windows bundle (no credentials)
+    needs: [bundle]
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v4
+        with:
+          name: AniFlow-9Key-Windows-${{ github.event.pull_request.head.sha || github.sha }}
+          path: bundle
+      - name: Run actual Windows installer, validate local HTML and video routes
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Set-Location bundle
+          & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\setup_aniflow_windows.ps1"
+          if ($LASTEXITCODE -ne 0) { throw "Windows bundle installer failed" }
+          & ".\.venv\Scripts\python.exe" -c "from aniflow.bridge.app import create_bridge_app; from fastapi.testclient import TestClient; app=create_bridge_app(); c=TestClient(app); assert c.get('/').status_code == 200; assert c.get('/api/health').json()['frontend_ready']; paths=c.get('/openapi.json').json()['paths']; assert '/api/video/create' in paths; assert '/api/video/status' in paths; print('PASS_WINDOWS_BUNDLE_NO_NODE_NO_KEY')"
+          if ($LASTEXITCODE -ne 0) { throw "Windows built-bundle Bridge smoke test failed" }
