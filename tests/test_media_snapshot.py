@@ -1,7 +1,6 @@
 """P0-007: source-identity regression tests. Only fake local media is generated."""
 from __future__ import annotations
 
-import hashlib
 import importlib.util
 import json
 import shutil
