@@ -9,7 +9,6 @@ from aniflow.agnes.http import AgnesApiError, AgnesHttpClient
 from aniflow.config import Settings
 from aniflow.models import JudgeScores
 
-
 JUDGE_FOCI = (
     "character identity, material/style consistency, and preservation of the subject",
     "anatomy/geometry integrity, temporal continuity, artifacts, and frame matching",
