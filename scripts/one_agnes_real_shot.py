@@ -108,6 +108,26 @@ def _single_key(environ: dict[str, str]) -> str:
     return key
 
 
+def _codespace_workspace_base() -> Path:
+    """GitHub's persisted volume; distinct from disposable container home."""
+    return Path("/workspaces")
+
+
+def _codespace_private_root() -> Path | None:
+    """Protect output and once-only evidence against Codespaces rebuilds."""
+    if os.environ.get("CODESPACES", "").lower() != "true":
+        return None
+    workspaces = _codespace_workspace_base()
+    if not workspaces.is_dir() or workspaces.is_symlink():
+        raise ShotError("Codespaces persistent /workspaces volume is unavailable")
+    private = workspaces / ".aniflow-private"
+    if private.is_symlink():
+        raise ShotError("Codespaces private persistent folder must not be a symlink")
+    if private.exists() and not private.is_dir():
+        raise ShotError("Codespaces private persistent folder is not a directory")
+    return private
+
+
 def _output_dir(path: Path, *, create: bool) -> Path:
     target = Path(path).expanduser()
     if target.exists() and target.is_symlink():
@@ -116,6 +136,16 @@ def _output_dir(path: Path, *, create: bool) -> Path:
     root = Path(__file__).resolve().parents[1]
     if target == root or root in target.parents:
         raise ShotError("Use an external output directory; never put videos in this Git repo")
+    persistent = _codespace_private_root()
+    if persistent is not None:
+        # GitHub Codespaces clears /home during a container rebuild; its
+        # /workspaces volume survives both restarts and rebuilds. Refuse
+        # disposable storage *before* making a potentially billable POST.
+        if persistent not in target.parents:
+            raise ShotError(
+                "In Codespaces use /workspaces/.aniflow-private/<new-folder>; "
+                "home-directory videos are erased on container rebuild"
+            )
     if target.parent.is_symlink() or not target.parent.is_dir():
         raise ShotError("Output parent directory must exist and not be a symlink")
     if create:
@@ -130,7 +160,10 @@ def _output_dir(path: Path, *, create: bool) -> Path:
 
 
 def _once_root() -> Path:
-    """User-workspace ledger, independent of the chosen video output folder."""
+    """One-submission ledger, in Codespaces' rebuild-persistent volume."""
+    private = _codespace_private_root()
+    if private is not None:
+        return private / "single-attempt-ledger"
     return Path.home() / ".local" / "state" / "aniflow-single-shot"
 
 
@@ -160,7 +193,7 @@ def _reserve_one_submission(plan: dict, outdir: Path) -> Path:
         "domain": plan["domain"],
         "output_folder": outdir.name,
         "reserved_at_unix": int(time.time()),
-        "policy": "one submission only across output folders in this user home",
+        "policy": "one submission per persistent workspace across output folders",
         "contains_api_key": False,
     }
     try:
@@ -171,7 +204,7 @@ def _reserve_one_submission(plan: dict, outdir: Path) -> Path:
             os.fsync(stream.fileno())
     except FileExistsError:
         raise ShotError(
-            "P0-010 already reserved in this user home: inspect the previous "
+            "P0-010 already reserved in this persistent workspace: inspect the previous "
             "attempt and provider history; never resubmit by changing output directories"
         ) from None
     except OSError:
