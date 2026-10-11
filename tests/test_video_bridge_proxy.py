@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import httpx
 from fastapi.testclient import TestClient
 
@@ -51,7 +53,6 @@ def test_create_forwards_exactly_one_agnes_post_without_exposing_key() -> None:
     assert requests[0].method == "POST"
     assert str(requests[0].url) == "https://apihub.agnes-ai.com/v1/videos"
     assert requests[0].headers["authorization"] == f"Bearer {FAKE_KEY}"
-    assert requests[0].json() if False else True  # Test uses the actual HTTP request body below.
     assert b'"model":"agnes-video-2.5-flash"' in requests[0].content
 
 
@@ -174,3 +175,54 @@ def test_credentials_mentioned_in_upstream_body_are_never_echoed() -> None:
                              json={"api_key": FAKE_KEY, "payload": GOOD_PAYLOAD})
     assert result.status_code == 502
     assert FAKE_KEY not in result.text
+
+
+
+def test_flash_reference_mode_forwards_one_image_as_reference_not_keyframe() -> None:
+    calls: list[dict] = []
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        assert request.method == "POST"
+        calls.append(json.loads(request.content))
+        return httpx.Response(200, json={"video_id": "video_reference_1", "status": "queued"})
+
+    source = "https://raw.githubusercontent.com/wpuu/AniFlow/4a09aa3d93f25f753c3379fd8bf4501427a266a0/assets/character/agnes-felt-test-frame.png"
+    payload = {
+        **GOOD_PAYLOAD, "mode": "reference",
+        "prompt": "Use <Picture 1> as researcher cat; add water bowl.",
+        "images": [source],
+    }
+    with client_for(respond) as client:
+        result = client.post(
+            "/api/video/create", json={"api_key": FAKE_KEY, "payload": payload}
+        )
+    assert result.status_code == 200
+    assert result.json()["video_id"] == "video_reference_1"
+    assert calls == [payload]
+    assert all(field not in calls[0] for field in ("first_frame", "last_frame", "videos"))
+
+
+def test_invalid_reference_images_are_blocked_before_any_external_post() -> None:
+    calls = 0
+
+    def respond(_request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(200, json={})
+
+    source = "https://raw.githubusercontent.com/wpuu/AniFlow/4a09aa3d93f25f753c3379fd8bf4501427a266a0/assets/character/agnes-felt-test-frame.png"
+    invalid = [
+        {**GOOD_PAYLOAD, "mode": "reference"},
+        {**GOOD_PAYLOAD, "mode": "reference", "images": []},
+        {**GOOD_PAYLOAD, "mode": "reference", "images": [source] * 6},
+        {**GOOD_PAYLOAD, "mode": "reference", "images": ["http://localhost/a.png"]},
+        {**GOOD_PAYLOAD, "mode": "reference", "images": [source], "first_frame": source},
+        {**GOOD_PAYLOAD, "mode": "text", "images": [source]},
+    ]
+    with client_for(respond) as client:
+        for payload in invalid:
+            result = client.post(
+                "/api/video/create", json={"api_key": FAKE_KEY, "payload": payload}
+            )
+            assert result.status_code == 422
+    assert calls == 0

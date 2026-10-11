@@ -107,6 +107,32 @@ def video_proxy_router(
         if not isinstance(request.payload.get("prompt"), str) or not request.payload["prompt"].strip():
             raise HTTPException(status_code=422, detail="Video prompt must be nonempty")
         if model == "agnes-video-2.5-flash":
+            mode = request.payload.get("mode")
+            if mode not in ("text", "keyframe", "reference"):
+                raise HTTPException(status_code=422, detail="Unsupported Flash video mode")
+            if mode == "reference":
+                images = request.payload.get("images")
+                if (
+                    not isinstance(images, list)
+                    or not 1 <= len(images) <= 5
+                    or any(
+                        not isinstance(image, str) or not image.startswith("https://")
+                        for image in images
+                    )
+                    or any(
+                        request.payload.get(field)
+                        for field in ("first_frame", "last_frame", "videos")
+                    )
+                ):
+                    raise HTTPException(status_code=422, detail="Invalid reference images")
+            elif mode == "text":
+                if any(
+                    request.payload.get(field)
+                    for field in ("first_frame", "last_frame", "images", "audios", "videos")
+                ):
+                    raise HTTPException(status_code=422, detail="Text mode excludes media")
+            elif not (request.payload.get("first_frame") or request.payload.get("last_frame")):
+                raise HTTPException(status_code=422, detail="Keyframe mode needs a frame")
             if request.payload.get("n") != 1 or request.payload.get("size") != "720P":
                 raise HTTPException(status_code=422, detail="Flash permits one 720P output per request")
             if str(request.payload.get("seconds")) not in {str(s) for s in range(4, 13)}:

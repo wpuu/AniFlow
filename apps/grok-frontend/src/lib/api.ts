@@ -42,6 +42,9 @@ export function buildRequestBody(
     } else if (params.mode === 'i2v') {
       body.mode = 'keyframe';
       if (params.singleImage) body.first_frame = params.singleImage;
+    } else if (params.mode === 'reference') {
+      body.mode = 'reference';
+      if (params.singleImage) body.images = [params.singleImage];
     } else {
       const images = validImages(params);
       body.mode = 'keyframe';

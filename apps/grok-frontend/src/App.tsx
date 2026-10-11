@@ -329,8 +329,10 @@ export default function App() {
       throw new Error('2.5 Flash 的参考帧必须是本地上传图片或可公开访问的 http(s) 图片 URL');
     }
 
-    if (next.mode === 'i2v') {
-      if (!next.singleImage) throw new Error('图生视频模式需要首帧图片');
+    if (next.mode === 'i2v' || next.mode === 'reference') {
+      if (!next.singleImage) throw new Error(
+        next.mode === 'reference' ? '参考图模式需要一张公开可访问图片' : '图生视频模式需要首帧图片',
+      );
       next.singleImage = await resolveImage(next.singleImage);
       next.singleImageFileName = undefined;
       return next;
@@ -473,8 +475,8 @@ export default function App() {
         notify('请先填写提示词', 'error');
         return;
       }
-      if (params.mode === 'i2v' && !params.singleImage) {
-        notify('图生视频模式需要先上传图片或填写图片地址', 'error');
+      if ((params.mode === 'i2v' || params.mode === 'reference') && !params.singleImage) {
+        notify('当前视频模式需要一张公开可访问图片，请先填入图片URL', 'error');
         return;
       }
 

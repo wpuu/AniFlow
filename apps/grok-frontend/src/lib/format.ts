@@ -8,6 +8,7 @@ const MODE_LABELS: Record<string, string> = {
   t2v: '文生视频',
   i2v: '图生视频',
   keyframes: '多关键帧',
+  reference: '角色参考图',
   unknown: '模式待核实',
 };
 

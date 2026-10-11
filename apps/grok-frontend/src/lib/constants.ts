@@ -11,6 +11,11 @@ export const API_BASE = 'https://apihub.agnes-ai.com';
 // 8-shot/46s MYCL-001 is frozen; this only fills the already-approved first shot.
 export const MYCL001_SHOT1_FROZEN_PROMPT = "handmade needle-felt stop-motion miniature diorama, visible wool fiber texture, soft warm studio light, shallow depth of field, tactile handmade feel. needle-felted American Shorthair cat, silver tabby with dark classic swirl markings, round amber eyes, tiny white lab coat with two buttons, visible wool fiber texture, handmade miniature puppet. medium shot, cat centered, bowl in lower third; sitting upright beside a small ceramic water bowl, looking straight at camera, ears forward; miniature felt kitchen counter, tiny felt window with warm morning light behind. the felt cat sits still beside the bowl, blinks once slowly, then tilts its head toward the camera. slow push in. medium shot, same framing, slightly closer; head tilted to one side, eyes half closed mid-blink, chin visibly dry and clean; same felt kitchen counter, same warm light";
 
+// Internal experiment only: reference identity is NOT an approved frame or commercial asset.
+export const MYCL001_CHARACTER_REFERENCE_URL = 'https://raw.githubusercontent.com/wpuu/AniFlow/4a09aa3d93f25f753c3379fd8bf4501427a266a0/assets/character/agnes-felt-test-frame.png';
+export const MYCL001_SHOT1_REFERENCE_PROMPT =
+  'Use <Picture 1> only as a character reference: preserve the silver tabby face, amber eyes and white lab coat. Do NOT copy the standing pose, left-side appliance, or missing bowl in the source image. ' + MYCL001_SHOT1_FROZEN_PROMPT;
+
 export const VIDEO_MODELS: Record<
   VideoModelKey,
   { label: string; apiModel: string; description: string }
@@ -23,7 +28,7 @@ export const VIDEO_MODELS: Record<
   flash25: {
     label: 'Agnes Video 2.5 Flash',
     apiModel: 'agnes-video-2.5-flash',
-    description: '新版 Flash 接口，720P，4–12 秒，支持文生视频、单图和首尾帧',
+    description: '新版 Flash 接口，720P，4–12 秒，支持文生、首尾帧与可选角色参考图',
   },
 };
 
@@ -90,6 +95,7 @@ export function modeOptions(modelKey: VideoModelKey): {
       { value: 't2v', label: '文生视频', desc: '2.5 Flash text 模式' },
       { value: 'i2v', label: '单图生视频', desc: '使用首帧 first_frame 让图片动起来' },
       { value: 'keyframes', label: '首尾帧动画', desc: '使用 first_frame + last_frame 控制过渡' },
+      { value: 'reference', label: '角色参考图', desc: '参考已有角色外观，不固定首帧构图；画质及权利仍须核实' },
     ];
   }
   return [

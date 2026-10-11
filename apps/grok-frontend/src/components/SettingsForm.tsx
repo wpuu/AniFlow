@@ -3,6 +3,8 @@ import {
   DURATION_PRESETS,
   FLASH_SECONDS_PRESETS,
   MYCL001_SHOT1_FROZEN_PROMPT,
+  MYCL001_SHOT1_REFERENCE_PROMPT,
+  MYCL001_CHARACTER_REFERENCE_URL,
   RESOLUTION_OPTIONS,
   RESOLUTION_PRESETS,
   VIDEO_MODELS,
@@ -120,10 +122,10 @@ export default function SettingsForm({ modelKey, onModelChange, params, onChange
           ))}
         </div>
 
-        {params.mode === 'i2v' ? (
+        {(params.mode === 'i2v' || (isFlash && params.mode === 'reference')) ? (
           <div className="mt-3">
             <ImageUploadSlot
-              label={isFlash ? '首帧图片（first_frame）' : '待生成动画的图片'}
+              label={isFlash && params.mode === 'reference' ? '角色参考图片（images[0]；不固定首帧）' : isFlash ? '首帧图片（first_frame）' : '待生成动画的图片'}
               imageUrl={params.singleImage}
               fileName={params.singleImageFileName}
               onChange={(url, fileName) =>
@@ -183,7 +185,26 @@ export default function SettingsForm({ modelKey, onModelChange, params, onChange
               }}>
               载入雪所长首镜头 · 5秒
             </button>
-            <span className="text-[11px] text-zinc-400">只填写已锁定的分镜参数，不发送请求</span>
+            <button type="button" className="rounded-md border border-amber-500 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50"
+              onClick={() => {
+                if (params.prompt.trim() && params.prompt !== MYCL001_SHOT1_REFERENCE_PROMPT
+                  && !window.confirm('载入角色参考图试验参数，仅用于测试一致性，不会提交视频。确认继续？')) return;
+                onChange((prev) => ({
+                  ...prev,
+                  prompt: MYCL001_SHOT1_REFERENCE_PROMPT,
+                  mode: 'reference',
+                  singleImage: MYCL001_CHARACTER_REFERENCE_URL,
+                  singleImageFileName: '',
+                  ratio: '9:16',
+                  resolution: '720p',
+                  width: 720,
+                  height: 1280,
+                  seconds: 5,
+                }));
+              }}>
+              载入角色参考图测试 · 5秒
+            </button>
+            <span className="text-[11px] text-zinc-400">按钮只填参数；参考图不是合格首帧，也未完成商用权利核实</span>
           </div>
         ) : null}
         <textarea
