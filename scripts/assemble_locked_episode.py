@@ -13,6 +13,7 @@ import json
 import math
 import os
 import re
+import stat
 import subprocess
 import tempfile
 from pathlib import Path
@@ -248,6 +249,81 @@ def preflight(*, shotlist: Path, factpack: Path, clips_dir: Path,
             clips, inputs)
 
 
+def _stage_source(source: Path, destination: Path, expected_sha256: str) -> None:
+    """Copy an input to a private snapshot and verify the *copied* bytes.
+
+    Never hand mutable user paths to ffmpeg after preflight. File-descriptor based
+    reading plus O_NOFOLLOW (where available) reduces path-swap/symlink risks.
+    On platforms without O_NOFOLLOW, the digest still protects content identity.
+    """
+    source = _source_file(source)
+    if not isinstance(expected_sha256, str) or len(expected_sha256) != 64:
+        raise AssemblyError("Missing source fingerprint")
+    fd = None
+    checksum = hashlib.sha256()
+    try:
+        flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
+        fd = os.open(source, flags)
+        if not stat.S_ISREG(os.fstat(fd).st_mode):
+            raise AssemblyError("Source is no longer a regular file")
+        with os.fdopen(fd, "rb") as incoming:
+            fd = None  # the first context manager now owns this descriptor
+            with destination.open("xb") as copied:
+                for block in iter(lambda: incoming.read(1024 * 1024), b""):
+                    checksum.update(block)
+                    copied.write(block)
+    except OSError:
+        raise AssemblyError("Could not snapshot checked source media") from None
+    finally:
+        if fd is not None:
+            os.close(fd)
+    if checksum.hexdigest() != expected_sha256:
+        raise AssemblyError("Source media changed after preflight; refusing to render")
+
+
+def _snapshot_inputs(report: dict, clips: list[Path], audio_files: list[Path],
+                     destination: Path, *, tolerance: float, width: int,
+                     height: int) -> tuple[list[Path], list[Path]]:
+    """Produce immutable per-render input copies and recheck their actual metadata."""
+    if len(clips) != len(report["schedule"]):
+        raise AssemblyError("Source clip count changed after preflight")
+    clips_dir = destination / "clips"
+    audio_dir = destination / "audio"
+    clips_dir.mkdir()
+    audio_dir.mkdir()
+    snapshots: list[Path] = []
+    for i, (source, spec, evidence) in enumerate(zip(clips, report["schedule"], report["clips"])):
+        snapshot = clips_dir / f"clip_{i:02d}.mp4"
+        _stage_source(source, snapshot, evidence["sha256"])
+        inspected = _video_probe(snapshot, expected=spec["seconds"], width=width,
+                                 height=height, tolerance=tolerance)
+        if inspected["sha256"] != evidence["sha256"]:
+            raise AssemblyError("Snapshot clip fingerprint mismatch")
+        snapshots.append(snapshot)
+    voice_snapshots: list[Path] = []
+    mode = report["narration"]["mode"]
+    if mode == "per_shot":
+        if len(audio_files) != len(report["narration"]["shots"]):
+            raise AssemblyError("Narration count changed after preflight")
+        descriptors = report["narration"]["shots"]
+    elif mode == "continuous":
+        if len(audio_files) != 1:
+            raise AssemblyError("Continuous narration count changed after preflight")
+        descriptors = [report["narration"]]
+    else:
+        raise AssemblyError("Unknown narration mode")
+    for i, (source, desc) in enumerate(zip(audio_files, descriptors)):
+        snapshot = audio_dir / f"voice_{i:02d}{source.suffix.lower()}"
+        _stage_source(source, snapshot, desc["sha256"])
+        duration = (report["schedule"][i]["seconds"] if mode == "per_shot"
+                    else report["total_seconds"])
+        inspected = _audio_probe(snapshot, expected=duration, per_shot=mode == "per_shot")
+        if inspected["sha256"] != desc["sha256"]:
+            raise AssemblyError("Snapshot narration fingerprint mismatch")
+        voice_snapshots.append(snapshot)
+    return snapshots, voice_snapshots
+
+
 def render(*, shotlist: Path, factpack: Path, clips_dir: Path,
            narration: Path | None = None, scene_audio_dir: Path | None = None,
            output: Path, tolerance: float = 0.3, width: int = 720, height: int = 1280,
@@ -260,12 +336,21 @@ def render(*, shotlist: Path, factpack: Path, clips_dir: Path,
         output=output, tolerance=tolerance,
         width=width, height=height, fixture_mode=fixture_mode)
     report["output_filename"] = Path(output).name
+    report["input_snapshots_verified"] = False
     if not execute:
         report["result"] = "PLAN_ONLY_NO_CHANGES"
         return report
     # Generate into a private sibling and publish only after probing the candidate.
     with tempfile.TemporaryDirectory(prefix="aniflow-local-assemble-", dir=Path(output).parent) as temp:
         tmp = Path(temp) / "output.mp4"
+        # Freeze each already-checked source, then independently re-probe the
+        # snapshot. ffmpeg sees only private staged files, never mutable originals.
+        clips, audio_files = _snapshot_inputs(
+            report, clips, audio_files, Path(temp), tolerance=tolerance,
+            width=width, height=height,
+        )
+        report["input_snapshots_verified"] = True
+        report["snapshotted_input_count"] = len(clips) + len(audio_files)
         graph = []
         for i, sh in enumerate(report["schedule"]):
             graph.append(f"[{i}:v:0]trim=duration={sh['seconds']},setpts=PTS-STARTPTS,fps={fps},scale={width}:{height},setsar=1,format=yuv420p[v{i}]")
