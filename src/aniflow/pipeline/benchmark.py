@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from pydantic import BaseModel, Field
@@ -135,7 +135,7 @@ class BenchmarkRunner:
         if not style_keys:
             raise ValueError("At least one style key is required")
 
-        run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        run_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         rows: list[BenchmarkRow] = []
         semaphore = asyncio.Semaphore(concurrency)
 
@@ -158,7 +158,10 @@ class BenchmarkRunner:
         for style_key in style_keys:
             profile = profiles[style_key]
 
-            async def run_one(index: int, idea: StoryIdea) -> BenchmarkRow:
+            async def run_one(
+                index: int, idea: StoryIdea,
+                style_key: str = style_key, profile: CharacterReferenceSet = profile,
+            ) -> BenchmarkRow:
                 episode_id = (
                     f"{self._slug(character_id)}-{self._slug(style_key)}-"
                     f"{run_id}-{index + 1:02d}"
@@ -220,7 +223,7 @@ class BenchmarkRunner:
         report = BenchmarkReport(
             run_id=run_id,
             character_id=character_id,
-            created_at=datetime.now(timezone.utc).isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
             per_style_target=per_style,
             shared_ideas=batch.ideas,
             rows=rows,
