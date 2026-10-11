@@ -35,7 +35,7 @@ export default function KeySettings({
           className="w-20 rounded-md border border-zinc-300 px-2 py-1.5 text-sm outline-none focus:border-indigo-500"
         />
         <span className="text-xs text-zinc-400">
-          支持 1-{MAX_KEYS} 个 Key，数量越多可同时并行生成的视频越多。
+          支持 1-{MAX_KEYS} 个 Key；增加提交请求数量不保证队列容量或视频成功率。
         </span>
       </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
