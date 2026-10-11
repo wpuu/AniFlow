@@ -30,6 +30,12 @@ jobs:
       - name: Ruff (must be independently fixed, never disabled)
         run: python -m ruff check src tests scripts/one_agnes_real_shot.py scripts/audit_wan_reference_assets.py scripts/build_nine_key_bundle.py
 
+      - name: Verify pinned publicly reachable Agnes portrait URL (read-only, no Agnes Key)
+        shell: bash
+        run: |
+          curl -fLsS --max-time 35 -o /tmp/agnes-pinned-portrait.png 'https://raw.githubusercontent.com/wpuu/AniFlow/4a09aa3d93f25f753c3379fd8bf4501427a266a0/assets/character/agnes-felt-test-frame.png'
+          echo 'f0c2b7c330c10c6c2640934b75e66b572e47e578805a978a84c907aada9db60e  /tmp/agnes-pinned-portrait.png' | sha256sum -c -
+
       - name: Read-only Wan first-frame PNG technical audit (no Key or requests)
         run: python scripts/audit_wan_reference_assets.py
 

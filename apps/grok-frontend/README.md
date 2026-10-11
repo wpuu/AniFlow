@@ -27,7 +27,10 @@ Uses the Flash contract:
 - `mode: "text"` for text-to-video
 - `mode: "keyframe"` + `first_frame` for single-image animation
 - `mode: "keyframe"` + `first_frame` + `last_frame` for first/last-frame animation
+- `mode: "reference"` + `images: ["https://..."]` for optional character/style reference; the current UI accepts one image although Agnes Flash supports up to five.
 - `n: 1`
+
+The optional “载入角色参考图测试 · 5秒” button uses the existing public silver-tabby portrait pinned to a known Git commit, as an *identity reference only*. P0-023 visual QA rejected that source as an exact first frame because the cat stands beside a kitchen appliance and the water bowl is missing. Reference mode can request another pose/background, but visual fidelity and commercial rights are **unproven**. It does not modify MYCL-001's locked 8 shots / 46 seconds.
 
 2.5 Flash requires public HTTP(S) frame URLs. Local image files selected in the browser are uploaded automatically through the AniFlow loopback Bridge and the configured R2/S3-compatible public media store before the video request is created. The same local image upload is cached for a multi-Key batch so it is not uploaded once per Key.
 
@@ -36,10 +39,11 @@ Uses the Flash contract:
 - 1-9 Agnes API keys can be entered in the page.
 - Keys and key count are automatically saved in the current browser.
 - Each configured idle Key can generate independently.
-- "Generate all" asks for explicit confirmation and starts every configured idle/unlocked Key, even when another Key is already running.
+- "Generate all" asks for explicit confirmation and starts every configured idle/unlocked Key, even when another Key is already running; duplicate Key strings across slots are blocked before any batch POST.
 - A Key input is locked while that Key has an active or unresolved task so polling/history cannot switch credentials mid-task.
 - Each video POST reserves a durable per-Key browser-local guard before calling the local Bridge. Network uncertainty retains the guard; users can resume GET polling by original video_id or manually unlock after checking the provider account.
 - "Stop tracking" stops browser polling only; it does not claim to cancel an already-created Agnes server task.
+- "复制9-Key安全测试摘要" copies status, category-level failures and measured times **without** Key strings, task/video IDs, prompt or CDN URLs.
 
 Do not use the auto-save feature on a shared/public computer.
 

@@ -41,6 +41,16 @@ handmade needle-felt stop-motion miniature diorama, visible wool fiber texture, 
 
 来源：[MYCL-001 锁定分镜表](https://github.com/wpuu/AniFlow/blob/audit/2026-10-11-v710-revalidation/content/shotlists/MYCL-001-cat-lapping.json) 与 [Issue #6](https://github.com/wpuu/AniFlow/issues/6)。8镜头46秒仍保持锁定；目前只测第一镜头5秒。
 
+### 可选试验：Agnes 原生角色参考图（与首帧锁定不同）
+
+- Agnes Video 2.5 Flash 官方支持 `mode=reference` 配 `images`，最多5张参考图片。本次9-Key原应用先支持**一张公开角色图片**，并非重建平台。
+- 页面在 Agnes Video 2.5 Flash 下可点击 **「载入角色参考图测试 · 5秒」**，自动填写已有银虎斑白大褂素材的固定 GitHub 原图链接、`mode=reference` 和 `<Picture 1>` 指令；要求模型保持角色造型、但**不要复制原图站姿和厨房家电，应出现水碗与坐姿**。此按钮只填参数，**不会创建视频任务**。
+- [参考素材](https://github.com/wpuu/AniFlow/blob/main/assets/character/agnes-felt-test-frame.png) 未通过第1镜头首帧验收，只有“角色参考图”实验价值；**授权归属和最终视觉一致性尚未核实，不可直接将输出作为商用成片**。8镜头46秒冻结原文不被覆盖，这是一种额外的实验生成提示词。
+- 因使用的是固定公共 HTTPS GitHub Raw URL，**本次角色参考图试验不需 R2**。用户上传本地图片仍需要通过现有 Bridge 上传到可公开访问的媒体存储。
+- 先单 Key、单镜头测试文生视频，把真实 `video_id` 和 MP4 回收完成；再经过费用确认、保留新的唯一任务证据后，才考虑单 Key 参考图模式。避免同一次点击触发9条重复收费任务。
+- 页面新增 **「复制9-Key安全测试摘要」**，只复制数量、状态、错误分类和实际时间，不含 API Key、提示词、任务 ID、视频 URL、原始错误正文。
+- 官方接口说明：https://wiki.agnes-ai.com/zh-Hans/docs/agnes-video-25-flash
+
 ## C. 本轮修复为何必须使用隔离分支
 
 - **官方 Agnes Video 2.5 Flash [最新 API 文档](https://wiki.agnes-ai.com/zh-Hans/docs/agnes-video-25-flash)**：完成时从响应顶层 `url` 获取视频；旧前端仅读 `metadata.url`，可能“生成成功但无预览”。
