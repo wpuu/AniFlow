@@ -42,7 +42,7 @@ def _git(*args: str) -> str:
     env["GIT_TERMINAL_PROMPT"] = "0"
     try:
         completed = subprocess.run(
-            ["git", *args],
+            ["git", "-c", "credential.helper=", *args],
             capture_output=True,
             text=True,
             check=False,
