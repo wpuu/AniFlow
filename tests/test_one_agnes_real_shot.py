@@ -10,7 +10,6 @@ import importlib.util
 import json
 import sys
 from pathlib import Path
-from unittest.mock import patch
 
 import httpx
 import pytest
@@ -123,11 +122,13 @@ def test_network_timeout_is_ambiguous_not_resubmitted(planned, tmp_path, fake_in
         nonlocal count
         count += 1
         raise httpx.ReadTimeout("could have already accepted submission")
-    with httpx.Client(transport=httpx.MockTransport(handler), trust_env=False) as client:
-        with pytest.raises(shot.ShotError, match="SUBMISSION_AMBIGUOUS"):
-            shot.run_live(planned, tmp_path / "unknown", execute=True, resume=False,
-                          confirmed_price=True, environ={"ANIFLOW_SINGLE_SHOT_API_KEY": "ONE_KEY"},
-                          client=client)
+    with (
+        httpx.Client(transport=httpx.MockTransport(handler), trust_env=False) as client,
+        pytest.raises(shot.ShotError, match="SUBMISSION_AMBIGUOUS"),
+    ):
+        shot.run_live(planned, tmp_path / "unknown", execute=True, resume=False,
+                      confirmed_price=True, environ={"ANIFLOW_SINGLE_SHOT_API_KEY": "ONE_KEY"},
+                      client=client)
     assert count == 1
     data = json.loads((tmp_path / "unknown/MYCL-001-shot-1.attempt.json").read_text())
     assert data["status"] == "SUBMISSION_ATTEMPT_UNCONFIRMED"
@@ -177,11 +178,13 @@ def test_existing_output_dir_refuses_second_post(planned, tmp_path, fake_inspect
     def handler(request):
         touched.append(request)
         return httpx.Response(200, json={"video_id": "new_bad"})
-    with httpx.Client(transport=httpx.MockTransport(handler), trust_env=False) as client:
-        with pytest.raises(shot.ShotError, match="already exists"):
-            shot.run_live(planned, out, execute=True, resume=False,
-                          confirmed_price=True, environ={"ANIFLOW_SINGLE_SHOT_API_KEY": "KEY"},
-                          client=client)
+    with (
+        httpx.Client(transport=httpx.MockTransport(handler), trust_env=False) as client,
+        pytest.raises(shot.ShotError, match="already exists"),
+    ):
+        shot.run_live(planned, out, execute=True, resume=False,
+                      confirmed_price=True, environ={"ANIFLOW_SINGLE_SHOT_API_KEY": "KEY"},
+                      client=client)
     assert touched == []
 
 
