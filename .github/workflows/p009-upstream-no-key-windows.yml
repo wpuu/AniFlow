@@ -1,8 +1,8 @@
 name: P0-009 Agnes v7.1.0 no-key Windows startup
 
 on:
-  pull_request:
-    branches: [main]
+  push:
+    branches: ["audit/**", "main"]
     paths:
       - .github/workflows/p009-upstream-no-key-windows.yml
       - scripts/prepare_video_studio_v710.py
