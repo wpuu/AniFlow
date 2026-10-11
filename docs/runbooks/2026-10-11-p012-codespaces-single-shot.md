@@ -42,15 +42,18 @@ python scripts/one_agnes_real_shot.py
 **先去你的 Agnes 平台账户确认当前价格、API 来源域名和 Key 是否有效**。官方公开文档当前显示 Flash 720P 限时 `$0/秒`，但政策可能调整；本程序不会自动读取账户实际余额/最终扣费。已确认并接受潜在费用后才继续：
 https://wiki.agnes-ai.com/zh-Hans/docs/agnes-video-25-flash
 
-先建立**Git 仓库之外**的存储父目录，再执行一次创建：
+先建立**Git 仓库之外、但位于 Codespaces 重建后仍保留的 `/workspaces` 持久化卷内**的私有存储目录，再执行一次创建：
+
+> **P0-015 修正：不要再使用旧版 `$HOME/aniflow-private` 路径。** GitHub 官方确认 Codespaces 容器重建会清理 `/workspaces` 以外的容器目录；旧路径不仅可能丢失 MP4，而且原有 `~/.local/state/aniflow-single-shot` 单次提交锁也会丢失。新代码在 Codespaces 中对临时主目录输出**直接拒绝**，并将唯一提交锁放在 `/workspaces/.aniflow-private/single-attempt-ledger/MYCL-001-shot-1.once.json`。如果曾用旧版提交，请先核实原视频与 Agnes 平台历史任务，**不得因重建后丢失锁而重新提交**。官方依据：https://docs.github.com/en/codespaces/developing-in-a-codespace/rebuilding-the-container-in-a-codespace#persisting-data-over-a-rebuild
+
 
 ```bash
-mkdir -p "$HOME/aniflow-private"
+mkdir -p "/workspaces/.aniflow-private"
 python scripts/one_agnes_real_shot.py \
   --execute \
   --i-reviewed-current-charges \
   --domain global \
-  --output-dir "$HOME/aniflow-private/mycl001-shot1"
+  --output-dir "/workspaces/.aniflow-private/mycl001-shot1"
 ```
 
 **国内 Key 使用前需核实域名**；若属于中国平台，请把 `--domain global` 改成 `--domain china`，切勿为了猜测域名连续提交多次。确认读取的是 `ANIFLOW_SINGLE_SHOT_API_KEY`；不要把密钥写入命令本身。
@@ -66,15 +69,15 @@ python scripts/one_agnes_real_shot.py \
   --resume \
   --i-reviewed-current-charges \
   --domain global \
-  --output-dir "$HOME/aniflow-private/mycl001-shot1"
+  --output-dir "/workspaces/.aniflow-private/mycl001-shot1"
 ```
 
-- 已下载的 `MYCL-001-shot-1.mp4` 与 `*.attempt.json` 存放在**仓库外的私人目录**，不要提交公开 GitHub。不向外部 CDN 发送 Agnes Key。
+- 已下载的 `MYCL-001-shot-1.mp4` 与 `*.attempt.json` 存放在**仓库外的 `/workspaces/.aniflow-private/mycl001-shot1` 持久目录**（容器重建后仍存在），不要提交公开 GitHub。不向外部 CDN 发送 Agnes Key。
 - 元数据通过只能表明 9:16 显示尺寸、时长、分辨率等合格；**还要本人完整观看画面**，排除像素横倒、角色/科学动态错误、伪影。暂不能发布或算作商业成品。
 
 ### 第四步：回收证据并关闭计费资源
 
-在 Codespaces 浏览器左侧文件资源管理器下载**真实 MP4**与无密钥的 JSON 验收记录。记录运行的 UTC/北京时间、单次实际请求、`video_id`、下载文件 SHA-256、收费记录（如有）、视频是否真正竖直。不要上传任何真实 Key 或账户余额等私密证据到公开 PR。
+真实文件保存在仓库目录的**兄弟目录** `/workspaces/.aniflow-private/mycl001-shot1`，不会自动出现在仅打开 `AniFlow` 仓库的文件树中。可以在 VS Code Web 的 **File → Open Folder（打开文件夹）** 进入此路径，下载真实 MP4 与无密钥 JSON 验收记录；请勿将它们复制进 Git 仓库。记录运行的 UTC/北京时间、单次实际请求、`video_id`、下载文件 SHA-256、收费记录（如有）、视频是否真正竖直。不要上传任何真实 Key 或账户余额等私密证据到公开 PR。
 
 **完成后停止 Codespace**，不再持续消耗计算配额；若视频已安全下载并不需要保留云端目录，可按 GitHub 指引删除 Codespace 以避免存储长期占用。
 
@@ -89,3 +92,5 @@ GitHub Codespaces 对部分个人账号包含月度免费计算/存储额度，�
 
 下一轮在 Codespace 配置完成后，继续 P0-012 的真 Key/真片证据采样，完成才解除 Issue #5 的首次真实视频阻塞。建议 GPT-6 Luna Medium；疑难异步队列/视频方向 High。
 
+
+> **P0-015 持久化范围声明：** `/workspaces` 能防止同一个 Codespace 的 stop/start 与 container rebuild 丢失数据，但**不同 Codespace 是不同的存储卷**。跨 Codespace 创建新实例不能认为已经清空原有视频任务；先检查 Agnes 平台任务历史和此前的 `once.json`，不得盲目第二次提交。
