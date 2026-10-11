@@ -359,7 +359,6 @@ def queue_probe(
     """
     from aniflow.queue_probe import (
         CAPACITY_AVAILABLE,
-        INCONCLUSIVE_SATURATED,
         NO_KEYS,
         PER_ACCOUNT,
         VERDICT_TEXT,
