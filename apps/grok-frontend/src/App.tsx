@@ -278,9 +278,9 @@ export default function App() {
   function handleKeyCountChange(count: number) {
     const hiddenBusyKey = Object.entries(tasksByKey).some(
       ([index, task]) => Number(index) >= count && BUSY_STATUSES.has(task.status),
-    );
+    ) || Object.keys(submissionGuards).some((index) => Number(index) >= count);
     if (hiddenBusyKey) {
-      notify('不能隐藏正在运行的 Key；请先停止跟踪对应任务，再减少 Key 数量', 'error');
+      notify('不能隐藏正在运行或有未回收任务的 Key；请先核实对应任务', 'error');
       return;
     }
     setApiKeyCount(count);
@@ -570,12 +570,57 @@ export default function App() {
   }
 
   function generateAll() {
-    for (let i = 0; i < apiKeyCount; i += 1) {
-      const busy = BUSY_STATUSES.has(tasksByKey[i]?.status ?? 'idle');
-      if (!busy && apiKeys[i]?.trim()) {
-        startGeneration(i);
-      }
+    const eligible = Array.from({ length: apiKeyCount }, (_, index) => index)
+      .filter((index) => (
+        !!apiKeys[index]?.trim()
+        && !BUSY_STATUSES.has(tasksByKey[index]?.status ?? 'idle')
+        && !submissionGuards[String(index)]
+        && !submittingKeysRef.current.has(index)
+      ));
+    if (!eligible.length) {
+      notify('没有可用 Key：请先核实原任务或检查密钥配置', 'error');
+      return;
     }
+    if (!window.confirm(
+      `将使用 ${eligible.length} 条 Key，向 Agnes 分别提交 1 个视频生成任务（共 ${eligible.length} 次创建请求）。`
+      + '这是真实生成，不是健康检查；可能消耗额度或费用。是否确认发送？',
+    )) return;
+    eligible.forEach((index) => { void startGeneration(index); });
+  }
+
+  function resumeExistingGuard(keyIndex: number) {
+    const guard = readSubmissionGuards()?.[String(keyIndex)];
+    if (!guard?.videoId) {
+      notify('没有可查询的 video_id；先在 Agnes 账号历史确认是否创建任务', 'error');
+      return;
+    }
+    const apiKey = apiKeys[keyIndex]?.trim();
+    if (!apiKey) {
+      notify(`请先在 Key ${keyIndex + 1} 输入原账号的合法密钥`, 'error');
+      return;
+    }
+    if (BUSY_STATUSES.has(tasksByKey[keyIndex]?.status ?? 'idle')) {
+      notify('已经在轮询原任务，无需重复恢复');
+      return;
+    }
+    stopFlags.current[keyIndex] = false;
+    activeHistoryIdByKey.current[keyIndex] = guard.attemptId;
+    updateTaskState(keyIndex, { status: 'queued', videoId: guard.videoId, modelKey: guard.modelKey, error: null });
+    updateHistoryItem(guard.attemptId, { status: 'queued', error: null });
+    poll(keyIndex, apiKey, guard.videoId, guard.attemptId, guard.modelKey);
+  }
+
+  function confirmUnlockGuard(keyIndex: number) {
+    const guard = readSubmissionGuards()?.[String(keyIndex)];
+    if (!guard) return;
+    const confirmed = window.confirm(
+      `Key ${keyIndex + 1} 的视频提交记录仍未结案。只有在 Agnes 平台已核实没有正在运行/未回收的原任务`
+      + '（或确认原任务已完成并已保存结果）之后，才允许解除安全锁。解除后再次生成可能产生第二条任务和费用。确认已经核实？',
+    );
+    if (!confirmed) return;
+    finishVideoGuard(keyIndex, guard.attemptId);
+    updateTaskState(keyIndex, { status: 'stopped', error: '已由操作员确认并手动解除安全锁' });
+    updateHistoryItem(guard.attemptId, { status: 'stopped', error: '操作员手动核实并解除提交安全锁' });
   }
 
   function refreshHistoryItem(item: HistoryItem) {
@@ -655,9 +700,10 @@ export default function App() {
   }
 
   function handleClearHistory() {
-    const anyBusy = Object.values(tasksByKey).some((task) => BUSY_STATUSES.has(task.status));
+    const anyBusy = Object.values(tasksByKey).some((task) => BUSY_STATUSES.has(task.status))
+      || Object.keys(submissionGuards).length > 0;
     if (anyBusy) {
-      notify('有任务正在运行，暂不能清空历史；请先等待完成或停止跟踪', 'error');
+      notify('仍有运行中或未核实的原任务；暂不能清空历史', 'error');
       return;
     }
     setHistory([]);
@@ -723,6 +769,7 @@ export default function App() {
               keyCount={apiKeyCount}
               apiKeys={apiKeys}
               tasksByKey={tasksByKey}
+              guardedKeyIndexes={new Set(Object.keys(submissionGuards).map(Number))}
               onGenerate={startGeneration}
               onStop={stopGeneration}
               onGenerateAll={generateAll}
