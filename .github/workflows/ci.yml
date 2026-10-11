@@ -28,7 +28,10 @@ jobs:
       - name: Install lint tool
         run: python -m pip install 'ruff>=0.9,<1'
       - name: Ruff (must be independently fixed, never disabled)
-        run: python -m ruff check src tests scripts/one_agnes_real_shot.py
+        run: python -m ruff check src tests scripts/one_agnes_real_shot.py scripts/audit_wan_reference_assets.py
+
+      - name: Read-only Wan first-frame PNG technical audit (no Key or requests)
+        run: python scripts/audit_wan_reference_assets.py
 
   tests:
     name: Pytest + doctor (${{ matrix.os }})
