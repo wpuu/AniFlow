@@ -13,6 +13,7 @@ import { genId } from './lib/imageUtils';
 import { buildSafeTrialReport } from './lib/safeTrialReport';
 import {
   attachVideoId,
+  duplicateKeySlots,
   isValidSubmissionGuards,
   releaseAttempt,
   reserveAttempt,
@@ -458,6 +459,16 @@ export default function App() {
         notify(`请先填写 Key ${keyIndex + 1}`, 'error');
         return;
       }
+      // The same secret configured in two slots must not create concurrent tasks.
+      const duplicateActive = apiKeys.some((other, index) => (
+        index !== keyIndex
+        && other?.trim() === apiKey
+        && (submittingKeysRef.current.has(index) || Boolean(storedGuards[String(index)]))
+      ));
+      if (duplicateActive) {
+        notify('同一 Agnes Key 在其他槽位已有未结束任务：已阻止重复提交', 'error');
+        return;
+      }
       if (!params.prompt.trim()) {
         notify('请先填写提示词', 'error');
         return;
@@ -579,6 +590,10 @@ export default function App() {
   }
 
   function generateAll() {
+    if (duplicateKeySlots(apiKeys.slice(0, apiKeyCount)).length) {
+      notify('检测到重复 Agnes API Key；请保留每条 Key 一个槽位。本次未发送任何生成请求', 'error');
+      return;
+    }
     const eligible = Array.from({ length: apiKeyCount }, (_, index) => index)
       .filter((index) => (
         !!apiKeys[index]?.trim()

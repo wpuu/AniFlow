@@ -42,6 +42,19 @@ export function shouldReleaseVideoGuard(status: string, videoUrl: string | null 
   }
 }
 
+/** Return duplicate indices only; never include credentials in diagnostics. */
+export function duplicateKeySlots(keys: readonly string[]): number[] {
+  const seen = new Set<string>();
+  const duplicates: number[] = [];
+  keys.forEach((raw, index) => {
+    const key = typeof raw === 'string' ? raw.trim() : '';
+    if (!key) return;
+    if (seen.has(key)) duplicates.push(index);
+    else seen.add(key);
+  });
+  return duplicates;
+}
+
 export function reserveAttempt(
   guards: SubmissionGuards,
   attempt: SubmissionGuard,

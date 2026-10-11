@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   attachVideoId,
+  duplicateKeySlots,
   isValidSubmissionGuards,
   releaseAttempt,
   reserveAttempt,
@@ -60,4 +61,13 @@ test('completed without a usable MP4 address must retain the guard', () => {
   assert.equal(shouldReleaseVideoGuard('queued', 'https://media.test/video.mp4'), false);
   assert.equal(shouldReleaseVideoGuard('completed', 'https://media.test/video.mp4'), true);
   assert.equal(shouldReleaseVideoGuard('failed', null), true);
+});
+
+test('duplicate credential slots are detected without returning raw secrets', () => {
+  const a = 'TEST_SECRET_A';
+  const b = 'TEST_SECRET_B';
+  const indexes = duplicateKeySlots([a, '', b, ` ${a} `, b, '']);
+  assert.deepEqual(indexes, [3, 4]);
+  assert.equal(JSON.stringify(indexes).includes(a), false);
+  assert.equal(JSON.stringify(indexes).includes(b), false);
 });
