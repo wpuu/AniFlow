@@ -33,6 +33,24 @@ jobs:
       - name: Read-only Wan first-frame PNG technical audit (no Key or requests)
         run: python scripts/audit_wan_reference_assets.py
 
+  frontend:
+    name: Nine-Key Agnes frontend TypeScript and Vite build
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/grok-frontend/package-lock.json
+      - name: Install pinned frontend dependencies
+        working-directory: apps/grok-frontend
+        run: npm ci
+      - name: Type-check and build standalone frontend (no API/Key)
+        working-directory: apps/grok-frontend
+        run: npm run build
+
   tests:
     name: Pytest + doctor (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
