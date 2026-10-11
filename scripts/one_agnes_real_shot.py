@@ -128,6 +128,59 @@ def _output_dir(path: Path, *, create: bool) -> Path:
     return target
 
 
+
+def _once_root() -> Path:
+    """User-workspace ledger, independent of the chosen video output folder."""
+    return Path.home() / ".local" / "state" / "aniflow-single-shot"
+
+
+def _reserve_one_submission(plan: dict, outdir: Path) -> Path:
+    """Reserve this fixed first-shot intent before any HTTP POST.
+
+    An exclusive file is deliberately retained after timeout or rejection:
+    creating a different output directory must not silently cause a second
+    potentially billable task in the same Codespace/user home. Do not store
+    API keys, signed CDN URLs or full user paths.
+    """
+    root = _once_root().expanduser()
+    if root.is_symlink():
+        raise ShotError("Single-submission guard location is a symlink")
+    try:
+        root.mkdir(mode=0o700, parents=True, exist_ok=True)
+    except OSError:
+        raise ShotError("Unable to create the single-submission guard directory") from None
+    if not root.is_dir() or root.is_symlink():
+        raise ShotError("Single-submission guard directory is not safe")
+    guard = root / "MYCL-001-shot-1.once.json"
+    if guard.is_symlink():
+        raise ShotError("Single-submission guard already exists")
+    record = {
+        "intent": "MYCL-001-shot-1",
+        "request_sha256": plan["request_sha256"],
+        "domain": plan["domain"],
+        "output_folder": outdir.name,
+        "reserved_at_unix": int(time.time()),
+        "policy": "one submission only across output folders in this user home",
+        "contains_api_key": False,
+    }
+    try:
+        # Exclusive-create works across concurrently running Python processes.
+        with guard.open("xb") as stream:
+            stream.write(json.dumps(record, ensure_ascii=False).encode("utf-8"))
+            stream.flush()
+            os.fsync(stream.fileno())
+    except FileExistsError:
+        raise ShotError(
+            "P0-010 already reserved in this user home: inspect the previous "
+            "attempt and provider history; never resubmit by changing output directories"
+        ) from None
+    except OSError:
+        # An ambiguous or partially written guard must remain; don't re-POST.
+        raise ShotError("Unable to durably reserve one submission; no POST attempted") from None
+    return guard
+
+
+
 def _safe_code(body: object) -> str:
     if isinstance(body, dict):
         code = body.get("code")
@@ -349,6 +402,10 @@ def run_live(plan: dict, output: Path, *, execute: bool, resume: bool, confirmed
             return _poll_existing(client, key, plan, evidence_path,
                                   interval=poll_interval, max_polls=max_polls,
                                   sleep_fn=sleep_fn)
+        # Guard across *different* output directories as well as repeated
+        # invocations in the same directory. This guard persists even if HTTP
+        # replies are lost or the request is rejected.
+        _reserve_one_submission(plan, outdir)
         # Durable marker BEFORE calling create: any lost response remains
         # ambiguous and MUST NOT be submitted again automatically.
         _save_attempt(evidence_path, plan, status="SUBMISSION_ATTEMPT_UNCONFIRMED")
