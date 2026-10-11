@@ -106,25 +106,29 @@ class NativeUpstreamSmokeGuards(unittest.TestCase):
             self.assertNotIn("hidden local path", str(caught.exception))
 
     def test_occupied_loopback_port_fails_without_launch(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
-                listener.bind(("127.0.0.1", 0))
-                listener.listen(1)
-                port = listener.getsockname()[1]
-                with (
-                    patch.object(smoke, "_check_isolated_upstream", return_value={
-                        "release": smoke.VERSION, "commit": smoke.COMMIT
-                    }),
-                    patch.object(smoke.subprocess, "Popen") as launcher,
-                    self.assertRaisesRegex(smoke.SmokeError, "occupied"),
-                ):
-                    smoke.run_smoke(Path(tmp), port=port)
-                launcher.assert_not_called()
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener,
+        ):
+            listener.bind(("127.0.0.1", 0))
+            listener.listen(1)
+            port = listener.getsockname()[1]
+            with (
+                patch.object(smoke, "_check_isolated_upstream", return_value={
+                    "release": smoke.VERSION, "commit": smoke.COMMIT
+                }),
+                patch.object(smoke.subprocess, "Popen") as launcher,
+                self.assertRaisesRegex(smoke.SmokeError, "occupied"),
+            ):
+                smoke.run_smoke(Path(tmp), port=port)
+            launcher.assert_not_called()
 
     def test_smoke_deadline_limits_are_strict(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            with self.assertRaisesRegex(smoke.SmokeError, "Startup deadline"):
-                smoke.run_smoke(Path(tmp), deadline_seconds=1)
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            self.assertRaisesRegex(smoke.SmokeError, "Startup deadline"),
+        ):
+            smoke.run_smoke(Path(tmp), deadline_seconds=1)
 
 
 if __name__ == "__main__":
