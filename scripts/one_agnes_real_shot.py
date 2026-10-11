@@ -389,6 +389,120 @@ def _inspect_clip(path: Path) -> dict:
     return report
 
 
+
+def _local_result_before_resume(evidence_path: Path, evidence: dict) -> dict | None:
+    """Inspect existing media first; never POST or GET for a finished local task.
+
+    A crash between atomic MP4 publication and attempt.json finalization leaves
+    a genuine-looking local MP4 but no provider-bound media fingerprint.
+    Surface its digest and QA result without claiming provider provenance or
+    silently deleting/replacing it. The operator must reconcile the original
+    video_id and file with the provider before treating it as Agnes output.
+    """
+    status = evidence.get("status")
+    video_id = evidence["video_id"]
+    movie = evidence_path.parent / "MYCL-001-shot-1.mp4"
+    partial = evidence_path.parent / "MYCL-001-shot-1.part"
+    final_statuses = {"MEDIA_REQUIRES_HUMAN_REVIEW", "MEDIA_QA_BLOCKED"}
+
+    if movie.is_symlink() or partial.is_symlink():
+        raise ShotError("Existing video or partial download is a symlink")
+    if status == "FAILED_UPSTREAM":
+        if movie.exists() or partial.exists():
+            raise ShotError("Failed task has unexpected local media; verify manually")
+        return {
+            "result": "FAILED_UPSTREAM",
+            "video_id": video_id,
+            "submissions": 0,
+            "network_requests": 0,
+            "already_recorded": True,
+            "error_code": evidence.get("error_code"),
+            "elapsed_to_final_result_seconds": evidence.get(
+                "elapsed_to_final_result_seconds"
+            ),
+        }
+    if partial.exists() and not movie.exists():
+        raise ShotError(
+            "Partial MP4 remains after an interrupted download; inspect it "
+            "manually before any further --resume (no new task permitted)"
+        )
+    if not movie.exists():
+        if status in final_statuses:
+            raise ShotError("Finalized video record exists but local MP4 is missing")
+        return None
+    if not movie.is_file():
+        raise ShotError("Existing media path is not a regular file")
+    size = movie.stat().st_size
+    if not 1024 <= size <= MAX_VIDEO_BYTES:
+        raise ShotError("Existing MP4 has an invalid byte size")
+
+    sha = hashlib.sha256()
+    with movie.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            sha.update(chunk)
+    digest = sha.hexdigest()
+
+    if status in final_statuses:
+        if (evidence.get("mp4_sha256") != digest or
+                type(evidence.get("mp4_bytes")) is not int or
+                evidence["mp4_bytes"] != size):
+            raise ShotError(
+                "Recorded MP4 SHA-256 or size differs from disk; "
+                "do not reuse or redownload silently"
+            )
+        report = _inspect_clip(movie)
+        expected_status = (
+            "MEDIA_QA_BLOCKED" if report.get("result") == "BLOCKED"
+            else "MEDIA_REQUIRES_HUMAN_REVIEW"
+        )
+        if status != expected_status:
+            raise ShotError(
+                "Current video QA differs from recorded outcome; manual review required"
+            )
+        return {
+            "result": status,
+            "video_id": video_id,
+            "submissions": 0,
+            "network_requests": 0,
+            "already_recorded": True,
+            "output_filename": movie.name,
+            "mp4_sha256": digest,
+            "size_bytes": size,
+            "media_check": report["result"],
+            "blockers": report.get("blockers", []),
+            "elapsed_to_final_result_seconds": evidence.get(
+                "elapsed_to_final_result_seconds"
+            ),
+            "pixel_orientation_verified": False,
+            "manual_viewing_required": True,
+            "published": False,
+        }
+
+    if status != "ACCEPTED_SINGLE_VIDEO":
+        raise ShotError(
+            "Local MP4 exists without a corresponding accepted provider task; "
+            "do not overwrite it"
+        )
+    report = _inspect_clip(movie)
+    return {
+        "result": "LOCAL_MP4_NEEDS_ORIGIN_RECONCILIATION",
+        "video_id": video_id,
+        "submissions": 0,
+        "network_requests": 0,
+        "already_recorded": False,
+        "output_filename": movie.name,
+        "mp4_sha256": digest,
+        "size_bytes": size,
+        "media_check": report.get("result"),
+        "blockers": report.get("blockers", []),
+        "provider_provenance_verified": False,
+        "attempt_record_unchanged": True,
+        "manual_viewing_required": True,
+        "published": False,
+    }
+
+
+
 def _poll_existing(client: httpx.Client, key: str, plan: dict, evidence_path: Path,
                    *, interval: float = 10.0, max_polls: int = MAX_POLLS,
                    sleep_fn=time.sleep) -> dict:
@@ -466,13 +580,26 @@ def run_live(plan: dict, output: Path, *, execute: bool, resume: bool, confirmed
         return public_plan(plan)
     if execute and resume:
         raise ShotError("--execute and --resume cannot be used together")
+    if resume:
+        # Finished media, completed/failed outcomes and interrupted local MP4s
+        # must be inspected before reading a Key or initiating any network.
+        # The final MP4 is never overwritten or downloaded twice.
+        outdir = _output_dir(output, create=False)
+        evidence_path = outdir / "MYCL-001-shot-1.attempt.json"
+        offline = _local_result_before_resume(
+            evidence_path, _read_attempt(evidence_path, plan)
+        )
+        if offline is not None:
+            return offline
+
     if not confirmed_price:
         raise ShotError("Review current Agnes billing and explicitly acknowledge it before live calls")
     key = _single_key(environ)
     if not shutil.which("ffprobe"):
         raise ShotError("Install ffprobe before submitting a paid-or-free video task")
-    outdir = _output_dir(output, create=execute)
-    evidence_path = outdir / "MYCL-001-shot-1.attempt.json"
+    if not resume:
+        outdir = _output_dir(output, create=True)
+        evidence_path = outdir / "MYCL-001-shot-1.attempt.json"
 
     owns_client = client is None
     if client is None:
@@ -547,7 +674,10 @@ def main(argv: list[str] | None = None) -> int:
                           resume=args.resume, confirmed_price=args.confirmed_price,
                           environ=os.environ)
         print(json.dumps(result, ensure_ascii=False, indent=2))
-        return 0 if result["result"] not in ("REJECTED_NO_VIDEO_ID", "FAILED_UPSTREAM", "MEDIA_QA_BLOCKED") else 2
+        return 0 if result["result"] not in (
+            "REJECTED_NO_VIDEO_ID", "FAILED_UPSTREAM", "MEDIA_QA_BLOCKED",
+            "LOCAL_MP4_NEEDS_ORIGIN_RECONCILIATION",
+        ) else 2
     except (ShotError, OSError) as exc:
         # Exceptions never include API responses, credentials or signed media URLs.
         print(json.dumps({"result": "BLOCKED", "reason": str(exc)}, ensure_ascii=False))
