@@ -206,10 +206,11 @@ async def run_round(
 
 
 def has_audio_track(path: Path) -> bool | None:
-    """True/False if determinable, None if unknown.
+    """Return True/False only when the format permits a determination.
 
-    Prefers ffprobe. Falls back to scanning the MP4 for a handler box declaring
-    the 'soun' media type, which needs no external tooling.
+    ffprobe's *exit code* matters: a corrupt MP4 reports failure and empty
+    stdout, which previously returned False instead of falling back to
+    the bounded MP4 handler scan (or None if still undecidable).
     """
     if shutil.which("ffprobe"):
         try:
@@ -225,18 +226,34 @@ def has_audio_track(path: Path) -> bool | None:
                 text=True,
                 timeout=60,
             )
-            return "audio" in out.stdout
-        except Exception:  # noqa: BLE001
-            pass
+        except (OSError, subprocess.TimeoutExpired):
+            out = None
+        if out is not None and out.returncode == 0:
+            return any(line.strip() == "audio" for line in out.stdout.splitlines())
+
+    # ffprobe unavailable/failed: scan *only* the first 2 MiB without reading
+    # the full output video into memory. This is a heuristic, not a proof.
     try:
-        head = path.read_bytes()[:2_000_000]
+        with path.open("rb") as f:
+            head = f.read(2_000_000)
     except OSError:
         return None
-    if b"soun" in head:
-        return True
-    if b"vide" in head:
-        return False  # video handler found, no audio handler
-    return None
+
+    found_video = False
+    offset = 0
+    while True:
+        index = head.find(b"hdlr", offset)
+        if index < 0:
+            break
+        # ISO BMFF HandlerReferenceBox: 'hdlr' (4 bytes), version+flags (4),
+        # pre_defined (4), then handler_type (4).
+        handler_type = head[index + 12 : index + 16]
+        if handler_type == b"soun":
+            return True
+        if handler_type == b"vide":
+            found_video = True
+        offset = index + 4
+    return False if found_video else None
 
 
 async def resolve_and_download(
