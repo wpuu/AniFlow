@@ -36,7 +36,7 @@ function isPublicImageUrl(value: string): boolean {
 }
 
 function normalizeModelKey(value: unknown): VideoModelKey {
-  return value === 'flash25' ? 'flash25' : 'v2';
+  return value === 'v2' ? 'v2' : 'flash25';
 }
 
 function mergeParams(
@@ -73,7 +73,7 @@ export default function App() {
   });
 
   const [modelKey, setModelKey] = useState<VideoModelKey>(() =>
-    normalizeModelKey(loadJSON<unknown>(STORAGE_KEYS.ACTIVE_MODEL, 'v2')),
+    normalizeModelKey(loadJSON<unknown>(STORAGE_KEYS.ACTIVE_MODEL, 'flash25')),
   );
 
   const [paramsByModel, setParamsByModel] = useState<Record<VideoModelKey, GenerationParams>>(() => {
@@ -305,7 +305,7 @@ export default function App() {
             modelKey: taskModelKey,
           };
           if (status === 'completed') {
-            patch.videoUrl = result.metadata?.url ?? null;
+            patch.videoUrl = result.url || result.metadata?.url || null;
             patch.progress = 100;
           }
           if (status === 'failed') {
@@ -482,7 +482,7 @@ export default function App() {
           size: result.size,
           seconds: result.seconds,
         };
-        if (status === 'completed') patch.videoUrl = result.metadata?.url ?? null;
+        if (status === 'completed') patch.videoUrl = result.url || result.metadata?.url || null;
         if (status === 'failed') patch.error = result.error?.message || '生成失败';
         updateHistoryItem(item.id, patch);
 
