@@ -1,4 +1,5 @@
-import { API_BASE, MAX_NUM_FRAMES, VIDEO_MODELS } from './constants';
+import { MAX_NUM_FRAMES, VIDEO_MODELS } from './constants';
+import { DEFAULT_BRIDGE_URL } from './bridge';
 import type {
   CreateVideoTaskResponse,
   GenerationParams,
@@ -108,13 +109,13 @@ export async function createVideoTask(
   modelKey: VideoModelKey,
   params: GenerationParams,
 ): Promise<CreateVideoTaskResponse> {
-  const res = await fetch(`${API_BASE}/v1/videos`, {
+  // Only the local loopback Bridge can forward Authorization: Agnes' public
+  // preflight wildcard does not authorize bearer headers in a web browser.
+  // The Bridge issues exactly one upstream POST and never retries automatically.
+  const res = await fetch(`${DEFAULT_BRIDGE_URL}/api/video/create`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(buildRequestBody(modelKey, params)),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ api_key: apiKey, payload: buildRequestBody(modelKey, params) }),
   });
   const data = await parseJsonSafe(res);
   if (!res.ok) {
@@ -129,11 +130,11 @@ export async function getVideoResult(
   modelKey: VideoModelKey,
 ): Promise<VideoResultResponse> {
   const modelName = VIDEO_MODELS[modelKey].apiModel;
-  const url = `${API_BASE}/agnesapi?video_id=${encodeURIComponent(videoId)}&model_name=${encodeURIComponent(
-    modelName,
-  )}`;
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${apiKey}` },
+  // Local POST transports a read-only GET to Agnes; it never creates a task.
+  const res = await fetch(`${DEFAULT_BRIDGE_URL}/api/video/status`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ api_key: apiKey, video_id: videoId, model_name: modelName }),
   });
   const data = await parseJsonSafe(res);
   if (!res.ok) {
