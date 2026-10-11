@@ -15,6 +15,7 @@ import argparse
 import hashlib
 import ipaddress
 import json
+import math
 import os
 import re
 import shutil
@@ -238,10 +239,27 @@ def _inspect_clip(path: Path) -> dict:
     from inspect_video_output import ProbeError, inspect_file
 
     try:
-        return inspect_file(path, min_seconds=4, max_seconds=6,
-                            require_audio=False, min_short_side=720)
+        report = inspect_file(
+            path, min_seconds=4, max_seconds=6,
+            require_audio=False, min_short_side=720,
+        )
     except (ProbeError, ValueError, OSError) as exc:
         return {"result": "BLOCKED", "blockers": [f"Media inspection failed ({type(exc).__name__})"]}
+
+    # A broad 4..6 second metadata window is NOT enough for a locked
+    # five-second narration/shot timeline. Reject even a valid 4s portrait MP4.
+    # The provider's published Flash 720P/9:16 geometry is 720x1280.
+    blockers = report.setdefault("blockers", [])
+    seconds = report.get("duration_seconds")
+    if type(seconds) not in (float, int) or not math.isfinite(seconds) or abs(seconds - 5) > 0.5:
+        blockers.append("Actual duration differs from locked 5-second shot (>0.5 s)")
+    if report.get("display_dimensions") != [720, 1280]:
+        blockers.append("Displayed frame must be 720x1280 for Flash 720P/9:16")
+    if blockers:
+        report["result"] = "BLOCKED"
+    report["requested_seconds"] = 5
+    report["allowed_duration_deviation_seconds"] = 0.5
+    return report
 
 
 def _poll_existing(client: httpx.Client, key: str, plan: dict, evidence_path: Path,
@@ -285,10 +303,16 @@ def _poll_existing(client: httpx.Client, key: str, plan: dict, evidence_path: Pa
             evidence["mp4_bytes"] = size
             evidence["media_check"] = report["result"]
             evidence["media_blockers"] = report.get("blockers", [])
+            evidence["actual_duration_seconds"] = report.get("duration_seconds")
+            evidence["display_dimensions"] = report.get("display_dimensions")
+            evidence["display_rotation_degrees"] = report.get("rotation_degrees")
             _write_json(evidence_path, evidence, replace=True)
             return {"result": evidence["status"], "video_id": video_id, "submissions": 0,
                     "output_filename": movie.name, "mp4_sha256": sha, "size_bytes": size,
                     "media_check": report["result"], "blockers": report.get("blockers", []),
+                    "actual_duration_seconds": report.get("duration_seconds"),
+                    "display_dimensions": report.get("display_dimensions"),
+                    "display_rotation_degrees": report.get("rotation_degrees"),
                     "pixel_orientation_verified": False,
                     "manual_viewing_required": True, "published": False}
         if status not in ("queued", "pending", "processing", "running"):
