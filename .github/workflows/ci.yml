@@ -33,6 +33,33 @@ jobs:
       - name: Read-only Wan first-frame PNG technical audit (no Key or requests)
         run: python scripts/audit_wan_reference_assets.py
 
+  cors_probe:
+    name: Agnes public OPTIONS preflight (no Key, no video task)
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Inspect browser CORS for local UI without any Authorization value
+        shell: bash
+        run: |
+          set +e
+          code=$(curl --silent --show-error --max-time 15 --output /dev/null \
+            --dump-header /tmp/agnes-cors.txt --write-out '%{http_code}' \
+            --request OPTIONS \
+            --header 'Origin: http://127.0.0.1:8765' \
+            --header 'Access-Control-Request-Method: POST' \
+            --header 'Access-Control-Request-Headers: authorization,content-type' \
+            'https://apihub.agnes-ai.com/v1/videos')
+          rc=$?
+          echo "NO_KEY_PREFLIGHT_HTTP=${code} CURL_EXIT=${rc}"
+          grep -i -E '^(access-control-allow-origin|access-control-allow-methods|access-control-allow-headers|vary):' /tmp/agnes-cors.txt || true
+          if [ "$rc" -eq 0 ] && grep -qi '^access-control-allow-origin:' /tmp/agnes-cors.txt; then
+            echo 'CORS_HEADERS_PRESENT_CHECK_VALUES'
+          else
+            echo 'CORS_NOT_CONFIRMED_FOR_BROWSER'
+          fi
+          # Diagnostic only. This read-only probe never sends Authorization/POST.
+          exit 0
+
   frontend:
     name: Nine-Key Agnes frontend TypeScript and Vite build
     runs-on: ubuntu-latest
