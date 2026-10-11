@@ -1,5 +1,8 @@
 # AniFlow / 动画工厂
 
+> **P0-021 9-Key 原前端可测性修复（2026-10-11）：** 原有 `apps/grok-frontend` 保留，并非新建应用。已验证公开 Agnes 视频接口的浏览器跨域 `Authorization` 请求会被阻止（[Chrome 无真实 Key 测试](https://github.com/wpuu/AniFlow/actions/runs/38152367310)）。因此隔离分支加入本机 Bridge 单次视频转发和每 Key 创建前持久安全锁，网络超时不自动重试，保留按 `video_id` 查询的能力。**要更新前端和本地 Python Bridge 两部分，不能只替换 HTML。** 文生视频不需要 R2。Windows 按[9-Key 中文试用卡](docs/runbooks/2026-10-11-nine-key-frontend-test.md)操作。**目前尚无真实 Agnes 视频、账户费用或人工画质证据**，PR #2 仍为 Draft，`main` 不变。
+
+
 > **P0-012 云端单镜头启动入口（2026-10-11）：** 已为当前隔离分支提供 [打开 GitHub Codespaces 创建页面](https://codespaces.new/wpuu/AniFlow/tree/audit/2026-10-11-v710-revalidation)。该云端环境预装 Python/FFmpeg，**无自动运行/生成 Hook**；可在 Codespaces 创建页可选填入账户个人加密密钥 `ANIFLOW_SINGLE_SHOT_API_KEY`，只能经明确指令生成一条五秒视频。创建 Codespace 可能消耗 GitHub 配额，先核实账户付费提示，绝不把 Key 放在 Issues、PR、CI 或聊天。完整低人工操作说明见 [P0-012 Codespaces 安全运行卡](docs/runbooks/2026-10-11-p012-codespaces-single-shot.md)。已用 GitHub Actions 验证无 Key、断网、只读项目目录的容器构建及 25 项测试；**还未在用户 Codespace 中用真实 Key 成功出片**。草稿 PR 继续不合并。
 
 > **P0-010 单条真实视频入口与队列结论纠偏（2026-10-11）：** 以前把“多账号同时提交时部分成功、部分队列满”解释为**账号级配额**是错误的——**共享队列仅剩少数空位同样产生混合结果**，不可据此声称九倍视频产能。旧 `queue-probe` 已被显式确认和次数上限保护，默认不再并发提交多个可能收费的任务。新增 [`scripts/one_agnes_real_shot.py`](scripts/one_agnes_real_shot.py) 以第一集第 1 镜头为唯一固定对象：默认只预览；仅明确批准当前计费并在可信电脑配置**一个单独环境变量 Key**后，才允许发送**一次** Agnes Video 2.5 Flash 视频创建请求，保存任务 ID，并可无新增 POST 续查；结果仍需实际观看横倒/角色质量。官方当前 Flash 720P 标价限时零费用，可能随时调整。**该程序在仓库中，不代表已持有 Key 或已生成真实 Agnes 视频**。详见 [Issue #5](https://github.com/wpuu/AniFlow/issues/5)；未获真实视频验证前 PR 保持草稿。
