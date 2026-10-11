@@ -184,7 +184,7 @@ export default function RightPanel({
                   <p className="line-clamp-2 text-xs text-zinc-700">{item.promptPreview || '（未填写提示词）'}</p>
                   <div className="mt-1 flex items-center justify-between">
                     <span className="text-[10px] text-zinc-400">{formatTime(item.createdAt)}</span>
-                    {item.status === 'queued' || item.status === 'in_progress' || item.status === 'creating' ? (
+                    {item.status === 'queued' || item.status === 'in_progress' || item.status === 'creating' || item.status === 'stopped' ? (
                       <button
                         type="button"
                         onClick={(e) => {
