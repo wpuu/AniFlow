@@ -10,6 +10,13 @@ import { DEFAULT_PARAMS_BY_MODEL, VIDEO_MODELS } from './lib/constants';
 import { createVideoTask, getVideoResult } from './lib/api';
 import { DEFAULT_BRIDGE_URL, uploadDataUrlToBridge } from './lib/bridge';
 import { genId } from './lib/imageUtils';
+import {
+  attachVideoId,
+  isValidSubmissionGuards,
+  releaseAttempt,
+  reserveAttempt,
+} from './lib/taskSafety';
+import type { SubmissionGuards } from './lib/taskSafety';
 import type {
   GenerationParams,
   HistoryItem,
@@ -19,6 +26,21 @@ import type {
 } from './lib/types';
 
 const BUSY_STATUSES = new Set<TaskStatus>(['creating', 'queued', 'in_progress']);
+
+function readSubmissionGuards(): SubmissionGuards | null {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEYS.SUBMISSION_GUARDS);
+    if (!raw) return {};
+    const value: unknown = JSON.parse(raw);
+    return isValidSubmissionGuards(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function taskErrorMessage(error: string | { message?: string } | null | undefined): string {
+  return typeof error === 'string' ? error : error?.message || '视频生成失败';
+}
 
 function emptyTask(): TaskState {
   return { status: 'idle', progress: 0, videoUrl: null, videoId: null, taskId: null, error: null };
@@ -88,6 +110,9 @@ export default function App() {
   const params = paramsByModel[modelKey];
 
   const [tasksByKey, setTasksByKey] = useState<Record<number, TaskState>>({});
+  const [submissionGuards, setSubmissionGuards] = useState<SubmissionGuards>(
+    () => readSubmissionGuards() ?? {},
+  );
   const [history, setHistory] = useState<HistoryItem[]>(() => loadJSON(STORAGE_KEYS.HISTORY, []));
   const [selectedKeyTab, setSelectedKeyTab] = useState(0);
   const [selectedHistoryIdByKey, setSelectedHistoryIdByKey] = useState<Record<number, string | undefined>>({});
@@ -97,6 +122,8 @@ export default function App() {
   const stopFlags = useRef<Record<number, boolean>>({});
   const activeHistoryIdByKey = useRef<Record<number, string>>({});
   const mediaUploadCache = useRef<Map<string, Promise<string>>>(new Map());
+  const submittingKeysRef = useRef<Set<number>>(new Set());
+  const submissionGuardsRef = useRef(submissionGuards);
 
   useEffect(() => {
     saveJSON(STORAGE_KEYS.API_KEYS, apiKeys);
@@ -140,6 +167,57 @@ export default function App() {
 
   function notify(text: string, type: 'info' | 'error' = 'info') {
     setMessage({ text, type });
+  }
+
+  // Persist the guard synchronously before the first POST. A missing/invalid
+  // localStorage record must never be treated as permission to retry.
+  function persistSubmissionGuards(next: SubmissionGuards): boolean {
+    if (!saveJSON(STORAGE_KEYS.SUBMISSION_GUARDS, next)) {
+      notify('无法持久保存视频提交安全记录，已阻止新的创建请求', 'error');
+      return false;
+    }
+    submissionGuardsRef.current = next;
+    setSubmissionGuards(next);
+    return true;
+  }
+
+  function reserveVideoAttempt(
+    keyIndex: number,
+    attemptId: string,
+    attemptModel: VideoModelKey,
+  ): boolean {
+    const stored = readSubmissionGuards();
+    if (!stored) {
+      notify('提交保护记录无法读取，请先修复本浏览器本地存储；没有创建视频', 'error');
+      return false;
+    }
+    const next = reserveAttempt(stored, {
+      keyIndex, attemptId, modelKey: attemptModel, createdAt: Date.now(), videoId: null,
+    });
+    if (!next) {
+      setSubmissionGuards(stored);
+      notify(`Key ${keyIndex + 1} 有未回收的提交记录，禁止重复创建`, 'error');
+      return false;
+    }
+    return persistSubmissionGuards(next);
+  }
+
+  function attachVideoToGuard(keyIndex: number, attemptId: string, videoId: string) {
+    const stored = readSubmissionGuards();
+    if (!stored) {
+      notify('已得到任务 ID，但无法读取本地安全记录；请勿重复提交', 'error');
+      return false;
+    }
+    const next = attachVideoId(stored, keyIndex, attemptId, videoId);
+    if (next === stored) return false;
+    return persistSubmissionGuards(next);
+  }
+
+  function finishVideoGuard(keyIndex: number, attemptId: string) {
+    const stored = readSubmissionGuards();
+    if (!stored) return;
+    const next = releaseAttempt(stored, keyIndex, attemptId);
+    if (next !== stored) persistSubmissionGuards(next);
   }
 
   function updateTaskState(keyIndex: number, patch: Partial<TaskState>) {
