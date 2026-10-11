@@ -14,8 +14,8 @@ from pydantic import BaseModel, Field
 from aniflow.agnes.http import AgnesHttpClient
 from aniflow.agnes.image import AgnesImageClient
 from aniflow.agnes.key_pool import KeyPool
-from aniflow.capcut.provider import CapCutSeedreamProvider, SubprocessCapCutRunner
 from aniflow.bridge.video_proxy import video_proxy_router
+from aniflow.capcut.provider import CapCutSeedreamProvider, SubprocessCapCutRunner
 from aniflow.config import Settings, get_settings
 from aniflow.image_provider import AgnesImageProvider
 from aniflow.media.images import persist_remote_image
