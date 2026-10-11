@@ -15,13 +15,9 @@ import argparse
 import hashlib
 import ipaddress
 import json
-import math
 import os
 import re
 import shutil
-import socket
-import subprocess
-import sys
 import time
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -181,7 +177,11 @@ def _public_https_url(url: object) -> str:
         u = urlsplit(url)
     except ValueError:
         raise ShotError("Completed task returned malformed video URL") from None
-    if u.scheme != "https" or not u.hostname or u.username or u.password or u.port not in (None, 443):
+    try:
+        port = u.port
+    except ValueError:
+        raise ShotError("Malformed video URL port") from None
+    if u.scheme != "https" or not u.hostname or u.username or u.password or port not in (None, 443):
         raise ShotError("Video download must be a public HTTPS URL without credentials")
     hostname = u.hostname.lower().rstrip(".")
     if hostname == "localhost" or hostname.endswith((".local", ".internal", ".localhost")):
@@ -208,19 +208,21 @@ def _download_video(client: httpx.Client, url: str, outdir: Path) -> tuple[Path,
     sha = hashlib.sha256()
     total = 0
     try:
-        with client.stream("GET", url, headers={"Accept": "video/mp4"}) as response:
+        with (
+            client.stream("GET", url, headers={"Accept": "video/mp4"}) as response,
+            temp.open("xb") as stream,
+        ):
             if response.status_code != 200:
                 raise ShotError(f"CDN download failed (HTTP {response.status_code})")
             mime = response.headers.get("content-type", "").lower()
             if mime and not (mime.startswith("video/") or mime.startswith("application/octet-stream")):
                 raise ShotError("CDN returned a non-video content type")
-            with temp.open("xb") as stream:
-                for block in response.iter_bytes(chunk_size=1024 * 1024):
-                    total += len(block)
-                    if total > MAX_VIDEO_BYTES:
-                        raise ShotError("Downloaded video exceeds 200 MiB safety limit")
-                    sha.update(block)
-                    stream.write(block)
+            for block in response.iter_bytes(chunk_size=1024 * 1024):
+                total += len(block)
+                if total > MAX_VIDEO_BYTES:
+                    raise ShotError("Downloaded video exceeds 200 MiB safety limit")
+                sha.update(block)
+                stream.write(block)
         if total < 1024:
             raise ShotError("Downloaded video is unexpectedly small")
         os.link(temp, target)  # atomic no-overwrite link on same volume
