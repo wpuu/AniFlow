@@ -237,3 +237,38 @@ def test_shared_global_one_slot_is_counterexample_to_per_account_claim():
     globally_shared_result = make_round(1, [True, False, False, False])
     assert globally_shared_result.is_mixed
     assert decide([globally_shared_result]) == MIXED_OBSERVED
+
+
+def test_legacy_queue_probe_requires_explicit_consent(monkeypatch):
+    """The old CLI must not create video tasks just by being invoked."""
+    from typer.testing import CliRunner
+
+    import aniflow.queue_probe as qp
+    from aniflow.cli import app
+
+    def must_not_fire(*args, **kwargs):
+        raise AssertionError("No video submission is authorized")
+
+    monkeypatch.setattr(qp, "run_round", must_not_fire)
+    result = CliRunner().invoke(app, ["queue-probe"])
+    assert result.exit_code == 2
+
+
+def test_legacy_queue_probe_watch_remains_disabled_even_with_acknowledgement(monkeypatch):
+    """An indefinite watch loop could submit an unbounded number of paid tasks."""
+    from typer.testing import CliRunner
+
+    import aniflow.queue_probe as qp
+    from aniflow.cli import app
+
+    def must_not_fire(*args, **kwargs):
+        raise AssertionError("No video submission is authorized")
+
+    monkeypatch.setattr(qp, "run_round", must_not_fire)
+    result = CliRunner().invoke(
+        app, [
+            "queue-probe", "--watch", "--rounds", "1",
+            "--acknowledge-multiple-video-submissions",
+        ]
+    )
+    assert result.exit_code == 2
