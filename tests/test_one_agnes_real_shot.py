@@ -275,14 +275,19 @@ def test_local_cli_preview_never_needs_key(capsys):
 
 
 @pytest.mark.parametrize(
-    ("size", "expected_result"),
+    ("size", "duration_seconds", "expected_result"),
     [
-        ("720x1280", "MEDIA_REQUIRES_HUMAN_REVIEW"),
-        ("1280x720", "MEDIA_QA_BLOCKED"),
+        ("720x1280", 5, "MEDIA_REQUIRES_HUMAN_REVIEW"),
+        ("1280x720", 5, "MEDIA_QA_BLOCKED"),
+        # Prior code accepted both 4s and 6s under an overly broad 4..6s gate.
+        ("720x1280", 4, "MEDIA_QA_BLOCKED"),
+        ("720x1280", 6, "MEDIA_QA_BLOCKED"),
+        # A nominal 9:16 file is not necessarily Flash's published 720P output.
+        ("900x1600", 5, "MEDIA_QA_BLOCKED"),
     ],
 )
 def test_full_single_shot_path_with_real_ffmpeg_metadata(
-    planned, tmp_path, monkeypatch, size, expected_result
+    planned, tmp_path, monkeypatch, size, duration_seconds, expected_result
 ):
     """Real Windows/Linux MP4+ffprobe: provider HTTP itself remains fully mocked.
 
@@ -298,8 +303,8 @@ def test_full_single_shot_path_with_real_ffmpeg_metadata(
     subprocess.run(
         [
             "ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error", "-y",
-            "-f", "lavfi", "-i", f"color=c=blue:s={size}:r=4:d=5",
-            "-t", "5", "-c:v", "mpeg4", "-q:v", "10",
+            "-f", "lavfi", "-i", f"color=c=blue:s={size}:r=4:d={duration_seconds}",
+            "-t", str(duration_seconds), "-c:v", "mpeg4", "-q:v", "10",
             "-pix_fmt", "yuv420p", str(video),
         ],
         check=True, capture_output=True, timeout=60,
@@ -329,7 +334,7 @@ def test_full_single_shot_path_with_real_ffmpeg_metadata(
         transport=httpx.MockTransport(handler), trust_env=False
     ) as client:
         result = shot.run_live(
-            planned, tmp_path / f"result-{size}", execute=True, resume=False,
+            planned, tmp_path / f"result-{size}-{duration_seconds}", execute=True, resume=False,
             confirmed_price=True,
             environ={"ANIFLOW_SINGLE_SHOT_API_KEY": "NON_SECRET_TEST_ONLY"},
             client=client, poll_interval=0, max_polls=1,
@@ -346,8 +351,17 @@ def test_full_single_shot_path_with_real_ffmpeg_metadata(
     assert result["manual_viewing_required"] is True
     assert result["pixel_orientation_verified"] is False
     assert result["mp4_sha256"] == hashlib.sha256(payload).hexdigest()
-    record = (tmp_path / f"result-{size}" / "MYCL-001-shot-1.attempt.json").read_text(
+    assert abs(result["actual_duration_seconds"] - duration_seconds) <= 0.15
+    assert result["display_dimensions"] == [int(x) for x in size.split("x")]
+    if duration_seconds != 5:
+        assert any("5-second shot" in x for x in result["blockers"])
+    if size == "900x1600":
+        assert any("720x1280" in x for x in result["blockers"])
+    record = (tmp_path / f"result-{size}-{duration_seconds}" / "MYCL-001-shot-1.attempt.json").read_text(
         encoding="utf-8"
     )
     assert "NON_SECRET_TEST_ONLY" not in record
     assert "video.example.org" not in record
+    saved = json.loads(record)
+    assert saved["display_dimensions"] == [int(x) for x in size.split("x")]
+    assert abs(saved["actual_duration_seconds"] - duration_seconds) <= 0.15
