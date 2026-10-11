@@ -8,8 +8,8 @@ import pytest
 from aniflow.queue_probe import (
     CAPACITY_AVAILABLE,
     INCONCLUSIVE_SATURATED,
-    NO_KEYS,
     MIXED_OBSERVED,
+    NO_KEYS,
     Attempt,
     Round,
     decide,
@@ -114,7 +114,7 @@ def test_run_round_fires_every_key_and_parses_both_outcomes():
     assert rnd.accepted[0].account_label == "account-2"
     assert all(a.is_queue_full for a in rnd.rejected)
     assert rnd.is_mixed
-    assert decide([rnd]) == PER_ACCOUNT
+    assert decide([rnd]) == MIXED_OBSERVED
 
 
 def test_probe_uses_text_mode_so_no_media_layer_is_required():
