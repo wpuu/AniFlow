@@ -24,6 +24,12 @@ shot = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(shot)
 
 
+@pytest.fixture(autouse=True)
+def isolate_single_attempt_ledger(tmp_path, monkeypatch):
+    """Never write mock test intent locks into the runner's real user home."""
+    monkeypatch.setattr(shot, "_once_root", lambda: tmp_path / "single-attempt-ledger")
+
+
 @pytest.fixture
 def planned():
     return shot.prepare_plan(
@@ -365,3 +371,123 @@ def test_full_single_shot_path_with_real_ffmpeg_metadata(
     saved = json.loads(record)
     assert saved["display_dimensions"] == [int(x) for x in size.split("x")]
     assert abs(saved["actual_duration_seconds"] - duration_seconds) <= 0.15
+
+
+def test_new_output_directory_cannot_resubmit_same_shot(planned, tmp_path, fake_inspection):
+    """Changing the folder after HTTP 503 must not create a second task."""
+    calls = []
+    def handler(request):
+        calls.append(request.method)
+        return httpx.Response(503, json={"code": "video_queue_full"})
+    with httpx.Client(transport=httpx.MockTransport(handler), trust_env=False) as client:
+        first = shot.run_live(
+            planned, tmp_path / "first-folder", execute=True, resume=False,
+            confirmed_price=True,
+            environ={"ANIFLOW_SINGLE_SHOT_API_KEY": "TEST_KEY_1"},
+            client=client,
+        )
+        assert first["result"] == "REJECTED_NO_VIDEO_ID"
+        with pytest.raises(shot.ShotError, match="already reserved"):
+            shot.run_live(
+                planned, tmp_path / "different-folder", execute=True, resume=False,
+                confirmed_price=True,
+                environ={"ANIFLOW_SINGLE_SHOT_API_KEY": "TEST_KEY_1"},
+                client=client,
+            )
+    assert calls == ["POST"]
+    assert not (tmp_path / "different-folder/MYCL-001-shot-1.attempt.json").exists()
+    ledger = tmp_path / "single-attempt-ledger/MYCL-001-shot-1.once.json"
+    record = json.loads(ledger.read_text(encoding="utf-8"))
+    assert record["request_sha256"] == planned["request_sha256"]
+    assert record["output_folder"] == "first-folder"
+    assert "TEST_KEY_1" not in ledger.read_text(encoding="utf-8")
+    assert "file://" not in ledger.read_text(encoding="utf-8")
+
+
+def test_changing_api_domain_does_not_bypass_single_shot_ledger(
+    planned, tmp_path, fake_inspection
+):
+    """A global-to-China domain switch must not silently double-bill."""
+    china = shot.prepare_plan(
+        ROOT / "content/shotlists/MYCL-001-cat-lapping.json",
+        ROOT / "content/factpacks/MYCL-001-cat-lapping.json",
+        domain="china",
+    )
+    assert china["domain"] != planned["domain"]
+    methods = []
+    def handler(request):
+        methods.append(request.method)
+        return httpx.Response(429, json={"code": "rate_limited"})
+    with httpx.Client(transport=httpx.MockTransport(handler), trust_env=False) as client:
+        shot.run_live(
+            planned, tmp_path / "global", execute=True, resume=False,
+            confirmed_price=True,
+            environ={"ANIFLOW_SINGLE_SHOT_API_KEY": "ONE_KEY"},
+            client=client,
+        )
+        with pytest.raises(shot.ShotError, match="already reserved"):
+            shot.run_live(
+                china, tmp_path / "china", execute=True, resume=False,
+                confirmed_price=True,
+                environ={"ANIFLOW_SINGLE_SHOT_API_KEY": "ONE_KEY"},
+                client=client,
+            )
+    assert methods == ["POST"]
+
+
+def test_network_ambiguity_guard_survives_new_output_folder(
+    planned, tmp_path, fake_inspection
+):
+    """When the first POST timed out, duplicate submissions must remain blocked."""
+    calls = []
+    def handler(request):
+        calls.append(request.method)
+        raise httpx.ReadTimeout("response lost after possible submit")
+    with httpx.Client(transport=httpx.MockTransport(handler), trust_env=False) as client:
+        with pytest.raises(shot.ShotError, match="SUBMISSION_AMBIGUOUS"):
+            shot.run_live(
+                planned, tmp_path / "uncertain", execute=True, resume=False,
+                confirmed_price=True,
+                environ={"ANIFLOW_SINGLE_SHOT_API_KEY": "ONE_KEY"},
+                client=client,
+            )
+        with pytest.raises(shot.ShotError, match="already reserved"):
+            shot.run_live(
+                planned, tmp_path / "new-uncertain", execute=True, resume=False,
+                confirmed_price=True,
+                environ={"ANIFLOW_SINGLE_SHOT_API_KEY": "ONE_KEY"},
+                client=client,
+            )
+    assert calls == ["POST"]
+
+
+def test_guard_is_exclusive_between_concurrent_process_intents(planned, tmp_path):
+    """File-exclusive reservation allows one winner even with concurrent attempts."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    ledger = tmp_path / "single-attempt-ledger"
+    output = tmp_path / "planned-video-dir"
+    def reserve(_):
+        try:
+            shot._reserve_one_submission(planned, output)
+            return "WIN"
+        except shot.ShotError:
+            return "BLOCKED"
+
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        outcomes = list(pool.map(reserve, range(6)))
+    assert outcomes.count("WIN") == 1
+    assert outcomes.count("BLOCKED") == 5
+    saved = json.loads(
+        (ledger / "MYCL-001-shot-1.once.json").read_text(encoding="utf-8")
+    )
+    assert saved["intent"] == "MYCL-001-shot-1"
+
+
+def test_default_plan_never_creates_single_attempt_guard(planned, tmp_path):
+    result = shot.run_live(
+        planned, tmp_path / "no-run", execute=False, resume=False,
+        confirmed_price=False, environ={},
+    )
+    assert result["submissions"] == 0
+    assert not (tmp_path / "single-attempt-ledger").exists()
