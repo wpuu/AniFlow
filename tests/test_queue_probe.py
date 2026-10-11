@@ -184,3 +184,49 @@ def test_audio_detection_returns_none_when_unknown(tmp_path):
 @pytest.mark.parametrize("missing", ["nope.mp4"])
 def test_audio_detection_handles_missing_file(tmp_path, missing):
     assert has_audio_track(tmp_path / missing) is None
+
+
+def test_audio_detection_ffprobe_failure_still_inspects_mp4_handler(tmp_path, monkeypatch):
+    """A failed ffprobe must not turn unknown/corrupt media into 'no audio'."""
+    from subprocess import CompletedProcess
+
+    f = tmp_path / "mp4-sample.mp4"
+    f.write_bytes(b"\x00" * 100 + b"hdlr" + b"\x00" * 8 + b"soun")
+    monkeypatch.setattr("aniflow.queue_probe.shutil.which", lambda _: "ffprobe")
+    monkeypatch.setattr(
+        "aniflow.queue_probe.subprocess.run",
+        lambda *args, **kwargs: CompletedProcess(args=args, returncode=1, stdout="", stderr="invalid MP4"),
+    )
+    assert has_audio_track(f) is True
+
+
+def test_audio_detection_ffprobe_success_disambiguates_no_audio(tmp_path, monkeypatch):
+    from subprocess import CompletedProcess
+
+    f = tmp_path / "realistic-media.mp4"
+    f.write_bytes(b"hdlr" + b"\x00" * 8 + b"soun")
+    monkeypatch.setattr("aniflow.queue_probe.shutil.which", lambda _: "ffprobe")
+    monkeypatch.setattr(
+        "aniflow.queue_probe.subprocess.run",
+        lambda *args, **kwargs: CompletedProcess(args=args, returncode=0, stdout="", stderr=""),
+    )
+    # A successfully parsed real MP4 with zero audio streams wins over the heuristic.
+    assert has_audio_track(f) is False
+
+
+def test_audio_detection_unrelated_soun_string_not_a_real_handler(tmp_path, monkeypatch):
+    f = tmp_path / "random.bin"
+    f.write_bytes(b"this is not a handler: soun")
+    monkeypatch.setattr("aniflow.queue_probe.shutil.which", lambda _: None)
+    assert has_audio_track(f) is None
+
+
+def test_audio_detection_missing_file_does_not_claim_no_audio(tmp_path, monkeypatch):
+    from subprocess import CompletedProcess
+
+    monkeypatch.setattr("aniflow.queue_probe.shutil.which", lambda _: "ffprobe")
+    monkeypatch.setattr(
+        "aniflow.queue_probe.subprocess.run",
+        lambda *args, **kwargs: CompletedProcess(args=args, returncode=1, stdout="", stderr="not found"),
+    )
+    assert has_audio_track(tmp_path / "missing.mp4") is None
