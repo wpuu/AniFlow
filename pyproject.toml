@@ -40,3 +40,7 @@ asyncio_mode = "auto"
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+
+[tool.ruff.lint.flake8-bugbear]
+# Declarative dependency/UI parameters intentionally use factory call defaults.
+extend-immutable-calls = ["fastapi.File", "typer.Argument", "typer.Option"]
