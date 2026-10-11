@@ -237,7 +237,7 @@ def test_reject_internal_or_unsafe_download_targets(url):
 
 
 def test_only_frozen_episode_is_accepted(planned, tmp_path):
-    data = json.loads((ROOT / "content/shotlists/MYCL-001-cat-lapping.json").read_text())
+    data = json.loads((ROOT / "content/shotlists/MYCL-001-cat-lapping.json").read_text(encoding="utf-8"))
     data["episode_id"] = "DIFFERENT-EPISODE"
     fake = tmp_path / "changed.json"
     fake.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
