@@ -1,16 +1,18 @@
-# P0-012: Build public, credential-free dependencies before Codespaces
-# injects account-scoped secrets into the runtime environment.
-# No project source or personal credentials are copied into the image.
-FROM mcr.microsoft.com/devcontainers/python:1-3.11-bookworm
+# P0-012: Small, official Python image. No third-party Yarn APT source.
+# Build dependencies before Codespaces injects account-scoped environment secrets.
+# No project source or personal credentials are copied into this image.
+FROM python:3.11-slim-bookworm
 
-USER root
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-       ffmpeg ca-certificates \
+    && apt-get install -y --no-install-recommends \
+       bash ca-certificates curl ffmpeg git tzdata \
     && rm -rf /var/lib/apt/lists/* \
     && python -m pip install --no-cache-dir \
-       'httpx>=0.28.1,<1' 'pytest>=8.3,<9'
+       'httpx>=0.28.1,<1' 'pytest>=8.3,<9' \
+    && useradd --create-home --uid 1000 --shell /bin/bash vscode
 
-# Non-root runtime. There are deliberately no postCreate/postStart hooks:
-# mounting a Codespaces secret must NEVER automatically call Agnes.
 USER vscode
+WORKDIR /workspaces/AniFlow
+
+# No postCreate/postStart hooks: a Codespaces Key must not trigger any API call.
