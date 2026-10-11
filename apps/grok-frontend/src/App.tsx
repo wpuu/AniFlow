@@ -15,6 +15,7 @@ import {
   isValidSubmissionGuards,
   releaseAttempt,
   reserveAttempt,
+  shouldReleaseVideoGuard,
 } from './lib/taskSafety';
 import type { SubmissionGuards } from './lib/taskSafety';
 import type {
@@ -385,7 +386,10 @@ export default function App() {
           if (status === 'completed') {
             patch.videoUrl = result.url || result.metadata?.url || null;
             patch.progress = 100;
-            if (!patch.videoUrl) patch.error = '任务已完成，但未返回可播放的视频 URL；请查看服务商原任务';
+            if (!shouldReleaseVideoGuard(status, patch.videoUrl)) {
+              patch.status = 'submission_unknown';
+              patch.error = '任务完成但无有效 MP4 地址：已保留安全锁，可继续查询原视频';
+            }
           }
           if (status === 'failed') {
             patch.error = taskErrorMessage(result.error);
@@ -394,7 +398,7 @@ export default function App() {
           updateHistoryItem(historyId, patch as Partial<HistoryItem>);
 
           if (status === 'completed' || status === 'failed') {
-            finishVideoGuard(keyIndex, historyId);
+            if (shouldReleaseVideoGuard(status, patch.videoUrl)) finishVideoGuard(keyIndex, historyId);
             delete pollTimers.current[keyIndex];
             delete activeHistoryIdByKey.current[keyIndex];
             return;
@@ -606,7 +610,32 @@ export default function App() {
     stopFlags.current[keyIndex] = false;
     activeHistoryIdByKey.current[keyIndex] = guard.attemptId;
     updateTaskState(keyIndex, { status: 'queued', videoId: guard.videoId, modelKey: guard.modelKey, error: null });
-    updateHistoryItem(guard.attemptId, { status: 'queued', error: null });
+    setHistory((prev) => {
+      if (prev.some((entry) => entry.id === guard.attemptId)) {
+        return prev.map((entry) => (
+          entry.id === guard.attemptId ? { ...entry, status: 'queued', error: null } : entry
+        ));
+      }
+      // Restore the original task identity, not invented prompt/mode details.
+      const recovered: HistoryItem = {
+        id: guard.attemptId,
+        keyIndex,
+        createdAt: guard.createdAt,
+        promptPreview: '从安全账本恢复；原始提示词与模式已无法核实',
+        modelKey: guard.modelKey,
+        modelName: VIDEO_MODELS[guard.modelKey].apiModel,
+        mode: 'unknown',
+        ratio: '9:16',
+        resolution: '720p',
+        status: 'queued',
+        progress: 0,
+        videoUrl: null,
+        videoId: guard.videoId,
+        taskId: null,
+        error: null,
+      };
+      return [recovered, ...prev];
+    });
     poll(keyIndex, apiKey, guard.videoId, guard.attemptId, guard.modelKey);
   }
 
@@ -641,10 +670,15 @@ export default function App() {
         };
         if (status === 'completed') {
           patch.videoUrl = result.url || result.metadata?.url || null;
-          if (!patch.videoUrl) patch.error = '任务已完成，但未返回视频地址';
+          if (!shouldReleaseVideoGuard(status, patch.videoUrl)) {
+            patch.status = 'submission_unknown';
+            patch.error = '任务完成但无有效 MP4 地址，已保留防重锁；请继续查原任务';
+          } else {
+            patch.error = null;
+          }
         }
         if (status === 'failed') patch.error = taskErrorMessage(result.error);
-        if (status === 'completed' || status === 'failed') {
+        if (shouldReleaseVideoGuard(status, patch.videoUrl)) {
           finishVideoGuard(item.keyIndex, item.id);
         }
         updateHistoryItem(item.id, patch);

@@ -30,6 +30,18 @@ export function isValidSubmissionGuards(value: unknown): value is SubmissionGuar
   });
 }
 
+/** Avoid releasing the once-only request lock for a completed task with no video. */
+export function shouldReleaseVideoGuard(status: string, videoUrl: string | null | undefined): boolean {
+  if (status === 'failed') return true;
+  if (status !== 'completed' || !videoUrl) return false;
+  try {
+    const url = new URL(videoUrl);
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
 export function reserveAttempt(
   guards: SubmissionGuards,
   attempt: SubmissionGuard,

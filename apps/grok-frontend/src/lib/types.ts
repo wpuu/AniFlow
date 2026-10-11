@@ -58,7 +58,7 @@ export interface HistoryItem {
   promptPreview: string;
   modelKey?: VideoModelKey;
   modelName?: string;
-  mode: GenMode;
+  mode: GenMode | 'unknown';
   ratio: Ratio;
   resolution: ResolutionTier;
   status: TaskStatus;

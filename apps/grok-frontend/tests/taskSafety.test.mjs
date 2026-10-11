@@ -5,6 +5,7 @@ import {
   isValidSubmissionGuards,
   releaseAttempt,
   reserveAttempt,
+  shouldReleaseVideoGuard,
 } from '../src/lib/taskSafety.ts';
 
 const a = { attemptId: 'local-attempt-1', keyIndex: 0, modelKey: 'flash25', createdAt: 1, videoId: null };
@@ -50,4 +51,13 @@ test('serialization preserves unresolved ledger through a page reload', () => {
   const restored = JSON.parse(persisted);
   assert.equal(isValidSubmissionGuards(restored), true);
   assert.equal(reserveAttempt(restored, b), null);
+});
+
+test('completed without a usable MP4 address must retain the guard', () => {
+  assert.equal(shouldReleaseVideoGuard('completed', null), false);
+  assert.equal(shouldReleaseVideoGuard('completed', ''), false);
+  assert.equal(shouldReleaseVideoGuard('completed', 'javascript:alert(1)'), false);
+  assert.equal(shouldReleaseVideoGuard('queued', 'https://media.test/video.mp4'), false);
+  assert.equal(shouldReleaseVideoGuard('completed', 'https://media.test/video.mp4'), true);
+  assert.equal(shouldReleaseVideoGuard('failed', null), true);
 });
