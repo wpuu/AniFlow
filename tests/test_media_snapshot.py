@@ -150,6 +150,25 @@ class ImmutableMediaSnapshotTests(unittest.TestCase):
         self.assertFalse(report["input_snapshots_verified"])
         self.assertFalse(self.output.exists())
 
+    def test_production_720x1280_render_has_verified_source_snapshots(self):
+        # Unlike the tiny geometry fixtures, this checks the actual production
+        # 720x1280 acceptance path, still using only synthetic colored video.
+        subprocess.run([
+            "ffmpeg", "-nostdin", "-loglevel", "error", "-y", "-f", "lavfi",
+            "-i", "color=c=green:s=720x1280:r=10:d=5",
+            "-c:v", "mpeg4", "-q:v", "10", str(self.scene),
+        ], check=True, capture_output=True)
+        params = self.params()
+        params.update(width=720, height=1280, fps=10, fixture_mode=False)
+        report = app.render(**params, execute=True)
+        self.assertEqual(report["result"], "ASSEMBLED_MP4_HUMAN_QA_REQUIRED")
+        self.assertTrue(report["input_snapshots_verified"])
+        self.assertFalse(report["publish_ready"])
+        movie = app._probe(self.output)
+        stream = next(s for s in movie["streams"] if s.get("codec_type") == "video")
+        self.assertEqual((stream["width"], stream["height"]), (720,1280))
+        self.assertAlmostEqual(float(movie["format"]["duration"]),5,delta=0.75)
+
     def test_symlink_swap_blocked_at_snapshot(self):
         if not hasattr(Path, "symlink_to"):
             self.skipTest("No symbolic link support")
