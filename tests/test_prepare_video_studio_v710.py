@@ -91,9 +91,8 @@ class PrepareStudioTests(unittest.TestCase):
 
     def test_wrong_sha_fails_closed_without_publishing(self):
         self.fake_head = "0" * 40
-        with patch.object(app, "_git", self.fake_git):
-            with self.assertRaisesRegex(app.SafetyError, "does not match"):
-                app.install(self.destination)
+        with (patch.object(app, "_git", self.fake_git), self.assertRaisesRegex(app.SafetyError, "does not match")):
+            app.install(self.destination)
         self.assertFalse(self.destination.exists())
 
     def test_invalid_source_fails_closed_without_publishing(self):
@@ -102,24 +101,21 @@ class PrepareStudioTests(unittest.TestCase):
             if args[0] == "clone":
                 (Path(args[-1]) / "core/api/retry_policy.py").unlink()
             return result
-        with patch.object(app, "_git", partial_git):
-            with self.assertRaisesRegex(app.SafetyError, "source files missing"):
-                app.install(self.destination)
+        with (patch.object(app, "_git", partial_git), self.assertRaisesRegex(app.SafetyError, "source files missing")):
+            app.install(self.destination)
         self.assertFalse(self.destination.exists())
 
     def test_failed_clone_keeps_destination_absent(self):
         self._make_checkout = False
-        with patch.object(app, "_git", self.fake_git):
-            with self.assertRaises(app.SafetyError):
-                app.install(self.destination)
+        with (patch.object(app, "_git", self.fake_git), self.assertRaises(app.SafetyError)):
+            app.install(self.destination)
         self.assertFalse(self.destination.exists())
 
     def test_git_modified_tracked_files_block_verification(self):
         self.write_checkout(self.destination)
         self.dirty = True
-        with patch.object(app, "_git", self.fake_git):
-            with self.assertRaisesRegex(app.SafetyError, "modified"):
-                app.verify_existing(self.destination)
+        with (patch.object(app, "_git", self.fake_git), self.assertRaisesRegex(app.SafetyError, "modified")):
+            app.verify_existing(self.destination)
 
     def test_reject_repo_internal_target(self):
         repo_inside = Path(app.__file__).resolve().parents[1] / "not_safe"
@@ -141,9 +137,8 @@ class PrepareStudioTests(unittest.TestCase):
             if "--show-toplevel" in args:
                 return str(self.home)
             return self.fake_git(*args)
-        with patch.object(app, "_git", fake_git):
-            with self.assertRaisesRegex(app.SafetyError, "does not equal"):
-                app.verify_existing(self.destination)
+        with (patch.object(app, "_git", fake_git), self.assertRaisesRegex(app.SafetyError, "does not equal")):
+            app.verify_existing(self.destination)
 
 
 if __name__ == "__main__":
