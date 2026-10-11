@@ -1,0 +1,37 @@
+name: P0-023 public source-frame visual proof (no Keys)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/p023-reference-visual-review.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-frame-thumbnails:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare original public PNG hashes and create read-only miniature visual proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v ffmpeg >/dev/null 2>&1; then
+            sudo apt-get update >/dev/null
+            sudo apt-get install -y ffmpeg >/dev/null
+          fi
+          echo 'Checking original public source images from this exact checkout'
+          echo 'f0c2b7c330c10c6c2640934b75e66b572e47e578805a978a84c907aada9db60e  assets/character/agnes-felt-test-frame.png' | sha256sum -c -
+          echo 'b91cbb57522669791f9c85f489d90cc7eed1a1376ff1f8fff22e38ef3707b095  assets/character/xue-director-felt-concept.png' | sha256sum -c -
+          ffmpeg -nostdin -loglevel error -y -i assets/character/agnes-felt-test-frame.png -vf 'scale=368:656' -frames:v 1 -q:v 9 /tmp/aniflow-portrait-preview.jpg
+          ffmpeg -nostdin -loglevel error -y -i assets/character/xue-director-felt-concept.png -vf 'scale=480:274' -frames:v 1 -q:v 9 /tmp/aniflow-concept-preview.jpg
+          echo 'P023_PORTRAIT_BASE64_BEGIN'
+          base64 -w 0 /tmp/aniflow-portrait-preview.jpg
+          echo ''
+          echo 'P023_PORTRAIT_BASE64_END'
+          echo 'P023_CONCEPT_BASE64_BEGIN'
+          base64 -w 0 /tmp/aniflow-concept-preview.jpg
+          echo ''
+          echo 'P023_CONCEPT_BASE64_END'
+          echo 'P023_NO_USER_KEYS_NO_VIDEO_REQUESTS'
