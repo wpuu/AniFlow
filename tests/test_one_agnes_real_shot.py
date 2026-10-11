@@ -176,6 +176,12 @@ def test_success_download_and_no_key_or_signed_url_leak(planned, tmp_path, fake_
     record = (tmp_path / "success/MYCL-001-shot-1.attempt.json").read_text()
     assert "THIS_KEY_STAYS_LOCAL" not in record
     assert "secret-download-token" not in record
+    elapsed_record = json.loads(record)
+    assert elapsed_record["created_at_unix"] <= elapsed_record["accepted_at_unix"]
+    assert elapsed_record["accepted_at_unix"] <= elapsed_record["finished_at_unix"]
+    assert elapsed_record["elapsed_to_final_result_seconds"] == result[
+        "elapsed_to_final_result_seconds"
+    ]
     assert hashlib.sha256(body).hexdigest() == result["mp4_sha256"]
 
 
@@ -600,3 +606,73 @@ def test_codespaces_one_post_survives_simulated_home_reset(
     assert events == ["POST"]
     assert (persistent / "first-job/MYCL-001-shot-1.attempt.json").is_file()
     assert (persistent / "single-attempt-ledger/MYCL-001-shot-1.once.json").is_file()
+
+
+def test_first_submission_time_survives_acceptance_and_completion(planned, tmp_path, monkeypatch):
+    """Never overwrite the original submission timestamp when status changes."""
+    from types import SimpleNamespace
+
+    clock = [120000]
+    monkeypatch.setattr(shot, "time", SimpleNamespace(time=lambda: clock[0]))
+    evidence = tmp_path / "timestamps.json"
+    begin = shot._save_attempt(
+        evidence, planned, status="SUBMISSION_ATTEMPT_UNCONFIRMED"
+    )
+    assert begin["created_at_unix"] == 120000
+    assert begin["response_at_unix"] is None
+
+    clock[0] = 120009
+    accepted = shot._save_attempt(
+        evidence, planned, status="ACCEPTED_SINGLE_VIDEO",
+        video_id="video_accepted", http_status=200,
+    )
+    assert accepted["created_at_unix"] == 120000
+    assert accepted["response_at_unix"] == 120009
+    assert accepted["accepted_at_unix"] == 120009
+    assert accepted["response_latency_seconds"] == 9
+
+    clock[0] = 121006
+    reread = json.loads(evidence.read_text(encoding="utf-8"))
+    assert shot._record_finished(reread) == 1006
+    assert reread["elapsed_to_final_result_seconds"] == 1006
+    assert reread["finished_at_unix"] == 121006
+    assert reread["created_at_unix"] == 120000
+
+
+def test_rejected_queue_full_preserves_initial_submit_time(planned, tmp_path, monkeypatch):
+    """Confirmed 503 rejection is counted, not erased by the response update."""
+    from types import SimpleNamespace
+
+    clock = [250000]
+    monkeypatch.setattr(shot, "time", SimpleNamespace(time=lambda: clock[0]))
+    evidence = tmp_path / "rejected.json"
+    shot._save_attempt(evidence, planned, status="SUBMISSION_ATTEMPT_UNCONFIRMED")
+    clock[0] += 12
+    rejection = shot._save_attempt(
+        evidence, planned, status="REJECTED_NO_VIDEO_ID",
+        http_status=503, code="video_queue_full",
+    )
+    assert rejection["created_at_unix"] == 250000
+    assert rejection["response_at_unix"] == 250012
+    assert rejection["response_latency_seconds"] == 12
+    assert rejection["accepted_at_unix"] is None
+    assert rejection["video_id"] is None
+    assert rejection["error_code"] == "video_queue_full"
+
+
+def test_timestamp_update_fails_closed_if_original_marker_tampered(planned, tmp_path):
+    evidence = tmp_path / "tampered.json"
+    evidence.write_text(
+        json.dumps({
+            "request_sha256": "0" * 64,
+            "status": "SUBMISSION_ATTEMPT_UNCONFIRMED",
+            "created_at_unix": 100,
+        }),
+        encoding="utf-8",
+    )
+    with pytest.raises(shot.ShotError, match="Original attempt record changed"):
+        shot._save_attempt(
+            evidence, planned, status="ACCEPTED_SINGLE_VIDEO",
+            video_id="video_accepted",
+        )
+    assert json.loads(evidence.read_text(encoding="utf-8"))["request_sha256"] == "0" * 64
