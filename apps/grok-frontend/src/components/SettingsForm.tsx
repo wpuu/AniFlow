@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import {
   DURATION_PRESETS,
   FLASH_SECONDS_PRESETS,
+  MYCL001_SHOT1_FROZEN_PROMPT,
   RESOLUTION_OPTIONS,
   RESOLUTION_PRESETS,
   VIDEO_MODELS,
@@ -163,6 +164,28 @@ export default function SettingsForm({ modelKey, onModelChange, params, onChange
 
       <div className="rounded-xl border border-zinc-200 bg-white p-4">
         <h3 className="mb-2 text-sm font-semibold text-zinc-800">提示词</h3>
+        {isFlash ? (
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <button type="button" className="rounded-md border border-indigo-500 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50"
+              onClick={() => {
+                if (params.prompt.trim() && params.prompt !== MYCL001_SHOT1_FROZEN_PROMPT
+                  && !window.confirm('会替换当前提示词与画面设置，但不会提交视频。确认载入 MYCL-001 第一镜头？')) return;
+                onChange((prev) => ({
+                  ...prev,
+                  prompt: MYCL001_SHOT1_FROZEN_PROMPT,
+                  mode: 't2v',
+                  ratio: '9:16',
+                  resolution: '720p',
+                  width: 720,
+                  height: 1280,
+                  seconds: 5,
+                }));
+              }}>
+              载入雪所长首镜头 · 5秒
+            </button>
+            <span className="text-[11px] text-zinc-400">只填写已锁定的分镜参数，不发送请求</span>
+          </div>
+        ) : null}
         <textarea
           value={params.prompt}
           onChange={(e) => onChange((prev) => ({ ...prev, prompt: e.target.value }))}
