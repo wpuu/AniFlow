@@ -96,8 +96,9 @@ async function parseJsonSafe(res: Response): Promise<Record<string, unknown> | n
 }
 
 function apiError(data: Record<string, unknown> | null, fallback: string): Error {
+  const rawError = data?.error;
   const message =
-    (data?.error as { message?: string } | undefined)?.message ||
+    (typeof rawError === 'string' ? rawError : (rawError as { message?: string } | undefined)?.message) ||
     (data?.message as string | undefined) ||
     (typeof data?.detail === 'string' ? data.detail : undefined) ||
     fallback;
