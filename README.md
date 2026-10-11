@@ -1,5 +1,7 @@
 # AniFlow / 动画工厂
 
+> **当前审计更新（2026-10-11）：** 本仓库的旧视频工作台安装器仍固定 `agnes-video-generator v7.0.4`，自制“队列满换 Key”补丁不可直接用于上游 `v7.1.0`。**不要把下方 V0.1/旧安装命令视为已验收的最新生产路径。** 现已新增只读兼容性预检与 7 项离线测试；Windows、真实 Key、竖屏视频与首集商业可行性仍待验。请先阅读 [最新独立复核](docs/reviews/2026-10-11-aniflow-business-and-v710-audit.md)、[离线验收记录](docs/reviews/2026-10-11-v710-offline-test-evidence.md)；预检脚本为 `scripts/audit_video_studio_v710.py`。本次是隔离分支候选，不表示已经部署、完成完整升级或实际出片。
+
 AniFlow is a private AI animation-production pipeline focused on repeatable short-form vertical animation rather than one-off prompt generation.
 
 ## Current V0.1 shape
