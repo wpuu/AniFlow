@@ -385,14 +385,16 @@ export default function App() {
           if (status === 'completed') {
             patch.videoUrl = result.url || result.metadata?.url || null;
             patch.progress = 100;
+            if (!patch.videoUrl) patch.error = '任务已完成，但未返回可播放的视频 URL；请查看服务商原任务';
           }
           if (status === 'failed') {
-            patch.error = result.error?.message || '生成失败，请检查参数或稍后重试';
+            patch.error = taskErrorMessage(result.error);
           }
           updateTaskState(keyIndex, patch);
           updateHistoryItem(historyId, patch as Partial<HistoryItem>);
 
           if (status === 'completed' || status === 'failed') {
+            finishVideoGuard(keyIndex, historyId);
             delete pollTimers.current[keyIndex];
             delete activeHistoryIdByKey.current[keyIndex];
             return;
@@ -410,8 +412,9 @@ export default function App() {
             );
           } else {
             const msg = err instanceof Error ? err.message : '网络异常，查询进度失败';
-            updateTaskState(keyIndex, { status: 'failed', error: msg, modelKey: taskModelKey });
-            updateHistoryItem(historyId, { status: 'failed', error: msg });
+            const warning = `状态查询中断（${msg}）。原任务可能仍在服务器运行，请仅恢复查询，勿重新创建。`;
+            updateTaskState(keyIndex, { status: 'stopped', error: warning, modelKey: taskModelKey });
+            updateHistoryItem(historyId, { status: 'stopped', error: warning });
             delete activeHistoryIdByKey.current[keyIndex];
           }
         }
@@ -560,8 +563,14 @@ export default function App() {
           size: result.size,
           seconds: result.seconds,
         };
-        if (status === 'completed') patch.videoUrl = result.url || result.metadata?.url || null;
-        if (status === 'failed') patch.error = result.error?.message || '生成失败';
+        if (status === 'completed') {
+          patch.videoUrl = result.url || result.metadata?.url || null;
+          if (!patch.videoUrl) patch.error = '任务已完成，但未返回视频地址';
+        }
+        if (status === 'failed') patch.error = taskErrorMessage(result.error);
+        if (status === 'completed' || status === 'failed') {
+          finishVideoGuard(item.keyIndex, item.id);
+        }
         updateHistoryItem(item.id, patch);
 
         if (activeHistoryIdByKey.current[item.keyIndex] === item.id) {
