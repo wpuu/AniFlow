@@ -9,7 +9,7 @@ from aniflow.queue_probe import (
     CAPACITY_AVAILABLE,
     INCONCLUSIVE_SATURATED,
     NO_KEYS,
-    PER_ACCOUNT,
+    MIXED_OBSERVED,
     Attempt,
     Round,
     decide,
@@ -31,19 +31,18 @@ def make_round(index: int, pattern: list[bool], code: str = "video_queue_full") 
 # --- the verdict logic is the whole product; test it hard -----------------
 
 
-def test_mixed_round_proves_per_account():
-    """Some accepted AND some queue_full at the same instant is only possible
-    if the limit is enforced per account."""
-    assert decide([make_round(1, [True, False, False])]) == PER_ACCOUNT
+def test_mixed_round_cannot_prove_per_account():
+    """One spare slot in a GLOBAL queue can also accept one, reject two."""
+    assert decide([make_round(1, [True, False, False])]) == MIXED_OBSERVED
 
 
 def test_mixed_in_any_round_is_enough():
     rounds = [
         make_round(1, [False, False, False]),
-        make_round(2, [False, True, False]),  # the smoking gun
+        make_round(2, [False, True, False]),  # a mixed sample, not proof of queue isolation
         make_round(3, [False, False, False]),
     ]
-    assert decide(rounds) == PER_ACCOUNT
+    assert decide(rounds) == MIXED_OBSERVED
 
 
 def test_all_rejected_is_inconclusive_not_global():
@@ -230,3 +229,11 @@ def test_audio_detection_missing_file_does_not_claim_no_audio(tmp_path, monkeypa
         lambda *args, **kwargs: CompletedProcess(args=args, returncode=1, stdout="", stderr="not found"),
     )
     assert has_audio_track(tmp_path / "missing.mp4") is None
+
+
+def test_shared_global_one_slot_is_counterexample_to_per_account_claim():
+    # A global queue with exactly one slot left admits the first concurrent
+    # request and rejects other accounts. That is indistinguishable here.
+    globally_shared_result = make_round(1, [True, False, False, False])
+    assert globally_shared_result.is_mixed
+    assert decide([globally_shared_result]) == MIXED_OBSERVED
