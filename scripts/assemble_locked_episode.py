@@ -1,9 +1,9 @@
-"""AniFlow P0-005: fail-closed, local-only assembly of approved shot clips.
+"""AniFlow P0-006: fail-closed assembly of clips and shot-aligned voice assets.
 
 This is an alternative to upstream creative-mode reauthoring. It DOES NOT create
 Agnes tasks, edit upstream checkpoints, synthesize voice, or upload/publish media.
 Default: --plan (no filesystem changes). Explicit --render creates a new file.
-Requires separately approved/supplied shot MP4s and narration audio.
+Requires approved shot MP4s and either one narration file or per-shot audio files.
 """
 from __future__ import annotations
 
@@ -113,17 +113,25 @@ def _video_probe(path: Path, *, expected: int, width: int, height: int, toleranc
     return {"seconds": round(d, 3), "sha256": _hash_file(path)}
 
 
-def _audio_probe(path: Path, *, expected: int) -> dict:
+def _audio_probe(path: Path, *, expected: int, per_shot: bool = False) -> dict:
     data = _probe(path)
     tracks = [s for s in data["streams"] if isinstance(s, dict) and s.get("codec_type") == "audio"]
     if len(tracks) != 1:
         raise AssemblyError("Expected a single narration audio stream")
     fmt = data.get("format") or {}
     d = _duration(fmt.get("duration"), label="Narration")
-    if d < max(1, expected * 0.30):
-        raise AssemblyError("Narration unexpectedly short for full episode")
-    if d > expected + 0.5:
-        raise AssemblyError("Narration exceeds locked episode length")
+    if per_shot:
+        # Respect sentence boundaries: a long spoken line must not be silently
+        # truncated to the shot length. 100ms covers small container rounding.
+        if d < 0.35:
+            raise AssemblyError("Per-shot narration is implausibly short")
+        if d > expected + 0.10:
+            raise AssemblyError("Per-shot narration exceeds its locked shot window")
+    else:
+        if d < max(1, expected * 0.30):
+            raise AssemblyError("Narration unexpectedly short for full episode")
+        if d > expected + 0.5:
+            raise AssemblyError("Narration exceeds locked episode length")
     return {"seconds": round(d, 3), "sha256": _hash_file(path),
             "will_pad_with_silence": d < expected - 0.25}
 
@@ -175,10 +183,13 @@ def _content_contract(shotlist: Path, factpack: Path) -> dict:
             "schedule": schedule}
 
 
-def preflight(*, shotlist: Path, factpack: Path, clips_dir: Path, narration: Path,
+def preflight(*, shotlist: Path, factpack: Path, clips_dir: Path,
+              narration: Path | None = None, scene_audio_dir: Path | None = None,
               output: Path, tolerance: float = 0.3, width: int = 720, height: int = 1280,
-              fixture_mode: bool = False) -> tuple[dict, list[Path], Path]:
+              fixture_mode: bool = False) -> tuple[dict, list[Path], list[Path]]:
     """No writes; check all inputs and exact shot contract before encoding."""
+    if (narration is None) == (scene_audio_dir is None):
+        raise AssemblyError("Choose exactly one narration source: --narration OR --scene-audio-dir")
     if not math.isfinite(tolerance) or not (0 <= tolerance <= 0.5):
         raise AssemblyError("Clip duration tolerance must be between 0 and 0.5 seconds")
     if width * 16 != height * 9 or width < 16 or height < 16:
@@ -203,24 +214,50 @@ def preflight(*, shotlist: Path, factpack: Path, clips_dir: Path, narration: Pat
         clips.append(path)
         evidence.append({"shot_id": sh["id"], "filename": path.name,
                          "planned_seconds": sh["seconds"], **check})
-    audio_file = _source_file(narration, extensions={".mp3", ".wav", ".m4a", ".aac"})
-    audio_evidence = _audio_probe(audio_file, expected=contract["total_seconds"])
+    if scene_audio_dir is not None:
+        folder = Path(scene_audio_dir)
+        if folder.is_symlink() or not folder.is_dir():
+            raise AssemblyError("Per-shot narration folder missing or symlink")
+        inputs: list[Path] = []
+        parts: list[dict] = []
+        for sh in contract["schedule"]:
+            # Reject ambiguous duplicate formats for a given shot; never guess.
+            options = [folder / f"narration_{sh['id']}{ext}"
+                       for ext in (".wav", ".mp3", ".m4a", ".aac")]
+            found = [p for p in options if p.exists() or p.is_symlink()]
+            if len(found) != 1:
+                raise AssemblyError(f"Expected exactly one narration for shot {sh['id']}")
+            source = _source_file(found[0], extensions={".mp3", ".wav", ".m4a", ".aac"})
+            info = _audio_probe(source, expected=sh["seconds"], per_shot=True)
+            inputs.append(source)
+            parts.append({"shot_id": sh["id"], "filename": source.name,
+                          "window_seconds": sh["seconds"], **info})
+        audio_evidence = {"mode": "per_shot", "shots": parts,
+                          "total_recorded_seconds": round(sum(p["seconds"] for p in parts), 3),
+                          "total_seconds": contract["total_seconds"],
+                          "silence_is_padded_at_each_shot_end": True}
+    else:
+        audio_file = _source_file(narration, extensions={".mp3", ".wav", ".m4a", ".aac"})
+        inputs = [audio_file]
+        audio_evidence = {"mode": "continuous", **_audio_probe(audio_file, expected=contract["total_seconds"])}
     return ({**contract, "clips": evidence, "narration": audio_evidence,
              "result": "SOURCE_MEDIA_CHECKED_NOT_RENDERED",
-             "warnings": ["Actual narration wording/audio was not transcribed or fact-checked.",
+             "warnings": ["Audio alignment is structural only; actual spoken words have not been transcribed or fact-checked.",
                           "Pixel orientation, character identity, and visual science require human viewing.",
                           "Subtitles, commercial music/voice rights and AI labeling are not added."]},
-            clips, audio_file)
+            clips, inputs)
 
 
-def render(*, shotlist: Path, factpack: Path, clips_dir: Path, narration: Path,
+def render(*, shotlist: Path, factpack: Path, clips_dir: Path,
+           narration: Path | None = None, scene_audio_dir: Path | None = None,
            output: Path, tolerance: float = 0.3, width: int = 720, height: int = 1280,
            fps: int = 24, fixture_mode: bool = False, execute: bool = False) -> dict:
     if not 1 <= fps <= 60:
         raise AssemblyError("FPS must be in 1..60")
-    report, clips, audio_path = preflight(
+    report, clips, audio_files = preflight(
         shotlist=shotlist, factpack=factpack, clips_dir=clips_dir,
-        narration=narration, output=output, tolerance=tolerance,
+        narration=narration, scene_audio_dir=scene_audio_dir,
+        output=output, tolerance=tolerance,
         width=width, height=height, fixture_mode=fixture_mode)
     report["output_filename"] = Path(output).name
     if not execute:
@@ -234,11 +271,27 @@ def render(*, shotlist: Path, factpack: Path, clips_dir: Path, narration: Path,
             graph.append(f"[{i}:v:0]trim=duration={sh['seconds']},setpts=PTS-STARTPTS,fps={fps},scale={width}:{height},setsar=1,format=yuv420p[v{i}]")
         video_inputs = "".join(f"[v{i}]" for i in range(len(clips)))
         graph.append(f"{video_inputs}concat=n={len(clips)}:v=1:a=0[v]")
-        graph.append(f"[{len(clips)}:a:0]aresample=async=1:first_pts=0,apad,atrim=duration={report['total_seconds']},asetpts=PTS-STARTPTS[a]")
+        if report["narration"]["mode"] == "per_shot":
+            for i, sh in enumerate(report["schedule"]):
+                graph.append(
+                    f"[{len(clips)+i}:a:0]aresample=48000:async=1:first_pts=0,"
+                    f"aformat=sample_fmts=fltp:channel_layouts=stereo,apad,"
+                    f"atrim=duration={sh['seconds']},asetpts=PTS-STARTPTS[a{i}]"
+                )
+            audio_inputs = "".join(f"[a{i}]" for i in range(len(clips)))
+            graph.append(f"{audio_inputs}concat=n={len(clips)}:v=0:a=1[a]")
+        else:
+            graph.append(
+                f"[{len(clips)}:a:0]aresample=48000:async=1:first_pts=0,"
+                f"aformat=sample_fmts=fltp:channel_layouts=stereo,apad,"
+                f"atrim=duration={report['total_seconds']},asetpts=PTS-STARTPTS[a]"
+            )
         cmd = ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error", "-n"]
         for clip in clips:
             cmd += ["-i", str(clip)]
-        cmd += ["-i", str(audio_path), "-filter_complex", ";".join(graph),
+        for audio_path in audio_files:
+            cmd += ["-i", str(audio_path)]
+        cmd += ["-filter_complex", ";".join(graph),
                 "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-preset", "veryfast",
                 "-crf", "23", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart",
                 str(tmp)]
@@ -279,13 +332,18 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--shotlist", type=Path, required=True)
     ap.add_argument("--factpack", type=Path, required=True)
     ap.add_argument("--clips-dir", type=Path, required=True)
-    ap.add_argument("--narration", type=Path, required=True)
+    audio_group = ap.add_mutually_exclusive_group(required=True)
+    audio_group.add_argument("--narration", type=Path,
+                             help="Legacy continuous narration; cannot enforce shot-level timing")
+    audio_group.add_argument("--scene-audio-dir", type=Path,
+                             help="Preferred: directory with narration_<shot-id>.wav/.mp3 per shot")
     ap.add_argument("--output", type=Path, required=True)
     ap.add_argument("--render", action="store_true", help="Explicitly assemble local checked clips")
     args = ap.parse_args(argv)
     try:
         result = render(shotlist=args.shotlist, factpack=args.factpack,
                         clips_dir=args.clips_dir, narration=args.narration,
+                        scene_audio_dir=args.scene_audio_dir,
                         output=args.output, execute=args.render)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
