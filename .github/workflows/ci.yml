@@ -176,3 +176,54 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Windows bundle installer failed" }
           & ".\.venv\Scripts\python.exe" -c "from aniflow.bridge.app import create_bridge_app; from fastapi.testclient import TestClient; app=create_bridge_app(); c=TestClient(app); assert c.get('/').status_code == 200; assert c.get('/api/health').json()['frontend_ready']; paths=c.get('/openapi.json').json()['paths']; assert '/api/video/create' in paths; assert '/api/video/status' in paths; print('PASS_WINDOWS_BUNDLE_NO_NODE_NO_KEY')"
           if ($LASTEXITCODE -ne 0) { throw "Windows built-bundle Bridge smoke test failed" }
+
+      - name: Start real Windows Bridge on localhost and GET compiled UI (zero Agnes calls)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Set-Location bundle
+          $python = (Resolve-Path ".\.venv\Scripts\python.exe").Path
+          $bridge = Start-Process -FilePath $python -ArgumentList @("-m", "aniflow.cli", "bridge") -WorkingDirectory (Get-Location).Path -PassThru -RedirectStandardOutput "bridge-smoke-out.txt" -RedirectStandardError "bridge-smoke-err.txt"
+          try {
+            $base = "http://127.0.0.1:8765"
+            $healthy = $false
+            for ($i = 0; $i -lt 35; $i++) {
+              if ($bridge.HasExited) { throw "Bridge process exited before HTTP health became ready" }
+              try {
+                $h = Invoke-RestMethod -Uri "$base/api/health" -TimeoutSec 2
+                if ($h.ok -eq $true -and $h.frontend_ready -eq $true) {
+                  $healthy = $true
+                  break
+                }
+              }
+              catch { }
+              Start-Sleep -Milliseconds 700
+            }
+            if (-not $healthy) { throw "Real Bridge never opened localhost:8765" }
+            $page = Invoke-WebRequest -Uri "$base/" -UseBasicParsing -TimeoutSec 10
+            if ($page.StatusCode -ne 200) { throw "Real Bridge did not serve the compiled UI" }
+            if ($page.Content -notmatch "AniFlow") { throw "Compiled AniFlow frontend not found in live response" }
+            $api = Invoke-RestMethod -Uri "$base/openapi.json" -TimeoutSec 10
+            $routes = $api.paths.PSObject.Properties.Name
+            if ($routes -notcontains "/api/video/create" -or $routes -notcontains "/api/video/status") {
+              throw "Real server is missing required Agnes video routes"
+            }
+            $client = [System.Net.Http.HttpClient]::new()
+            try {
+              $request = [System.Net.Http.HttpRequestMessage]::new(
+                [System.Net.Http.HttpMethod]::Get, "$base/api/health"
+              )
+              $request.Headers.Host = "127.0.0.1.rebind.invalid"
+              $reply = $client.SendAsync($request).GetAwaiter().GetResult()
+              if ([int]$reply.StatusCode -ne 400) { throw "DNS rebinding Host was not rejected" }
+              $reply.Dispose()
+              $request.Dispose()
+            }
+            finally { $client.Dispose() }
+            Write-Host "PASS_WINDOWS_REAL_LOCALHOST_BRIDGE_UI_ROUTES_HOST_GUARD_ZERO_AGNES_REQUESTS"
+          }
+          finally {
+            Stop-Process -Id $bridge.Id -Force -ErrorAction SilentlyContinue
+            Wait-Process -Id $bridge.Id -ErrorAction SilentlyContinue
+          }
+
