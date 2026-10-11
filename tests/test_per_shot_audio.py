@@ -102,6 +102,35 @@ class PerShotAudioTests(unittest.TestCase):
             self.assertGreater(own,wrong*4, f'tone did not align to scene at {elapsed}s')
             elapsed+=seconds
 
+    def test_mixed_mp3_and_wav_voice_inputs_resample_to_one_track(self):
+        mixed=self.root/'mixed-audio-formats'
+        shutil.copytree(self.voices,mixed)
+        for i in (2,6):
+            source=mixed/f'narration_{i}.wav'
+            dest=mixed/f'narration_{i}.mp3'
+            subprocess.run(['ffmpeg','-nostdin','-loglevel','error','-y',
+                            '-i',str(source),'-ar','22050','-ac','1',str(dest)],
+                           check=True,capture_output=True)
+            source.unlink()
+        target=self.root/'mixed-codec-render.mp4'
+        report=app.render(**{**self.kw(output=target),'scene_audio_dir':mixed},execute=True)
+        self.assertEqual(report['result'],'ASSEMBLED_MP4_HUMAN_QA_REQUIRED')
+        self.assertEqual(report['narration']['mode'],'per_shot')
+        self.assertEqual(len(report['narration']['shots']),8)
+        meta=app._probe(target)
+        self.assertEqual(len([x for x in meta['streams'] if x.get('codec_type')=='audio']),1)
+        self.assertAlmostEqual(float(meta['format']['duration']),46,delta=0.75)
+
+    def test_only_one_per_shot_narration_mode_accepted_from_cli(self):
+        output=self.root/'cli-preview.mp4'
+        args=['--shotlist',str(self.sp),'--factpack',str(self.fp),
+              '--clips-dir',str(self.clips),'--scene-audio-dir',str(self.voices),
+              '--output',str(output)]
+        # CLI hardcodes production 720x1280; fixture clips are deliberately tiny,
+        # so it must fail closed without creating an output file.
+        self.assertEqual(app.main(args),2)
+        self.assertFalse(output.exists())
+
     def test_two_narration_modes_are_rejected(self):
         with self.assertRaisesRegex(app.AssemblyError,'exactly one narration'):
             app.render(**self.kw(narration=self.voices/'narration_1.wav'))
