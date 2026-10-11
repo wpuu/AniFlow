@@ -62,9 +62,9 @@ class ImmutableMediaSnapshotTests(unittest.TestCase):
         self.output = self.root / "assembled.mp4"
 
     def params(self):
-        return dict(shotlist=self.shotlist,factpack=self.fact,clips_dir=self.clips_dir,
-                    narration=self.audio,output=self.output,width=90,height=160,
-                    fixture_mode=True,fps=3)
+        return {"shotlist": self.shotlist, "factpack": self.fact, "clips_dir": self.clips_dir,
+                "narration": self.audio, "output": self.output, "width": 90, "height": 160,
+                "fixture_mode": True, "fps": 3}
 
     def test_stage_source_returns_identical_snapshot_not_a_hardlink(self):
         copy = self.root / "copy.mp4"
@@ -89,9 +89,9 @@ class ImmutableMediaSnapshotTests(unittest.TestCase):
             with clips[0].open("ab") as f:
                 f.write(b"POST_PREFLIGHT_MUTATION")
             return original(report, clips, audio_files, dest, **opts)
-        with patch.object(app, "_snapshot_inputs", side_effect=mutate_before_staging):
-            with self.assertRaisesRegex(app.AssemblyError,"changed after preflight"):
-                app.render(**self.params(),execute=True)
+        with (patch.object(app, "_snapshot_inputs", side_effect=mutate_before_staging),
+              self.assertRaisesRegex(app.AssemblyError, "changed after preflight")):
+            app.render(**self.params(), execute=True)
         self.assertFalse(self.output.exists())
         self.assertEqual(list(self.root.glob("aniflow-local-assemble-*")),[])
 
@@ -101,9 +101,9 @@ class ImmutableMediaSnapshotTests(unittest.TestCase):
             with audio_files[0].open("ab") as f:
                 f.write(b"CHANGED_AUDIO")
             return original(report, clips, audio_files, dest, **opts)
-        with patch.object(app, "_snapshot_inputs", side_effect=mutate_voice):
-            with self.assertRaisesRegex(app.AssemblyError,"changed after preflight"):
-                app.render(**self.params(),execute=True)
+        with (patch.object(app, "_snapshot_inputs", side_effect=mutate_voice),
+              self.assertRaisesRegex(app.AssemblyError, "changed after preflight")):
+            app.render(**self.params(), execute=True)
         self.assertFalse(self.output.exists())
 
     def test_ffmpeg_reads_only_staged_sources_and_reports_verified(self):
