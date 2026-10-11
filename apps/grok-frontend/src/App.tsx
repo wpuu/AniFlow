@@ -776,6 +776,33 @@ export default function App() {
             />
           </div>
 
+          {Object.keys(submissionGuards).length > 0 ? (
+            <div className="mt-3 space-y-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+              <p className="font-semibold">视频提交安全记录：这些 Key 在确认原任务状态前禁止重新提交。</p>
+              <p>刷新页面、停止跟踪、网络中断均不意味着服务器取消生成。继续查询只发送 GET，不创建视频。</p>
+              <div className="flex flex-wrap gap-2">
+                {Object.values(submissionGuards)
+                  .sort((a, b) => a.keyIndex - b.keyIndex)
+                  .map((guard) => (
+                    <div key={guard.attemptId} className="flex items-center gap-2 rounded bg-white px-2 py-1">
+                      <strong>Key {guard.keyIndex + 1}</strong>
+                      <span>{guard.videoId ? '有原视频 ID' : '提交结果不明'}</span>
+                      {guard.videoId ? (
+                        <button type="button" onClick={() => resumeExistingGuard(guard.keyIndex)}
+                          className="rounded border border-amber-500 px-2 py-1 hover:bg-amber-100">
+                          继续查原任务
+                        </button>
+                      ) : null}
+                      <button type="button" onClick={() => confirmUnlockGuard(guard.keyIndex)}
+                        className="rounded border border-amber-500 px-2 py-1 hover:bg-amber-100">
+                        人工核实后解锁
+                      </button>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          ) : null}
+
           {message ? (
             <div
               className={`mt-2 rounded-md px-3 py-1.5 text-xs font-medium ${
@@ -794,11 +821,12 @@ export default function App() {
             <KeySettings
               keyCount={apiKeyCount}
               apiKeys={apiKeys}
-              busyKeyIndexes={new Set(
-                Object.entries(tasksByKey)
+              busyKeyIndexes={new Set([
+                ...Object.entries(tasksByKey)
                   .filter(([, task]) => BUSY_STATUSES.has(task.status))
                   .map(([index]) => Number(index)),
-              )}
+                ...Object.keys(submissionGuards).map(Number),
+              ])}
               onKeyCountChange={handleKeyCountChange}
               onKeyChange={handleKeyChange}
             />
