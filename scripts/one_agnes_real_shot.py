@@ -23,7 +23,6 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 import httpx
-
 from lock_upstream_creative_checkpoint import ContractError, lock_contract
 
 MODEL = "agnes-video-2.5-flash"
@@ -215,7 +214,7 @@ def _download_video(client: httpx.Client, url: str, outdir: Path) -> tuple[Path,
             if response.status_code != 200:
                 raise ShotError(f"CDN download failed (HTTP {response.status_code})")
             mime = response.headers.get("content-type", "").lower()
-            if mime and not (mime.startswith("video/") or mime.startswith("application/octet-stream")):
+            if mime and not mime.startswith(("video/", "application/octet-stream")):
                 raise ShotError("CDN returned a non-video content type")
             for block in response.iter_bytes(chunk_size=1024 * 1024):
                 total += len(block)
