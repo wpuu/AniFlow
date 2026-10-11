@@ -68,9 +68,9 @@ class LockedAssemblyTests(unittest.TestCase):
         ], check=True, capture_output=True)
 
     def kwargs(self):
-        return dict(shotlist=self.sp, factpack=self.fp, clips_dir=self.clips,
-                    narration=self.audio, output=self.output, width=90, height=160,
-                    fixture_mode=True, fps=3)
+        return {"shotlist": self.sp, "factpack": self.fp, "clips_dir": self.clips,
+                "narration": self.audio, "output": self.output, "width": 90, "height": 160,
+                "fixture_mode": True, "fps": 3}
 
     def test_real_myclarity_8_shots_46_seconds(self):
         c=assembly._content_contract(self.sp,self.fp)
