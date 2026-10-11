@@ -98,6 +98,32 @@ jobs:
         run: python -m pip install -e ".[dev]"
       - name: Full repository Pytest suite (no private keys)
         run: python -m pytest -q
+      - name: Locked first-shot plan-only preview (never reads secrets or sends POST)
+        shell: bash
+        if: runner.os == 'Linux'
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          import sys
+          run = subprocess.run(
+              [sys.executable, "scripts/one_agnes_real_shot.py"],
+              capture_output=True,
+              check=True,
+              text=True,
+          )
+          plan = json.loads(run.stdout)
+          assert plan["result"] == "PLAN_ONLY_NO_REQUESTS"
+          assert plan["submissions"] == 0
+          assert plan["episode_id"] == "MYCL-001"
+          assert plan["seconds"] == 5
+          assert plan["model"] == "agnes-video-2.5-flash"
+          assert plan["mode"] == "text"
+          assert plan["resolution"] == "720P"
+          assert plan["aspect_ratio"] == "9:16"
+          assert not any("api_key" in key.lower() for key in plan)
+          print("PASS_CLOUD_FIRST_SHOT_PLAN_ONLY_ZERO_POST")
+          PY
       - name: AniFlow doctor
         run: aniflow doctor
 

@@ -8,6 +8,7 @@ from uuid import uuid4
 import httpx
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 
@@ -87,6 +88,13 @@ def create_bridge_app(
         allow_credentials=False,
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["*"],
+    )
+    # Bind-to-loopback is necessary but insufficient against DNS rebinding.
+    # The synthetic testserver host is used only by Starlette's TestClient.
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=["127.0.0.1", "localhost", "testserver"],
+        www_redirect=False,
     )
 
     def resolve_store() -> PublicMediaStore:

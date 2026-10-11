@@ -226,3 +226,72 @@ def test_invalid_reference_images_are_blocked_before_any_external_post() -> None
             )
             assert result.status_code == 422
     assert calls == 0
+
+
+
+def test_rebinding_host_is_rejected_before_any_create_or_status_upstream_call() -> None:
+    """A localhost TCP listener is not enough: reject a foreign Host."""
+    calls: list[httpx.Request] = []
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        return httpx.Response(200, json={"video_id": "should_never_exist"})
+
+    with client_for(respond) as client:
+        for route, data in (
+            ("/api/video/create", {"api_key": FAKE_KEY, "payload": GOOD_PAYLOAD}),
+            ("/api/video/status", {
+                "api_key": FAKE_KEY,
+                "video_id": "an_existing_id",
+                "model_name": "agnes-video-2.5-flash",
+            }),
+        ):
+            reply = client.post(
+                route,
+                headers={"Host": "127.0.0.1.attacker.example"},
+                json=data,
+            )
+            assert reply.status_code == 400
+    assert calls == []
+
+
+def test_foreign_browser_origin_cannot_pass_preflight_and_no_video_is_created() -> None:
+    calls: list[httpx.Request] = []
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        return httpx.Response(200, json={"video_id": "should_never_exist"})
+
+    with client_for(respond) as client:
+        reply = client.options(
+            "/api/video/create",
+            headers={
+                "Host": "localhost:8765",
+                "Origin": "https://attacker.example",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "content-type",
+            },
+        )
+    assert reply.status_code == 400
+    assert "https://attacker.example" not in reply.headers.get(
+        "access-control-allow-origin", ""
+    )
+    assert calls == []
+
+
+def test_valid_loopback_host_still_accepts_one_explicit_mocked_create() -> None:
+    calls: list[httpx.Request] = []
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        return httpx.Response(200, json={"video_id": "mock_existing_one", "status": "queued"})
+
+    with client_for(respond) as client:
+        response = client.post(
+            "/api/video/create",
+            headers={"Host": "127.0.0.1:8765"},
+            json={"api_key": FAKE_KEY, "payload": GOOD_PAYLOAD},
+        )
+    assert response.status_code == 200
+    assert response.json()["video_id"] == "mock_existing_one"
+    assert len(calls) == 1

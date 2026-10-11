@@ -5,6 +5,10 @@
 - **这是已有 `apps/grok-frontend/` 的实际操作卡，不是开发新平台。**
 - 适用范围：自己的可信 Windows 浏览器，持有合法权限的 Agnes API Key；本轮仅做无 Key 模拟和真实浏览器跨域试验，**未生成任何真实视频**。
 
+> **P0-025 本机 Bridge 访问防护：** 已新增精确 Host 白名单，阻断域名重新绑定（DNS rebinding）访问。只允许 `localhost`、`127.0.0.1` 和仅用于测试的 `testserver` 名称；外部网页 Origin 的预检依旧不放行。此为无 Key 的接口安全检查，不证明真实视频出片。新增 `scripts/one_agnes_real_shot.py` 的 CI 纯预览门槛，只验证 `PLAN_ONLY_NO_REQUESTS` / `submissions=0`。
+>
+> **云端约束：** 现有 `AGNES_API_KEYS` 曾在 GitHub Actions 旧作业中被判定为非空，但并不等于 Codespaces 中已有 `ANIFLOW_SINGLE_SHOT_API_KEY`。GitHub 的 `workflow_dispatch` 要求对应工作流已存在于默认分支；当前隔离分支内的设计不能凭空变成手机端可执行的正式入口，且在公开仓库中把私有 MP4 上传为可访问的构建产物不是默认安全交付方式。真实试片仍需明确单次许可与私有输出方案。
+>
 > **P0-021 必须使用最新本地 Bridge：** 官方 Agnes 的 OPTIONS 请求返回 HTTP 204 和通用 CORS 头，但 [Chrome 真浏览器测试](https://github.com/wpuu/AniFlow/actions/runs/38152367310) 发现带 Authorization 的跨域请求仍被阻止，符合 [MDN 对 Authorization 必须显式允许的说明](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Allow-Headers)。已在**原 AniFlow 本机 Bridge**增加视频请求转发，浏览器只向 `http://127.0.0.1:8765` 发送请求，由本机一次转发给 Agnes。**不是新平台，不装第二套应用，也没有服务端自动重试**。旧 main 和仅打开孤立 index.html 的用法不具备这一修复。
 
 ## A. 从现有应用启动
