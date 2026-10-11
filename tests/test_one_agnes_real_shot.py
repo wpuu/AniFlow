@@ -23,6 +23,8 @@ assert SPEC and SPEC.loader
 shot = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(shot)
 
+_ORIGINAL_ONCE_ROOT = shot._once_root
+
 
 @pytest.fixture(autouse=True)
 def isolate_single_attempt_ledger(tmp_path, monkeypatch):
@@ -491,3 +493,110 @@ def test_default_plan_never_creates_single_attempt_guard(planned, tmp_path):
     )
     assert result["submissions"] == 0
     assert not (tmp_path / "single-attempt-ledger").exists()
+
+
+@pytest.fixture
+def fake_rebuild_persistent_codespace(tmp_path, monkeypatch):
+    """Simulate a Codespace with persistent /workspaces and disposable /home."""
+    workspaces = tmp_path / "workspaces"
+    workspaces.mkdir()
+    persistent = workspaces / ".aniflow-private"
+    persistent.mkdir(mode=0o700)
+    monkeypatch.setenv("CODESPACES", "true")
+    monkeypatch.setattr(shot, "_codespace_workspace_base", lambda: workspaces)
+    # The test module's global fixture isolates home-ledger behavior; restore
+    # the real selector for these explicit Codespaces-specific cases.
+    monkeypatch.setattr(shot, "_once_root", _ORIGINAL_ONCE_ROOT)
+    return persistent
+
+
+def test_codespaces_ledger_uses_rebuild_persistent_volume(
+    planned, tmp_path, monkeypatch, fake_rebuild_persistent_codespace
+):
+    persistent = fake_rebuild_persistent_codespace
+    expected = persistent / "single-attempt-ledger"
+    assert shot._once_root() == expected
+    monkeypatch.setenv("HOME", str(tmp_path / "disposable-home-one"))
+    shot._reserve_one_submission(planned, persistent / "first")
+    guard = expected / "MYCL-001-shot-1.once.json"
+    assert guard.is_file()
+
+    # Rebuild scenario: container's home is erased/recreated while the mounted
+    # /workspaces volume remains unchanged.
+    monkeypatch.setenv("HOME", str(tmp_path / "disposable-home-after-rebuild"))
+    assert shot._once_root() == expected
+    with pytest.raises(shot.ShotError, match="already reserved"):
+        shot._reserve_one_submission(planned, persistent / "different-folder")
+    assert guard.is_file()
+
+
+def test_codespaces_disposable_home_video_folder_is_refused(
+    tmp_path, fake_rebuild_persistent_codespace
+):
+    ephemeral_home = tmp_path / "disposable-home"
+    ephemeral_home.mkdir()
+    with pytest.raises(shot.ShotError, match="home-directory videos are erased"):
+        shot._output_dir(ephemeral_home / "mycl001-shot1", create=True)
+    assert not (ephemeral_home / "mycl001-shot1").exists()
+    allowed = shot._output_dir(
+        fake_rebuild_persistent_codespace / "mycl001-shot1", create=True
+    )
+    assert allowed.is_dir()
+    assert allowed.parent == fake_rebuild_persistent_codespace
+
+
+def test_codespaces_missing_persistent_volume_fails_closed(
+    tmp_path, monkeypatch, fake_rebuild_persistent_codespace
+):
+    unavailable = tmp_path / "missing-workspaces"
+    monkeypatch.setattr(shot, "_codespace_workspace_base", lambda: unavailable)
+    with pytest.raises(shot.ShotError, match="persistent /workspaces volume"):
+        shot._once_root()
+    with pytest.raises(shot.ShotError, match="persistent /workspaces volume"):
+        shot._output_dir(tmp_path / "other" / "video", create=True)
+
+
+def test_codespaces_symlinked_private_volume_fails_closed(
+    tmp_path, monkeypatch, fake_rebuild_persistent_codespace
+):
+    original = fake_rebuild_persistent_codespace
+    original.rmdir()
+    other = tmp_path / "outside"
+    other.mkdir()
+    try:
+        original.symlink_to(other, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("Filesystem does not support symlinks")
+    with pytest.raises(shot.ShotError, match="must not be a symlink"):
+        shot._once_root()
+
+
+def test_codespaces_one_post_survives_simulated_home_reset(
+    planned, tmp_path, monkeypatch, fake_rebuild_persistent_codespace, fake_inspection
+):
+    persistent = fake_rebuild_persistent_codespace
+    events = []
+
+    def handler(request):
+        events.append(request.method)
+        return httpx.Response(503, json={"code": "video_queue_full"})
+
+    with httpx.Client(transport=httpx.MockTransport(handler), trust_env=False) as client:
+        result = shot.run_live(
+            planned, persistent / "first-job", execute=True, resume=False,
+            confirmed_price=True,
+            environ={"ANIFLOW_SINGLE_SHOT_API_KEY": "TEST_ONLY"},
+            client=client,
+        )
+        assert result["result"] == "REJECTED_NO_VIDEO_ID"
+        monkeypatch.setenv("HOME", str(tmp_path / "newly-built-container-home"))
+        with pytest.raises(shot.ShotError, match="already reserved"):
+            shot.run_live(
+                planned, persistent / "second-job", execute=True, resume=False,
+                confirmed_price=True,
+                environ={"ANIFLOW_SINGLE_SHOT_API_KEY": "TEST_ONLY"},
+                client=client,
+            )
+    assert events == ["POST"]
+    assert (persistent / "first-job/MYCL-001-shot-1.attempt.json").is_file()
+    assert (persistent / "single-attempt-ledger/MYCL-001-shot-1.once.json").is_file()
