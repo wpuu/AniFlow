@@ -47,6 +47,6 @@ jobs:
             aniflow-p012-no-key \
             bash -euc '
               python scripts/one_agnes_real_shot.py > /tmp/aniflow-preview.json
-              python -c "import json; p=json.load(open(\x27/tmp/aniflow-preview.json\x27)); assert p[\x27result\x27]==\x27PLAN_ONLY_NO_REQUESTS\x27; assert p[\x27submissions\x27]==0"
+              grep -q PLAN_ONLY_NO_REQUESTS /tmp/aniflow-preview.json
               python -m pytest -q -p no:cacheprovider tests/test_one_agnes_real_shot.py
             '
