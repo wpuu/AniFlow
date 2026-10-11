@@ -1,0 +1,52 @@
+name: P0-012 Codespaces plan-only isolated image
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".devcontainer/**"
+      - ".github/workflows/p012-codespaces-plan-only.yml"
+      - "scripts/one_agnes_real_shot.py"
+      - "scripts/lock_upstream_creative_checkpoint.py"
+      - "tests/test_one_agnes_real_shot.py"
+      - "content/shotlists/**"
+      - "content/factpacks/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p012-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  no-key-cloud-image:
+    name: Browser Codespace image build and offline single-shot contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ANIFLOW_SINGLE_SHOT_API_KEY: ""
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build fixed Python and FFmpeg devcontainer image
+        run: |
+          docker build --pull --file .devcontainer/Dockerfile \
+            --tag aniflow-p012-no-key .devcontainer
+
+      - name: Run plan and mocked tests without network or write access to repo
+        run: |
+          docker run --rm \
+            --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --tmpfs /tmp:rw,nosuid,nodev,size=512m \
+            -e PYTHONDONTWRITEBYTECODE=1 \
+            -e ANIFLOW_SINGLE_SHOT_API_KEY="" \
+            --mount type=bind,src="$GITHUB_WORKSPACE",dst=/workspaces/AniFlow,readonly \
+            --workdir /workspaces/AniFlow \
+            aniflow-p012-no-key \
+            bash -euc '
+              python scripts/one_agnes_real_shot.py > /tmp/aniflow-preview.json
+              python -c "import json; p=json.load(open(\x27/tmp/aniflow-preview.json\x27)); assert p[\x27result\x27]==\x27PLAN_ONLY_NO_REQUESTS\x27; assert p[\x27submissions\x27]==0"
+              python -m pytest -q -p no:cacheprovider tests/test_one_agnes_real_shot.py
+            '
