@@ -272,3 +272,82 @@ def test_local_cli_preview_never_needs_key(capsys):
     assert code == 0
     assert "PLAN_ONLY_NO_REQUESTS" in out
     assert "video_id" not in out
+
+
+@pytest.mark.parametrize(
+    ("size", "expected_result"),
+    [
+        ("720x1280", "MEDIA_REQUIRES_HUMAN_REVIEW"),
+        ("1280x720", "MEDIA_QA_BLOCKED"),
+    ],
+)
+def test_full_single_shot_path_with_real_ffmpeg_metadata(
+    planned, tmp_path, monkeypatch, size, expected_result
+):
+    """Real Windows/Linux MP4+ffprobe: provider HTTP itself remains fully mocked.
+
+    This exercises actual video bytes on disk and actual orientation metadata
+    verification, not the previous _inspect_clip mock.
+    """
+    import shutil
+    import subprocess
+
+    if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
+        pytest.skip("FFmpeg and FFprobe are not installed")
+    video = tmp_path / "locally-generated-not-agnes.mp4"
+    subprocess.run(
+        [
+            "ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error", "-y",
+            "-f", "lavfi", "-i", f"color=c=blue:s={size}:r=4:d=5",
+            "-t", "5", "-c:v", "mpeg4", "-q:v", "10",
+            "-pix_fmt", "yuv420p", str(video),
+        ],
+        check=True, capture_output=True, timeout=60,
+    )
+    payload = video.read_bytes()
+    assert len(payload) > 1024
+    events = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        events.append(request.method)
+        if request.method == "POST":
+            assert request.url.path == "/v1/videos"
+            return httpx.Response(201, json={"video_id": "test_local_ffprobe_001"})
+        if request.url.path == "/agnesapi":
+            return httpx.Response(
+                200, json={
+                    "status": "completed",
+                    "url": "https://video.example.org/synthetic-only.mp4",
+                }
+            )
+        assert request.url.host == "video.example.org"
+        return httpx.Response(
+            200, headers={"Content-Type": "video/mp4"}, content=payload
+        )
+
+    with httpx.Client(
+        transport=httpx.MockTransport(handler), trust_env=False
+    ) as client:
+        result = shot.run_live(
+            planned, tmp_path / f"result-{size}", execute=True, resume=False,
+            confirmed_price=True,
+            environ={"ANIFLOW_SINGLE_SHOT_API_KEY": "NON_SECRET_TEST_ONLY"},
+            client=client, poll_interval=0, max_polls=1,
+            sleep_fn=lambda _: None,
+        )
+    assert events == ["POST", "GET", "GET"]
+    assert result["result"] == expected_result
+    assert result["submissions"] == 1
+    assert result["media_check"] == (
+        "METADATA_OK_HUMAN_QA_REQUIRED"
+        if expected_result == "MEDIA_REQUIRES_HUMAN_REVIEW"
+        else "BLOCKED"
+    )
+    assert result["manual_viewing_required"] is True
+    assert result["pixel_orientation_verified"] is False
+    assert result["mp4_sha256"] == hashlib.sha256(payload).hexdigest()
+    record = (tmp_path / f"result-{size}" / "MYCL-001-shot-1.attempt.json").read_text(
+        encoding="utf-8"
+    )
+    assert "NON_SECRET_TEST_ONLY" not in record
+    assert "video.example.org" not in record
