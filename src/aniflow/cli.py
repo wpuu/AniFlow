@@ -350,7 +350,11 @@ def queue_probe(
     interval: float = typer.Option(20.0, min=1.0, help="每轮间隔秒数"),
     watch: bool = typer.Option(False, "--watch", help="持续挂机直到测出结论"),
     seconds: int = typer.Option(8, min=4, max=12, help="测试视频时长"),
-    download: bool = typer.Option(True, help="抢到位后下载视频并检测是否自带音轨"),
+    download: bool = typer.Option(True, help="已入队后下载视频并检查音轨"),
+    acknowledge_multiple: bool = typer.Option(
+        False, "--acknowledge-multiple-video-submissions",
+        help="显式接受最多两条潜在收费的并发视频请求；并非队列隔离证明",
+    ),
     out_dir: Path = typer.Option(Path("output/queue-probe"), help="视频保存目录"),
 ) -> None:
     """探测 Agnes 视频队列是【按账户】还是【全平台共享】。
@@ -360,15 +364,24 @@ def queue_probe(
     from aniflow.queue_probe import (
         CAPACITY_AVAILABLE,
         NO_KEYS,
-        PER_ACCOUNT,
         VERDICT_TEXT,
         decide,
         resolve_and_download,
         run_round,
     )
 
+    # This old command used to fire 9 accounts × 3 rounds by default, sometimes
+    # recommending indefinite --watch. Do not risk billing under a "probe" label.
+    if watch or not acknowledge_multiple or rounds != 1:
+        typer.echo("此批量探测已限制：禁止 --watch；需明确确认且仅限 --rounds 1。", err=True)
+        typer.echo("混合结果无法证明账号独立配额。请优先运行单镜头验收。", err=True)
+        raise typer.Exit(code=2)
+
     settings = get_settings()
     keys = settings.api_keys
+    if len(keys) > 2:
+        typer.echo("最多允许两条 Key 做一次观察；绝不自动运行全部已存 Key。", err=True)
+        raise typer.Exit(code=2)
     line = "=" * 58
 
     typer.echo(line)
@@ -415,11 +428,11 @@ def queue_probe(
                         reason = a.code or a.detail or f"HTTP {a.http_status}"
                         typer.echo(f"   {a.account_label:<11} 被拒     {reason}")
                 ok, no = len(rnd.accepted), len(rnd.rejected)
-                flag = "   <<< 混合结果，已可定论" if rnd.is_mixed else ""
+                flag = "   <<< 混合结果，仍无法判断限额模型" if rnd.is_mixed else ""
                 typer.echo(f"   小结: {ok} 成功 / {no} 被拒{flag}")
 
                 verdict = decide(collected)
-                done = verdict == PER_ACCOUNT or (not watch and index >= rounds)
+                done = index >= rounds
                 if done:
                     break
                 await asyncio.sleep(interval)
@@ -455,7 +468,7 @@ def queue_probe(
                 else:
                     typer.echo(f"   未能取回: {info.get('reason')}")
 
-            return 0 if verdict in (PER_ACCOUNT, CAPACITY_AVAILABLE) else 2
+            return 0 if verdict == CAPACITY_AVAILABLE else 2
 
     raise typer.Exit(code=asyncio.run(_run()))
 
