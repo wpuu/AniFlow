@@ -11,7 +11,8 @@ export type TaskStatus =
   | 'in_progress'
   | 'completed'
   | 'failed'
-  | 'stopped';
+  | 'stopped'
+  | 'submission_unknown';
 
 export interface KeyframeScene {
   id: string;
@@ -101,5 +102,5 @@ export interface VideoResultResponse {
     url?: string;
     size_mapping?: Record<string, unknown>;
   };
-  error?: { message?: string } | null;
+  error?: { message?: string } | string | null;
 }
