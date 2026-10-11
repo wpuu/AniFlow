@@ -137,15 +137,14 @@ def _output_dir(path: Path, *, create: bool) -> Path:
     if target == root or root in target.parents:
         raise ShotError("Use an external output directory; never put videos in this Git repo")
     persistent = _codespace_private_root()
-    if persistent is not None:
-        # GitHub Codespaces clears /home during a container rebuild; its
-        # /workspaces volume survives both restarts and rebuilds. Refuse
-        # disposable storage *before* making a potentially billable POST.
-        if persistent not in target.parents:
-            raise ShotError(
-                "In Codespaces use /workspaces/.aniflow-private/<new-folder>; "
-                "home-directory videos are erased on container rebuild"
-            )
+    # GitHub Codespaces clears /home during a container rebuild; its
+    # /workspaces volume survives both restarts and rebuilds. Refuse
+    # disposable storage *before* making a potentially billable POST.
+    if persistent is not None and persistent not in target.parents:
+        raise ShotError(
+            "In Codespaces use /workspaces/.aniflow-private/<new-folder>; "
+            "home-directory videos are erased on container rebuild"
+        )
     if target.parent.is_symlink() or not target.parent.is_dir():
         raise ShotError("Output parent directory must exist and not be a symlink")
     if create:
