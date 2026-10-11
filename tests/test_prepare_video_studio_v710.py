@@ -53,6 +53,14 @@ class PrepareStudioTests(unittest.TestCase):
             return " M tracked.py" if self.dirty else ""
         raise AssertionError(f"unexpected git command: {args}")
 
+    def test_git_disables_credential_helper(self):
+        from subprocess import CompletedProcess
+        fake = CompletedProcess(args=[], returncode=0, stdout="OK", stderr="")
+        with patch.object(app.subprocess, "run", return_value=fake) as runner:
+            self.assertEqual(app._git("--version"), "OK")
+        command = runner.call_args.args[0]
+        self.assertEqual(command[:3], ["git", "-c", "credential.helper="])
+
     def test_default_plan_does_not_write_or_call_git(self):
         with patch.object(app, "_git", self.fake_git):
             result = app.plan(self.destination)
