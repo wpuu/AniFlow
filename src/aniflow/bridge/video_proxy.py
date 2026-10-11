@@ -33,8 +33,7 @@ class VideoStatusRequest(BaseModel):
 
 def _upstream_root(settings: Settings) -> str:
     root = settings.agnes_api_root.rstrip("/")
-    if root.endswith("/v1"):
-        root = root[:-3]
+    root = root.removesuffix("/v1")
     if not root.startswith("https://"):
         raise HTTPException(status_code=500, detail="Agnes API must use HTTPS")
     return root
