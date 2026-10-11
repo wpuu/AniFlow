@@ -223,6 +223,29 @@ def _safe_code(body: object) -> str:
 
 def _save_attempt(path: Path, plan: dict, *, status: str, video_id: str | None = None,
                   http_status: int | None = None, code: str | None = None) -> dict:
+    """Preserve the original submission timestamp across response updates.
+
+    The previous implementation overwrote created_at_unix each time a
+    response arrived. That hid queue/submit latency in the sole attempt
+    record and weakened the commercial provider-capacity evidence.
+    """
+    now = int(time.time())
+    started = now
+    if status != "SUBMISSION_ATTEMPT_UNCONFIRMED":
+        if not path.is_file() or path.is_symlink() or path.stat().st_size > 16_384:
+            raise ShotError("Original submission record unavailable; do not re-submit")
+        try:
+            previous = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            raise ShotError("Original submission record unreadable; do not re-submit") from None
+        if (
+            not isinstance(previous, dict)
+            or previous.get("request_sha256") != plan["request_sha256"]
+            or previous.get("status") != "SUBMISSION_ATTEMPT_UNCONFIRMED"
+            or type(previous.get("created_at_unix")) is not int
+        ):
+            raise ShotError("Original attempt record changed; do not re-submit")
+        started = previous["created_at_unix"]
     item = {
         "episode_id": plan["episode_id"], "shot_id": plan["shot_id"],
         "model": plan["model"], "domain": plan["domain"],
@@ -231,11 +254,30 @@ def _save_attempt(path: Path, plan: dict, *, status: str, video_id: str | None =
         "factpack_sha256": plan["factpack_sha256"],
         "status": status, "video_id": video_id,
         "http_status": http_status, "error_code": code,
-        "submissions_attempted": 1, "created_at_unix": int(time.time()),
+        "submissions_attempted": 1, "created_at_unix": started,
+        "response_at_unix": now if status != "SUBMISSION_ATTEMPT_UNCONFIRMED" else None,
+        "response_latency_seconds": max(0, now - started)
+        if status != "SUBMISSION_ATTEMPT_UNCONFIRMED" else None,
+        "accepted_at_unix": now if status == "ACCEPTED_SINGLE_VIDEO" else None,
+        "finished_at_unix": None,
+        "elapsed_to_final_result_seconds": None,
         "contains_api_key": False,
     }
     _write_json(path, item, replace=(status != "SUBMISSION_ATTEMPT_UNCONFIRMED"))
     return item
+
+
+def _record_finished(evidence: dict) -> int | None:
+    """Time from the FIRST create attempt, including later --resume calls."""
+    now = int(time.time())
+    started = evidence.get("created_at_unix")
+    evidence["finished_at_unix"] = now
+    if type(started) is int and 0 <= started <= now:
+        elapsed = now - started
+    else:
+        elapsed = None
+    evidence["elapsed_to_final_result_seconds"] = elapsed
+    return elapsed
 
 
 def _read_attempt(path: Path, plan: dict) -> dict:
@@ -375,9 +417,11 @@ def _poll_existing(client: httpx.Client, key: str, plan: dict, evidence_path: Pa
         if status == "failed":
             evidence["status"] = "FAILED_UPSTREAM"
             evidence["error_code"] = _safe_code(data.get("error"))
+            elapsed = _record_finished(evidence)
             _write_json(evidence_path, evidence, replace=True)
             return {"result": "FAILED_UPSTREAM", "video_id": video_id, "submissions": 0,
-                    "error_code": evidence["error_code"]}
+                    "error_code": evidence["error_code"],
+                    "elapsed_to_final_result_seconds": elapsed}
         if status == "completed":
             # Save no URL / signed CDN query to the audit record.
             download_url = _public_https_url(data.get("url"))
@@ -391,8 +435,10 @@ def _poll_existing(client: httpx.Client, key: str, plan: dict, evidence_path: Pa
             evidence["actual_duration_seconds"] = report.get("duration_seconds")
             evidence["display_dimensions"] = report.get("display_dimensions")
             evidence["display_rotation_degrees"] = report.get("rotation_degrees")
+            elapsed = _record_finished(evidence)
             _write_json(evidence_path, evidence, replace=True)
             return {"result": evidence["status"], "video_id": video_id, "submissions": 0,
+                    "elapsed_to_final_result_seconds": elapsed,
                     "output_filename": movie.name, "mp4_sha256": sha, "size_bytes": size,
                     "media_check": report["result"], "blockers": report.get("blockers", []),
                     "actual_duration_seconds": report.get("duration_seconds"),
@@ -404,8 +450,11 @@ def _poll_existing(client: httpx.Client, key: str, plan: dict, evidence_path: Pa
             raise ShotError("Unknown Agnes task status; resume existing video_id manually")
         if n + 1 < max_polls:
             sleep_fn(interval)
+    started = evidence.get("created_at_unix")
+    elapsed = max(0, int(time.time()) - started) if type(started) is int else None
     return {"result": "EXISTING_TASK_STILL_PENDING", "video_id": video_id,
-            "submissions": 0, "polls": max_polls, "new_task_created": False}
+            "submissions": 0, "polls": max_polls, "new_task_created": False,
+            "elapsed_since_first_submission_seconds": elapsed}
 
 
 def run_live(plan: dict, output: Path, *, execute: bool, resume: bool, confirmed_price: bool,
@@ -454,10 +503,11 @@ def run_live(plan: dict, output: Path, *, execute: bool, resume: bool, confirmed
                 body = response.json()
             except ValueError:
                 body = {}
-            _save_attempt(evidence_path, plan, status="REJECTED_NO_VIDEO_ID",
-                          http_status=response.status_code, code=_safe_code(body))
+            rejection = _save_attempt(evidence_path, plan, status="REJECTED_NO_VIDEO_ID",
+                                      http_status=response.status_code, code=_safe_code(body))
             return {"result": "REJECTED_NO_VIDEO_ID", "http_status": response.status_code,
                     "error_code": _safe_code(body), "submissions": 1,
+                    "response_latency_seconds": rejection["response_latency_seconds"],
                     "automatic_retry": False}
         try:
             data = response.json()
