@@ -2,6 +2,8 @@
 
 This directory contains the owner's Grok 4.6 generated Agnes workbench, now adapted as AniFlow's private interactive animation frontend.
 
+> **2026-10-11 P0-021**: Use this branch's **new local Bridge and rebuilt frontend together**. A real headless Chrome test showed Agnes public cross-origin `Authorization` browser fetch is blocked despite OPTIONS 204, so video create/status now go through same-origin `http://127.0.0.1:8765/api/video/*`. The Bridge sends **one** upstream POST per explicitly approved creation and one GET for each status query; it never automatically retries a create. No R2 is needed for text-to-video. [中文操作卡](../../docs/runbooks/2026-10-11-nine-key-frontend-test.md).
+
 ## Video models
 
 AniFlow currently supports both:
@@ -34,8 +36,9 @@ Uses the Flash contract:
 - 1-9 Agnes API keys can be entered in the page.
 - Keys and key count are automatically saved in the current browser.
 - Each configured idle Key can generate independently.
-- "Generate all" starts every configured idle Key, even when another Key is already running.
-- A Key input is locked while that Key has an active task so polling/history cannot switch credentials mid-task.
+- "Generate all" asks for explicit confirmation and starts every configured idle/unlocked Key, even when another Key is already running.
+- A Key input is locked while that Key has an active or unresolved task so polling/history cannot switch credentials mid-task.
+- Each video POST reserves a durable per-Key browser-local guard before calling the local Bridge. Network uncertainty retains the guard; users can resume GET polling by original video_id or manually unlock after checking the provider account.
 - "Stop tracking" stops browser polling only; it does not claim to cancel an already-created Agnes server task.
 
 Do not use the auto-save feature on a shared/public computer.
@@ -70,6 +73,7 @@ Browser: http://127.0.0.1:8765/
           v
 AniFlow Local Bridge
   |-- serves the built single-file frontend
+  |-- Agnes Video create/status -> one-shot HTTPS relay (no CORS or retry)
   |-- local image -> R2/S3 -> public URL
   |-- Agnes Image -> persistent public URL
   `-- CapCut Seedream Provider -> browser Agent Runner (after UI probe)
@@ -85,7 +89,7 @@ From the repository root:
 powershell -ExecutionPolicy Bypass -File scripts\setup_aniflow_windows.ps1
 ```
 
-Then create local `.env` from `.env.example` and fill the R2/S3 values needed for public media.
+For **text-to-video**, R2/S3 is **not required**. Configure `.env` storage only when using browser-local image uploads, Agnes Image or CapCut media.
 
 Normal start:
 
