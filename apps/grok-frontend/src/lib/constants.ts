@@ -149,6 +149,7 @@ export const STATUS_LABELS: Record<string, string> = {
   completed: '已完成',
   failed: '失败',
   stopped: '已停止跟踪',
+  submission_unknown: '提交结果待核实',
 };
 
 export const STATUS_COLORS: Record<string, string> = {
@@ -159,4 +160,5 @@ export const STATUS_COLORS: Record<string, string> = {
   completed: 'bg-emerald-100 text-emerald-700',
   failed: 'bg-rose-100 text-rose-700',
   stopped: 'bg-zinc-200 text-zinc-600',
+  submission_unknown: 'bg-amber-100 text-amber-800',
 };
