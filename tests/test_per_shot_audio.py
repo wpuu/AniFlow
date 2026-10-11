@@ -93,7 +93,7 @@ class PerShotAudioTests(unittest.TestCase):
             raw=got.stdout
             self.assertGreater(len(raw),1000)
             data=struct.unpack('<'+'h'*(len(raw)//2),raw)
-            def power(f):
+            def power(f, data=data):
                 c=sum(x*math.cos(2*math.pi*f*j/8000) for j,x in enumerate(data))
                 s=sum(x*math.sin(2*math.pi*f*j/8000) for j,x in enumerate(data))
                 return math.hypot(c,s)
