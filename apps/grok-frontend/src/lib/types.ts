@@ -85,6 +85,7 @@ export interface CreateVideoTaskResponse {
 }
 
 export interface VideoResultResponse {
+  url?: string;
   id?: string;
   video_id?: string;
   task_id?: string;
