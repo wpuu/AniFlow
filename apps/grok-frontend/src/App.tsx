@@ -426,6 +426,24 @@ export default function App() {
 
   const startGeneration = useCallback(
     async (keyIndex: number) => {
+      // A double click must not create two requests before React re-renders.
+      if (submittingKeysRef.current.has(keyIndex)) return;
+
+      const storedGuards = readSubmissionGuards();
+      if (!storedGuards) {
+        notify('本地提交保护记录读取失败，禁止发送视频请求', 'error');
+        return;
+      }
+      if (storedGuards[String(keyIndex)]) {
+        setSubmissionGuards(storedGuards);
+        notify(`Key ${keyIndex + 1} 的原请求尚未核实。请先恢复查询或人工确认后解锁`, 'error');
+        return;
+      }
+      if (BUSY_STATUSES.has(tasksByKey[keyIndex]?.status ?? 'idle')) {
+        notify(`Key ${keyIndex + 1} 正在生成，请勿重复创建`, 'error');
+        return;
+      }
+
       const apiKey = apiKeys[keyIndex]?.trim();
       if (!apiKey) {
         notify(`请先填写 Key ${keyIndex + 1}`, 'error');
@@ -435,81 +453,94 @@ export default function App() {
         notify('请先填写提示词', 'error');
         return;
       }
-
       if (params.mode === 'i2v' && !params.singleImage) {
         notify('图生视频模式需要先上传图片或填写图片地址', 'error');
         return;
       }
 
-      let requestParams = params;
-      if (modelKey === 'flash25') {
-        try {
-          requestParams = await prepareFlashParams(params);
-        } catch (err) {
-          notify(err instanceof Error ? err.message : '本地图片上传失败', 'error');
-          return;
-        }
-      } else if (params.mode === 'keyframes') {
-        const valid = params.keyframeScenes.filter((s) => s.imageUrl.trim());
-        if (valid.length < 2) {
-          notify('V2.0 多关键帧模式至少需要上传 2 张关键帧图片', 'error');
-          return;
-        }
-      }
-
-      stopFlags.current[keyIndex] = false;
-
-      const historyId = genId('task');
-      activeHistoryIdByKey.current[keyIndex] = historyId;
-      setSelectedKeyTab(keyIndex);
-
-      const modelName = VIDEO_MODELS[modelKey].apiModel;
-      const newItem: HistoryItem = {
-        id: historyId,
-        keyIndex,
-        createdAt: Date.now(),
-        promptPreview: requestParams.prompt.trim().slice(0, 100),
-        modelKey,
-        modelName,
-        mode: requestParams.mode,
-        ratio: requestParams.ratio,
-        resolution: requestParams.resolution,
-        status: 'creating',
-        progress: 0,
-        videoUrl: null,
-        videoId: null,
-        taskId: null,
-      };
-      setHistory((prev) => [newItem, ...prev]);
-      setSelectedHistoryIdByKey((prev) => ({ ...prev, [keyIndex]: historyId }));
-      updateTaskState(keyIndex, {
-        status: 'creating',
-        progress: 0,
-        videoUrl: null,
-        videoId: null,
-        taskId: null,
-        error: null,
-        modelKey,
-      });
-
+      submittingKeysRef.current.add(keyIndex);
       try {
-        const created = await createVideoTask(apiKey, modelKey, requestParams);
-        const videoId = created.video_id || created.id || created.task_id || '';
-        const taskId = created.task_id || created.id || '';
-        if (!videoId) throw new Error('未获取到有效的视频任务 ID，请检查返回结果');
-        const status = mapStatus(created.status);
-        updateTaskState(keyIndex, { status, progress: created.progress ?? 0, videoId, taskId, modelKey });
-        updateHistoryItem(historyId, { status, progress: created.progress ?? 0, videoId, taskId });
-        poll(keyIndex, apiKey, videoId, historyId, modelKey);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : '创建任务失败';
-        updateTaskState(keyIndex, { status: 'failed', error: msg, modelKey });
-        updateHistoryItem(historyId, { status: 'failed', error: msg });
-        delete activeHistoryIdByKey.current[keyIndex];
-        notify(msg, 'error');
+        let requestParams = params;
+        if (modelKey === 'flash25') {
+          try {
+            requestParams = await prepareFlashParams(params);
+          } catch (err) {
+            notify(err instanceof Error ? err.message : '本地图片准备失败；没有创建视频', 'error');
+            return;
+          }
+        } else if (params.mode === 'keyframes') {
+          const valid = params.keyframeScenes.filter((scene) => scene.imageUrl.trim());
+          if (valid.length < 2) {
+            notify('V2.0 多关键帧模式至少需要两张图片；没有创建视频', 'error');
+            return;
+          }
+        }
+
+        const historyId = genId('task');
+        // Fail closed if localStorage is denied/full. Reservation happens BEFORE the video POST.
+        if (!reserveVideoAttempt(keyIndex, historyId, modelKey)) return;
+
+        stopFlags.current[keyIndex] = false;
+        activeHistoryIdByKey.current[keyIndex] = historyId;
+        setSelectedKeyTab(keyIndex);
+
+        const modelName = VIDEO_MODELS[modelKey].apiModel;
+        const newItem: HistoryItem = {
+          id: historyId,
+          keyIndex,
+          createdAt: Date.now(),
+          promptPreview: requestParams.prompt.trim().slice(0, 100),
+          modelKey,
+          modelName,
+          mode: requestParams.mode,
+          ratio: requestParams.ratio,
+          resolution: requestParams.resolution,
+          status: 'creating',
+          progress: 0,
+          videoUrl: null,
+          videoId: null,
+          taskId: null,
+        };
+        setHistory((prev) => [newItem, ...prev]);
+        setSelectedHistoryIdByKey((prev) => ({ ...prev, [keyIndex]: historyId }));
+        updateTaskState(keyIndex, {
+          status: 'creating',
+          progress: 0,
+          videoUrl: null,
+          videoId: null,
+          taskId: null,
+          error: null,
+          modelKey,
+        });
+
+        try {
+          const created = await createVideoTask(apiKey, modelKey, requestParams);
+          // Agnes GET needs video_id, NOT its potentially different task_id.
+          const videoId = typeof created.video_id === 'string' ? created.video_id.trim() : '';
+          if (!videoId) {
+            throw new Error('创建请求返回成功但没有 video_id；可能已提交，请先查服务商任务历史');
+          }
+          const taskId = created.task_id || created.id || '';
+          if (!attachVideoToGuard(keyIndex, historyId, videoId)) {
+            notify('已获得 video_id，但保护账本写回失败；不要重试创建', 'error');
+          }
+          const status = mapStatus(created.status);
+          updateTaskState(keyIndex, { status, progress: created.progress ?? 0, videoId, taskId, modelKey });
+          updateHistoryItem(historyId, { status, progress: created.progress ?? 0, videoId, taskId });
+          poll(keyIndex, apiKey, videoId, historyId, modelKey);
+        } catch (err) {
+          const reason = err instanceof Error ? err.message : '创建响应不确定';
+          const warning = `${reason}。该请求可能已被服务端接受；请核实原任务，不要重新点击生成。`;
+          updateTaskState(keyIndex, { status: 'submission_unknown', error: warning, modelKey });
+          updateHistoryItem(historyId, { status: 'submission_unknown', error: warning });
+          delete activeHistoryIdByKey.current[keyIndex];
+          notify(`Key ${keyIndex + 1} 提交结果待核实；已保留本地安全锁`, 'error');
+        }
+      } finally {
+        submittingKeysRef.current.delete(keyIndex);
       }
     },
-    [apiKeys, modelKey, params, poll],
+    [apiKeys, modelKey, params, poll, tasksByKey],
   );
 
   function stopGeneration(keyIndex: number) {
