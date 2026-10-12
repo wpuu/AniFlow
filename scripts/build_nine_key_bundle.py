@@ -17,6 +17,8 @@ REQUIRED = (
     "pyproject.toml",
     "首次安装AniFlow.cmd",
     "启动AniFlow.cmd",
+    "一键重启当前AniFlow.cmd",
+    "scripts/restart_aniflow_windows.ps1",
     "scripts/setup_aniflow_windows.ps1",
     "scripts/start_aniflow_windows.ps1",
     "apps/grok-frontend/dist/index.html",
@@ -27,7 +29,8 @@ INSTRUCTIONS = """AniFlow 雪所长｜9-Key 视频测试包（非已生成的视
 
 1. 解压整个文件夹。需要 Windows、Python 3.11+ 和首次安装时可访问的 Python 包下载源。
 2. 双击“首次安装AniFlow.cmd”。前端已由 GitHub CI 预构建，不需 Node/npm。
-3. 安装成功后双击“启动AniFlow.cmd”，本机打开 http://127.0.0.1:8765/ 。
+3. 安装成功后以后统一双击“一键重启当前AniFlow.cmd”，它只会关闭已确认的旧 AniFlow 服务，校验当前包版本再打开浏览器，不清空 Key/历史。
+   “启动AniFlow.cmd”仍保留兼容。
 4. 选择 Agnes Video 2.5 Flash，点击“载入雪所长首镜头 · 5秒”。
 5. 在自己的可信浏览器填写合法 Key。先点击一个 Key 的“生成视频”，确认计费后才考虑9-Key批量。
 6. 收到完成结果后尽快打开视频链接并保存 MP4；任务可能存在服务器上，网页刷新不等于取消任务。
