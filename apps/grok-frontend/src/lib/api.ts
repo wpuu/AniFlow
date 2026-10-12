@@ -150,7 +150,16 @@ export async function getVideoResult(
   });
   const data = await parseJsonSafe(res);
   if (!res.ok) {
-    throw apiError(data, `查询结果失败（状态码 ${res.status}）`);
+    throw new Error(`HTTP ${res.status}：${apiError(data, '查询结果失败').message}`);
+  }
+  if (data?.code && !data?.status && data.code !== 0 && data.code !== '0') {
+    const code = typeof data.code === 'string' ? data.code : String(data.code);
+    const failure = apiError(data, 'Agnes查询返回业务错误');
+    // A known video_id may be temporarily unavailable right after creation.
+    if (/not.?found|404|task.?missing/i.test(code + ' ' + failure.message)) {
+      throw new Error(`HTTP 404：${failure.message}`);
+    }
+    throw new Error(`Agnes查询错误（${code}）：${failure.message}`);
   }
   return (data || {}) as VideoResultResponse;
 }

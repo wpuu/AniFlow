@@ -13,6 +13,7 @@ function safeStatus(value: unknown): TaskStatus | 'unknown' {
 function errorClass(value: unknown): string {
   if (value === null || value === undefined || value === '') return 'none';
   if (typeof value !== 'string') return 'other';
+  if (/已取得 video_id|状态暂时不可用|只读跟踪已达到20分钟/.test(value)) return 'status_query_pending';
   if (/queue[_ -]?full|video_queue_full|队列已满/.test(value.toLowerCase())) return 'queue_full';
   if (/401|403|invalid.?key|unauthoriz|forbidden|令牌无效/.test(value.toLowerCase())) return 'auth';
   if (/429|rate.limit|too.many.requests/.test(value.toLowerCase())) return 'rate_limited';

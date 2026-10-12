@@ -3,6 +3,7 @@ import {
   DURATION_PRESETS,
   FLASH_SECONDS_PRESETS,
   MYCL001_SHOT1_FROZEN_PROMPT,
+  MYCL001_PUBLIC_I2V_TEST_PROMPT,
   MYCL001_SHOT1_REFERENCE_PROMPT,
   MYCL001_CHARACTER_REFERENCE_URL,
   RESOLUTION_OPTIONS,
@@ -151,9 +152,9 @@ export default function SettingsForm({
         {(params.mode === 'i2v' || (isModern && params.mode === 'reference')) ? (
           <div className="mt-3">
             <p className="mb-2 text-xs text-zinc-600">
-              可直接选择本地图片，前端会尝试以Base64随创建请求传给Agnes，不需要R2/S3。
-              此格式尚未获官方文档明确确认；若Agnes拒绝，会直接显示接口错误。
-              最可靠的方式仍是填写公开HTTPS图片URL。
+              Agnes 官方要求可公开访问并在任务生成期间有效的 HTTPS 图片链接。
+              填写公开 HTTPS URL 最可靠，不需要 R2/S3。直接上传的本地图片仍按实验性 Base64 尝试，服务商尚未确认支持，可能失败。
+              可先点击上面的“公开首帧图生测试”，验证不需要 R2 的标准图生流程。
             </p>
             <ImageUploadSlot
               fileInputTestId="video-single-file"
@@ -236,7 +237,26 @@ export default function SettingsForm({
               }}>
               载入角色参考图测试 · 5秒
             </button>
-            <span className="text-[11px] text-zinc-400">按钮只填参数；参考图不是合格首帧，也未完成商用权利核实</span>
+            <button type="button"
+              data-testid="public-first-frame-test"
+              className="rounded-md border border-teal-600 px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-50"
+              onClick={() => {
+                if (params.prompt.trim() && params.prompt !== MYCL001_PUBLIC_I2V_TEST_PROMPT) onSavePrompt();
+                onChange((prev) => ({
+                  ...prev,
+                  prompt: MYCL001_PUBLIC_I2V_TEST_PROMPT,
+                  negativePrompt: SNOW_DIRECTOR_AVOID,
+                  mode: 'i2v',
+                  singleImage: MYCL001_CHARACTER_REFERENCE_URL,
+                  singleImageFileName: '',
+                  ratio: '9:16',
+                  resolution: '720p',
+                  width: 720,
+                  height: 1280,
+                  seconds: 5,
+                }));
+              }}>公开首帧图生测试 · 5秒</button>
+            <span className="text-[11px] text-zinc-400">三个按钮只填写参数，不创建任务。公开图仅用于测试，不是正式首镜头，版权仍需单独审核。</span>
           </div>
         ) : null}
         <div className="mb-2 flex flex-wrap items-center gap-2">

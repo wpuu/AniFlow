@@ -12,6 +12,13 @@ export const API_BASE = 'https://apihub.agnes-ai.com';
 // 8-shot/46s MYCL-001 is frozen; this only fills the already-approved first shot.
 export const MYCL001_SHOT1_FROZEN_PROMPT = "handmade needle-felt stop-motion miniature diorama, visible wool fiber texture, soft warm studio light, shallow depth of field, tactile handmade feel. needle-felted American Shorthair cat, silver tabby with dark classic swirl markings, round amber eyes, tiny white lab coat with two buttons, visible wool fiber texture, handmade miniature puppet. medium shot, cat centered, bowl in lower third; sitting upright beside a small ceramic water bowl, looking straight at camera, ears forward; miniature felt kitchen counter, tiny felt window with warm morning light behind. the felt cat sits still beside the bowl, blinks once slowly, then tilts its head toward the camera. slow push in. medium shot, same framing, slightly closer; head tilted to one side, eyes half closed mid-blink, chin visibly dry and clean; same felt kitchen counter, same warm light";
 
+// Test-only: the pinned public reference image does NOT contain the approved water bowl.
+export const MYCL001_PUBLIC_I2V_TEST_PROMPT =
+  'A handmade needle-felted silver tabby cat puppet with amber eyes and a miniature white lab coat. ' +
+  'Animate ONLY the existing pose from the supplied first frame: one gentle blink, tiny head tilt, and subtle breathing. ' +
+  'Preserve the exact felt fibers, background, composition, face pattern and clothing. Keep the camera steady. ' +
+  'Do not introduce a water bowl or other new objects. This is a supplier image-to-video pathway test, not the approved first shot.';
+
 // Internal experiment only: reference identity is NOT an approved frame or commercial asset.
 export const MYCL001_CHARACTER_REFERENCE_URL = 'https://raw.githubusercontent.com/wpuu/AniFlow/4a09aa3d93f25f753c3379fd8bf4501427a266a0/assets/character/agnes-felt-test-frame.png';
 export const MYCL001_SHOT1_REFERENCE_PROMPT =

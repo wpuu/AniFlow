@@ -14,6 +14,7 @@ import { genId } from './lib/imageUtils';
 import { rememberPrompt } from './lib/promptHistory';
 import { SNOW_DIRECTOR_AVOID } from './lib/negativePrompt';
 import { selectGeneratableKeys } from './lib/eligibleKeys';
+import { isWithinStatusWindow, retryableStatusDelayMs, STATUS_POLL_SUCCESS_INTERVAL_MS } from './lib/pollPolicy';
 import type { SavedPrompt } from './lib/promptHistory';
 import { buildSafeTrialReport } from './lib/safeTrialReport';
 import {
@@ -159,6 +160,7 @@ export default function App() {
   const activeHistoryIdByKey = useRef<Record<number, string>>({});
   const submittingKeysRef = useRef<Set<number>>(new Set());
   const submissionGuardsRef = useRef(submissionGuards);
+  const restoredPollersRef = useRef(false);
 
   useEffect(() => {
     saveJSON(STORAGE_KEYS.API_KEYS, apiKeys);
@@ -440,69 +442,103 @@ export default function App() {
       historyId: string,
       taskModelKey: VideoModelKey,
       apiDomain: AgnesApiDomain,
-      retriesLeft = 5,
+      acceptedAt: number,
+      lastStatus: TaskStatus = 'queued',
+      lastProgress = 0,
     ) => {
+      const scheduleNext = (delay: number, status: TaskStatus, progress: number) => {
+        pollTimers.current[keyIndex] = window.setTimeout(
+          () => poll(keyIndex, apiKey, videoId, historyId, taskModelKey,
+            apiDomain, acceptedAt, status, progress),
+          delay,
+        );
+      };
+
+      const pauseTracking = (reason: string, progress = lastProgress) => {
+        const patch: Partial<TaskState> = {
+          status: 'stopped', progress, modelKey: taskModelKey,
+          videoId, error: reason,
+        };
+        updateTaskState(keyIndex, patch);
+        updateHistoryItem(historyId, patch);
+        delete pollTimers.current[keyIndex];
+        delete activeHistoryIdByKey.current[keyIndex];
+        // Real Agnes video_id stays in history. Never auto-POST a new task.
+      };
+
       const run = async () => {
         if (stopFlags.current[keyIndex]) return;
         try {
           const result = await getVideoResult(apiKey, videoId, taskModelKey, apiDomain);
           if (stopFlags.current[keyIndex]) return;
           const status = mapStatus(result.status);
+          const progress = result.progress ?? lastProgress;
           const patch: Partial<TaskState> = {
-            status,
-            progress: result.progress ?? 0,
-            size: result.size,
-            seconds: result.seconds,
-            modelKey: taskModelKey,
+            status, progress, size: result.size, seconds: result.seconds,
+            modelKey: taskModelKey, videoId, error: null,
           };
           if (status === 'completed') {
             patch.videoUrl = result.url || result.metadata?.url || null;
             patch.progress = 100;
             if (!shouldReleaseVideoGuard(status, patch.videoUrl)) {
               patch.status = 'stopped';
-              patch.error = 'Agnes 报告任务完成但没有视频链接；可以从历史记录重新查询。';
+              patch.error = 'Agnes 返回完成，但暂时没有可播放视频链接。保留 video_id；从历史记录点击刷新，不要直接重新生成。';
             }
           }
-          if (status === 'failed') {
-            patch.error = taskErrorMessage(result.error);
-          }
+          if (status === 'failed') patch.error = taskErrorMessage(result.error);
           updateTaskState(keyIndex, patch);
           const terminal = shouldReleaseVideoGuard(status, patch.videoUrl);
           updateHistoryItem(historyId, {
-            ...patch,
-            ...(terminal ? { finishedAt: Date.now() } : {}),
-          } as Partial<HistoryItem>);
+            ...patch, ...(terminal ? { finishedAt: Date.now() } : {}),
+          });
 
           if (status === 'completed' || status === 'failed') {
-            if (shouldReleaseVideoGuard(status, patch.videoUrl)) finishVideoGuard(keyIndex, historyId);
+            if (terminal) finishVideoGuard(keyIndex, historyId);
             delete pollTimers.current[keyIndex];
             delete activeHistoryIdByKey.current[keyIndex];
             return;
           }
-          pollTimers.current[keyIndex] = window.setTimeout(
-            () => poll(keyIndex, apiKey, videoId, historyId, taskModelKey, apiDomain, 5),
-            3000,
-          );
+          if (!isWithinStatusWindow(acceptedAt, Date.now())) {
+            pauseTracking('只读跟踪已达到20分钟上限，Agnes 仍可能继续处理。已保存 video_id；请从历史记录刷新状态，不要重复创建。', progress);
+            return;
+          }
+          scheduleNext(STATUS_POLL_SUCCESS_INTERVAL_MS, status, progress);
         } catch (err) {
           if (stopFlags.current[keyIndex]) return;
-          if (retriesLeft > 0) {
-            pollTimers.current[keyIndex] = window.setTimeout(
-              () => poll(keyIndex, apiKey, videoId, historyId, taskModelKey, apiDomain, retriesLeft - 1),
-              4000,
-            );
+          const reason = err instanceof Error ? err.message : '未知状态查询错误';
+          const delay = retryableStatusDelayMs(reason);
+          if (delay !== null && isWithinStatusWindow(acceptedAt, Date.now())) {
+            const message = `已取得 video_id，状态暂时不可用（${reason}）；仅重试状态查询，不重新生成。`;
+            updateTaskState(keyIndex, { status: lastStatus, progress: lastProgress, error: message, modelKey: taskModelKey, videoId });
+            updateHistoryItem(historyId, { status: lastStatus, progress: lastProgress, error: message });
+            scheduleNext(delay, lastStatus, lastProgress);
           } else {
-            const msg = err instanceof Error ? err.message : '网络异常，查询进度失败';
-            const warning = `状态查询中断：${msg}。已有的 video_id 保存在历史中，可刷新；也可以重新点击生成新任务。`;
-            updateTaskState(keyIndex, { status: 'stopped', error: warning, modelKey: taskModelKey });
-            updateHistoryItem(historyId, { status: 'stopped', error: warning });
-            delete activeHistoryIdByKey.current[keyIndex];
+            pauseTracking(`Agnes 状态查询已暂停：${reason}。video_id 已保留，可以在历史记录查询；本次不会重新生成。`);
           }
         }
       };
-      run();
+      void run();
     },
     [],
   );
+
+  useEffect(() => {
+    // Refresh only resumes GET for already-accepted IDs.
+    // No POST, no retry of unnumbered or manually stopped tasks.
+    if (restoredPollersRef.current) return;
+    restoredPollersRef.current = true;
+    Object.entries(tasksByKey).forEach(([slot, item]) => {
+      const index = Number(slot);
+      const historyItem = history.find((h) => h.keyIndex === index && h.videoId === item.videoId);
+      const key = apiKeys[index]?.trim();
+      if (!item.videoId || !historyItem || !key || !BUSY_STATUSES.has(item.status)) return;
+      stopFlags.current[index] = false;
+      activeHistoryIdByKey.current[index] = historyItem.id;
+      poll(index, key, item.videoId, historyItem.id,
+        historyItem.modelKey ?? 'flash25', historyItem.apiDomain ?? 'global',
+        historyItem.createdAt, item.status, item.progress);
+    });
+  }, []); // mount-only: browser-state snapshot; poll identity is stable
 
   const startGeneration = useCallback(
     async (keyIndex: number, paidConfirmed = false) => {
@@ -622,7 +658,8 @@ export default function App() {
           const status = mapStatus(created.status);
           updateTaskState(keyIndex, { status, progress: created.progress ?? 0, videoId, taskId, modelKey });
           updateHistoryItem(historyId, { status, progress: created.progress ?? 0, videoId, taskId });
-          poll(keyIndex, apiKey, videoId, historyId, modelKey, apiDomain);
+          poll(keyIndex, apiKey, videoId, historyId, modelKey, apiDomain,
+            newItem.createdAt, status, created.progress ?? 0);
         } catch (err) {
           const reason = err instanceof Error ? err.message : '创建响应不确定';
           const knownFailure = /^HTTP (400|401|403|404|409|422|429|503)\b/.test(reason)

@@ -403,6 +403,45 @@ def test_browser(screenshot: Path) -> None:
             assert business.get_by_role("button", name="key1", exact=True).is_enabled()
             businessctx.close()
 
+            # A successfully accepted video_id can be temporarily invisible on
+            # GET /agnesapi. Repeat only GET, never a second create POST.
+            delayedctx = browser.new_context(viewport={"width": 1200, "height": 900})
+            configure_local_only_network(delayedctx)
+            delayed = delayedctx.new_page()
+            fill_single_key_and_first_shot(delayed, "E2E_MOCK_DELAYED_STATUS_KEY")
+            old_posts = mock_state()["create_calls"]
+            delayed.get_by_role("button", name="key1", exact=True).click()
+            delayed.get_by_test_id("selected-task-error").filter(
+                has_text="HTTP 404",
+            ).wait_for(timeout=15_000)
+            assert mock_state()["create_calls"] == old_posts + 1
+            delayed.locator('video[src*="/__e2e_fake_video.mp4"]').wait_for(timeout=35_000)
+            assert mock_state()["delayed_status_reads"] >= 2
+            assert mock_state()["create_calls"] == old_posts + 1, (
+                "Retry of accepted video_id must issue only GETs"
+            )
+            delayedctx.close()
+
+            # Public HTTPS first-frame preset removes R2 and experimental Base64
+            # from the *test* path. Loading preset must never submit on its own.
+            publicctx = browser.new_context(viewport={"width": 1200, "height": 900})
+            configure_local_only_network(publicctx)
+            public = publicctx.new_page()
+            fill_single_key_and_first_shot(public, FAKE_VALID)
+            before_public = mock_state()["create_calls"]
+            public.get_by_test_id("public-first-frame-test").click()
+            assert mock_state()["create_calls"] == before_public
+            public.get_by_role("button", name="key1", exact=True).click()
+            public.locator('video[src*="/__e2e_fake_video.mp4"]').wait_for(timeout=25_000)
+            payload = mock_state()["last_payload"]
+            assert payload["mode"] == "keyframe"
+            assert payload["first_frame"].startswith("https://raw.githubusercontent.com/wpuu/AniFlow/")
+            assert not payload["first_frame"].startswith("data:image/")
+            assert mock_state()["create_calls"] == before_public + 1
+            publicctx.close()
+
+            print("PASS_REAL_BROWSER_ACCEPTED_404_READ_ONLY_RECOVERY_NO_NEW_POST")
+            print("PASS_REAL_BROWSER_PUBLIC_HTTPS_FIRST_FRAME_ONE_CLICK_NO_R2")
             print("PASS_REAL_BROWSER_TOP_PLAYER_AND_VISIBLE_HISTORY_COMPACT_KEY_ROW")
             print("PASS_REAL_BROWSER_BATCH_SKIPS_RUNNING_KEY2_AND_DUPLICATES")
             print("PASS_REAL_BROWSER_PER_KEY_DOMAIN_AND_HTTP200_QUEUE_ENVELOPE")

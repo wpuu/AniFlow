@@ -157,8 +157,14 @@ export default function RightPanel({
               )}
             </div>
             {display?.error ? (
-              <p className="mt-2 break-words rounded-md bg-rose-50 px-2 py-1.5 text-xs text-rose-700"
-                data-testid="selected-task-error">错误：{display.error}</p>
+              <p className={cn(
+                'mt-2 break-words rounded-md px-2 py-1.5 text-xs',
+                ['queued', 'in_progress'].includes(display.status)
+                  ? 'bg-amber-50 text-amber-800' : 'bg-rose-50 text-rose-700',
+              )} data-testid="selected-task-error">
+                {['queued', 'in_progress'].includes(display.status) ? '查询提示：' : '错误：'}
+                {display.error}
+              </p>
             ) : null}
             <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-zinc-500">
               {display?.size ? <span>画幅：{display.size}</span> : null}
