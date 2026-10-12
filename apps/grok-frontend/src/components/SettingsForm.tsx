@@ -201,8 +201,7 @@ export default function SettingsForm({
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <button type="button" className="rounded-md border border-indigo-500 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50"
               onClick={() => {
-                if (params.prompt.trim() && params.prompt !== MYCL001_SHOT1_FROZEN_PROMPT
-                  && !window.confirm('会替换当前提示词与画面设置，但不会提交视频。确认载入 MYCL-001 第一镜头？')) return;
+                if (params.prompt.trim() && params.prompt !== MYCL001_SHOT1_FROZEN_PROMPT) onSavePrompt();
                 onChange((prev) => ({
                   ...prev,
                   prompt: MYCL001_SHOT1_FROZEN_PROMPT,
@@ -218,8 +217,7 @@ export default function SettingsForm({
             </button>
             <button type="button" className="rounded-md border border-amber-500 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50"
               onClick={() => {
-                if (params.prompt.trim() && params.prompt !== MYCL001_SHOT1_REFERENCE_PROMPT
-                  && !window.confirm('载入角色参考图试验参数，仅用于测试一致性，不会提交视频。确认继续？')) return;
+                if (params.prompt.trim() && params.prompt !== MYCL001_SHOT1_REFERENCE_PROMPT) onSavePrompt();
                 onChange((prev) => ({
                   ...prev,
                   prompt: MYCL001_SHOT1_REFERENCE_PROMPT,
