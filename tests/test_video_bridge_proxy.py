@@ -334,3 +334,45 @@ def test_v2_legacy_creation_and_invalid_paid_resolutions_block_before_post() -> 
             })
             assert result.status_code == 422
     assert not attempts
+
+
+
+def test_video_keyframe_accepts_local_base64_data_uri_without_s3() -> None:
+    import json
+
+    seen = []
+    local_image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUg=="
+
+    def accept(request: httpx.Request) -> httpx.Response:
+        seen.append(json.loads(request.content))
+        return httpx.Response(200, json={"video_id": "mock_keyframe_inline_1", "status": "queued"})
+
+    with client_for(accept) as client:
+        result = client.post("/api/video/create", json={
+            "api_key": FAKE_KEY, "payload": {
+                **GOOD_PAYLOAD, "mode": "keyframe", "first_frame": local_image,
+            },
+        })
+    assert result.status_code == 200
+    assert seen[0]["first_frame"] == local_image
+    assert "S3" not in result.text
+
+
+def test_base64_bad_format_rejected_before_provider() -> None:
+    called = 0
+
+    def upstream(_request: httpx.Request) -> httpx.Response:
+        nonlocal called
+        called += 1
+        return httpx.Response(200, json={})
+
+    with client_for(upstream) as client:
+        for image in ("data:text/html;base64,AAAA", "data:image/png;base64,!!notbase64",
+                      "data:image/png;base64," + "A" * 5_500_001):
+            result = client.post("/api/video/create", json={
+                "api_key": FAKE_KEY, "payload": {
+                    **GOOD_PAYLOAD, "mode": "keyframe", "first_frame": image,
+                },
+            })
+            assert result.status_code == 422
+    assert called == 0

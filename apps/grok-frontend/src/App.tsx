@@ -342,11 +342,16 @@ export default function App() {
     async function resolveImage(value: string): Promise<string> {
       const trimmed = value.trim();
       if (isPublicImageUrl(trimmed)) return trimmed;
-      if (trimmed.startsWith('data:image/')) {
-        notify('正在通过 AniFlow 本机 Bridge 上传本地图片…');
-        return uploadLocalImage(trimmed);
+      if (/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/i.test(trimmed)) {
+        // Agnes' public specification prefers URLs; other integration examples
+        // accept Base64. Forward once as an experimental direct input, without
+        // uploading the owner's image to a third-party S3/R2 bucket.
+        if (trimmed.length > 5_500_000) {
+          throw new Error('图片过大（超过约4MB）。请压缩图片后重试，或填写公共HTTPS链接。');
+        }
+        return trimmed;
       }
-      throw new Error('2.5 Flash 的参考帧必须是本地上传图片或可公开访问的 http(s) 图片 URL');
+      throw new Error('图片需为PNG/JPEG/WebP本地文件，或可公开访问的HTTPS图片链接。');
     }
 
     if (next.mode === 'i2v' || next.mode === 'reference') {

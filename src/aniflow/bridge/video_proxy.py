@@ -8,6 +8,7 @@ The Bridge must remain bound to the loopback interface.
 
 from __future__ import annotations
 
+import re
 from typing import Any, Literal
 
 import httpx
@@ -18,6 +19,19 @@ from pydantic import BaseModel, Field
 from aniflow.config import Settings
 
 VideoModel = Literal["agnes-video-2.5-flash", "agnes-video-2.5", "agnes-video-v2.0"]
+
+
+def _valid_image_source(source: object) -> bool:
+    if not isinstance(source, str):
+        return False
+    if source.startswith("https://") and len(source) <= 2048:
+        return True
+    if len(source) > 5_500_000 or not source.startswith("data:image/"):
+        return False
+    return bool(re.fullmatch(
+        r"data:image/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+",
+        source, flags=re.IGNORECASE,
+    ))
 
 
 class CreateVideoRequest(BaseModel):
@@ -118,7 +132,7 @@ def video_proxy_router(
                     not isinstance(images, list)
                     or not 1 <= len(images) <= 5
                     or any(
-                        not isinstance(image, str) or not image.startswith("https://")
+                        not _valid_image_source(image)
                         for image in images
                     )
                     or any(
@@ -135,6 +149,13 @@ def video_proxy_router(
                     raise HTTPException(status_code=422, detail="Text mode excludes media")
             elif not (request.payload.get("first_frame") or request.payload.get("last_frame")):
                 raise HTTPException(status_code=422, detail="Keyframe mode needs a frame")
+            elif mode == "keyframe":
+                if any(
+                    not _valid_image_source(request.payload[field])
+                    for field in ("first_frame", "last_frame")
+                    if request.payload.get(field)
+                ):
+                    raise HTTPException(status_code=422, detail="Invalid keyframe image source")
             permitted_sizes = ("720P",) if model.endswith("-flash") else ("720P", "1080P")
             if request.payload.get("n") != 1 or request.payload.get("size") not in permitted_sizes:
                 raise HTTPException(status_code=422, detail="Unsupported model size or output count")
