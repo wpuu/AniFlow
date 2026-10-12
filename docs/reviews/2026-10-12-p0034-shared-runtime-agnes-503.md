@@ -1,7 +1,7 @@
 # AniFlow P0-034｜Windows 共享依赖环境与 Agnes 503 容量结论
 
 日期：2026-10-12（北京时间）
-版本：v0.34.1 / P0-034
+版本：v0.34.2 / P0-034
 唯一项目：wpuu/AniFlow；原 PR #2 隔离分支，main 不合并。
 
 ## 1. 真实定位：重复安装依赖是应用缺陷
@@ -38,7 +38,7 @@ P0-034 将第三方 Python 依赖从每个版本目录中独立，改为 **同�
 
 本次代码/CI没有读取真实 Key、不会触发 Agnes POST、不会部署或合并 main。
 
-## 4. CI可靠性纠偏（v0.34.1）
+## 4. CI可靠性纠偏（v0.34.2）
 
 最初 Windows 共享依赖安装验收中发现旧版 PowerShell 5.1 的 python -c 双引号丢失问题，已改为打包 Python 标准库独立探测脚本，避免复杂命令行代码。随后 CI 中 Chromium 作业长期停留在 apt-get/FFmpeg 环境准备。现在将浏览器假视频改为仓库内固定的 1秒64×96 蓝色 MP4，SHA256 `2f93bf140de2907eea5286ba28fe6bb2e6950543a4c3af6139598ddde8feeaaa`，不用在浏览器作业下载 FFmpeg；Linux/Windows pytest 继续使用真实 ffprobe 检查此文件的格式、分辨率、时长及哈希。
 

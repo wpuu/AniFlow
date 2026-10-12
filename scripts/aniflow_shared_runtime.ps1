@@ -69,7 +69,9 @@ function Get-AniFlowRuntimePython {
         throw "AniFlow third-party dependencies changed or were damaged. Run first installation to update them."
     }
     Write-Host "[AniFlow] Installing dependencies once for this requirements set..."
-    & $Python -m pip install --disable-pip-version-check @Requirements
+    # Important: native pip STDOUT must NEVER escape into this function's return
+    # pipeline. Otherwise PowerShell turns the install log into "$Python".
+    & $Python -m pip install --disable-pip-version-check @Requirements | Out-Host
     if ($LASTEXITCODE -ne 0) {
         throw "Third-party dependency installation failed; existing releases were not modified."
     }

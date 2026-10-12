@@ -15,9 +15,9 @@ def mock_checkout(root: Path) -> None:
         target = root / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         if relative == "pyproject.toml":
-            target.write_text('[project]\nname = "aniflow"\nversion = "0.34.1"\n')
+            target.write_text('[project]\nname = "aniflow"\nversion = "0.34.2"\n')
         elif relative == "version.json":
-            target.write_text(json.dumps({"app_version": "0.34.1", "release_stage": "P0-034"}))
+            target.write_text(json.dumps({"app_version": "0.34.2", "release_stage": "P0-034"}))
         else:
             target.write_text("<html>sample</html>" if target.name == "index.html" else "fake public file")
     code = root / "src" / "aniflow" / "__init__.py"
@@ -42,7 +42,7 @@ def test_allowlist_excludes_private_env_and_preserves_frontend_hash(tmp_path: Pa
         (output / "apps/grok-frontend/dist/index.html").read_bytes(),
     ).hexdigest()
     assert actual["contains_credentials"] is False
-    assert actual["app_version"] == "0.34.1"
+    assert actual["app_version"] == "0.34.2"
     assert actual["release_stage"] == "P0-034"
     assert (output / "version.json").is_file()
     with pytest.raises(FileExistsError):

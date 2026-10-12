@@ -247,6 +247,26 @@ jobs:
             throw "Installer re-downloaded Python dependencies instead of reusing shared runtime"
           }
           Write-Host "PASS_WINDOWS_SECOND_INSTALL_REUSES_SHARED_RUNTIME_NO_PIP"
+          # The user's actual upgrade extracts each version to a different folder.
+          # Prove that a separate copy reuses dependencies and still binds its OWN src.
+          $here = (Get-Location).Path
+          $next = Join-Path (Split-Path -Parent $here) "bundle-second-folder"
+          Copy-Item -LiteralPath $here -Destination $next -Recurse -ErrorAction Stop
+          try {
+            Set-Location -LiteralPath $next
+            $nextSetup = & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\setup_aniflow_windows.ps1" 2>&1
+            if ($LASTEXITCODE -ne 0) { throw "Install in another release folder failed" }
+            if (($nextSetup -join [Environment]::NewLine) -notmatch "PASS_ANIFLOW_SHARED_RUNTIME_REUSED_NO_PIP") {
+              throw "Second version folder reinstalled identical Python dependencies"
+            }
+            if (($nextSetup -join [Environment]::NewLine) -notmatch "PASS_ANIFLOW_CURRENT_SOURCE_BOUND_SHARED_RUNTIME") {
+              throw "Second version folder imported stale source"
+            }
+            Write-Host "PASS_WINDOWS_DIFFERENT_RELEASE_FOLDER_REUSES_PIP_AND_BINDS_SOURCE"
+          }
+          finally {
+            Set-Location -LiteralPath $here
+          }
           $python = Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "AniFlow\python-env\Scripts\python.exe"
           if (-not (Test-Path -LiteralPath $python -PathType Leaf)) { throw "Shared Python was not installed" }
           $env:PYTHONPATH = Join-Path (Get-Location).Path "src"

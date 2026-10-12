@@ -32,7 +32,7 @@ def test_shared_python_runtime_installer_avoids_per_version_editable_installs() 
     assert 'spec["project"]["dependencies"]' in probe
     assert "PASS_ANIFLOW_SHARED_RUNTIME_REUSED_NO_PIP" in runtime
     assert "if ($CurrentFingerprint -eq $Fingerprint -and $Healthy)" in runtime
-    assert "pip install --disable-pip-version-check @Requirements" in runtime
+    assert "pip install --disable-pip-version-check @Requirements | Out-Host" in runtime
     assert "AGNES_API_KEY" not in runtime
 
 
