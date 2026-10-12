@@ -1,5 +1,12 @@
 export const DEFAULT_BRIDGE_URL = 'http://127.0.0.1:8765';
 
+export interface BridgeVersion {
+  source_commit: string | null;
+  frontend_sha256: string | null;
+  frontend_verified: boolean;
+  build_type: 'prebuilt' | 'source';
+}
+
 export interface BridgeHealth {
   ok: boolean;
   media_ready: boolean;
@@ -46,6 +53,16 @@ async function readError(res: Response): Promise<string> {
     // fall through
   }
   return `HTTP ${res.status}`;
+}
+
+export async function getBridgeVersion(
+  bridgeUrl = DEFAULT_BRIDGE_URL,
+): Promise<BridgeVersion> {
+  const response = await fetch(`${normalizeBridgeUrl(bridgeUrl)}/api/version`, {
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error('无法读取运行版本');
+  return (await response.json()) as BridgeVersion;
 }
 
 export async function getBridgeHealth(
