@@ -216,6 +216,9 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Windows bundle installer failed" }
           & ".\.venv\Scripts\python.exe" -c "from aniflow.bridge.app import create_bridge_app; from fastapi.testclient import TestClient; app=create_bridge_app(); c=TestClient(app); assert c.get('/').status_code == 200; assert c.get('/api/health').json()['frontend_ready']; paths=c.get('/openapi.json').json()['paths']; assert '/api/video/create' in paths; assert '/api/video/status' in paths; print('PASS_WINDOWS_BUNDLE_NO_NODE_NO_KEY')"
           if ($LASTEXITCODE -ne 0) { throw "Windows built-bundle Bridge smoke test failed" }
+          & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\restart_aniflow_windows.ps1" -ValidateOnly
+          if ($LASTEXITCODE -ne 0) { throw "Safe restart version validation failed" }
+          if (-not (Test-Path "一键重启当前AniFlow.cmd")) { throw "User one-click launcher is missing" }
 
       - name: Start real Windows Bridge on localhost and GET compiled UI (zero Agnes calls)
         shell: pwsh
@@ -245,8 +248,17 @@ jobs:
             if ($page.Content -notmatch "AniFlow") { throw "Compiled AniFlow frontend not found in live response" }
             $api = Invoke-RestMethod -Uri "$base/openapi.json" -TimeoutSec 10
             $routes = $api.paths.PSObject.Properties.Name
-            if ($routes -notcontains "/api/video/create" -or $routes -notcontains "/api/video/status") {
-              throw "Real server is missing required Agnes video routes"
+            if ($routes -notcontains "/api/video/create" -or $routes -notcontains "/api/video/status"
+              -or $routes -notcontains "/api/version") {
+              throw "Real server is missing version or video routes"
+            }
+            $active = Invoke-RestMethod -Uri "$base/api/version" -TimeoutSec 5
+            $manifest = Get-Content -LiteralPath "prebuilt_frontend.json" -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($active.source_commit -ne $manifest.source_commit -or -not $active.frontend_verified) {
+              throw "Running Bridge does not match packaged HTML"
+            }
+            if ($page.Headers["Cache-Control"] -notmatch "no-store") {
+              throw "Compiled HTML can be cached as an old version"
             }
             $client = [System.Net.Http.HttpClient]::new()
             try {
@@ -267,3 +279,23 @@ jobs:
             Wait-Process -Id $bridge.Id -ErrorAction SilentlyContinue
           }
 
+
+      - name: Run one-click restart twice and verify active build SHA (no Agnes traffic)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Set-Location bundle
+          & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\restart_aniflow_windows.ps1" -NoBrowser
+          if ($LASTEXITCODE -ne 0) { throw "First verified one-click restart failed" }
+          $manifest = Get-Content "prebuilt_frontend.json" -Raw -Encoding UTF8 | ConvertFrom-Json
+          $v = Invoke-RestMethod "http://127.0.0.1:8765/api/version"
+          if ($v.source_commit -ne $manifest.source_commit -or -not $v.frontend_verified) {
+            throw "First restart showed stale HTML"
+          }
+          & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\restart_aniflow_windows.ps1" -NoBrowser
+          if ($LASTEXITCODE -ne 0) { throw "Second verified one-click restart failed" }
+          $again = Invoke-RestMethod "http://127.0.0.1:8765/api/version"
+          if ($again.source_commit -ne $manifest.source_commit -or -not $again.frontend_verified) {
+            throw "Repeated restart showed a stale service"
+          }
+          Write-Host "PASS_WINDOWS_ONECLICK_RESTART_TWICE_ACTIVE_SHA_MATCH"
