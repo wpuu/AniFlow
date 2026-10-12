@@ -176,11 +176,46 @@ def test_browser(screenshot: Path) -> None:
             assert mock_state()["create_calls"] == 3, "Duplicate slots must block an entire batch"
             dups.close()
 
+            # Nine DISTINCT fake Keys simultaneously: actual browser click, exactly
+            # nine independent local mock POSTs and nine GET-polled video IDs.
+            batchctx = browser.new_context(viewport={"width": 1300, "height": 900})
+            configure_local_only_network(batchctx)
+            batch = batchctx.new_page()
+            batch.goto(BASE + "/", wait_until="domcontentloaded")
+            batch.locator('input[type="number"][max="9"]').fill("9")
+            for idx in range(1, 10):
+                batch.get_by_placeholder(f"请输入 Key {idx}（API Key）").fill(
+                    f"E2E_MOCK_SLOT_KEY_{idx}"
+                )
+            batch.get_by_role("button", name="载入雪所长首镜头 · 5秒").click()
+            prior = mock_state()["create_calls"]
+            batch.once("dialog", lambda dialog: dialog.accept())
+            batch.get_by_role("button", name="一键生成全部可用 Key").click()
+            deadline = time.monotonic() + 20
+            while time.monotonic() < deadline and mock_state()["batch_create_calls"] < 9:
+                time.sleep(0.3)
+            state = mock_state()
+            assert state["batch_create_calls"] == 9, "Nine distinct Keys did not submit nine tasks"
+            assert state["create_calls"] == prior + 9, "Nine-key batch submitted extra requests"
+            assert len(set(state["batch_video_ids"])) == 9
+            assert set(state["batch_video_ids"]) == {
+                f"e2e_local_mock_batch_{idx}" for idx in range(1, 10)
+            }
+            for idx in range(1, 10):
+                batch.get_by_role("button", name=f"Key {idx}", exact=True).click()
+                batch.locator('video[src*="/__e2e_fake_video.mp4"]').wait_for(timeout=25_000)
+                assert f"历史记录（Key {idx}）" in batch.content()
+            assert mock_state()["create_calls"] == prior + 9, (
+                "Switching Key tabs must not submit another generation"
+            )
+            batchctx.close()
+
             print("PASS_REAL_BROWSER_MOCK_AGNES_FIRST_SHOT_CREATE_QUERY_VIDEO_RELOAD")
             print("PASS_REAL_BROWSER_AMBIGUOUS_POST_FAIL_CLOSED_NO_RESUBMIT")
             print("PASS_REAL_BROWSER_REFERENCE_VS_FIRST_FRAME_AND_DUPLICATE_KEY_BLOCK")
             print("PASS_REAL_BROWSER_REDACTED_CLIPBOARD_SUMMARY")
-            print("BROWSER_MOCK_CREATE_CALLS=3, REAL_AGNES_CREATE_CALLS=0")
+            print("PASS_REAL_BROWSER_NINE_UNIQUE_KEYS_BATCH_NINE_IDS_NO_DUPLICATES")
+            print("BROWSER_MOCK_CREATE_CALLS=12, REAL_AGNES_CREATE_CALLS=0")
         finally:
             browser.close()
 
