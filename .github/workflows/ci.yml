@@ -193,7 +193,7 @@ jobs:
         run: |
           python3 scripts/build_nine_key_bundle.py \
             --output-dir bundle-out/AniFlow-9Key \
-            --source-commit "$(git rev-parse HEAD)"
+            --source-commit "${{ github.event.pull_request.head.sha || github.sha }}"
       - name: Upload temporary CI test artifact (not a deployment or release)
         uses: actions/upload-artifact@v4
         with:
