@@ -33,7 +33,6 @@ try {
 finally {
     $Hasher.Dispose()
 }
-    if ($Actual -ine $Expected) {
 if ($Actual -ine $Expected) {
     throw "Frontend SHA256 mismatch. Do not launch a mixed old/new app. Re-extract a complete ZIP."
 }
