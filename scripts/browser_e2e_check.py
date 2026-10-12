@@ -154,6 +154,9 @@ def test_browser(screenshot: Path) -> None:
             assert after_uncertain["create_calls"] == 2
             assert after_uncertain["has_seen_timeout"] is True
             page2.reload(wait_until="domcontentloaded")
+            assert "ceramic water bowl" in page2.get_by_test_id("video-prompt").input_value(), (
+                "Prompt lost after a quick timeout/reload; manual retry would be a no-op"
+            )
             assert page2.get_by_role("button", name="生成视频", exact=True).is_enabled()
             assert mock_state()["create_calls"] == 2, "Reload must not auto-resubmit a task"
             page2.get_by_role("button", name="生成视频", exact=True).click()

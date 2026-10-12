@@ -163,16 +163,15 @@ export default function App() {
   }, [promptHistory]);
 
   useEffect(() => {
-    const t = window.setTimeout(() => {
-      const persisted = {
-        v2: stripEphemeralImages(paramsByModel.v2),
-        flash25: stripEphemeralImages(paramsByModel.flash25),
-        paid25: stripEphemeralImages(paramsByModel.paid25),
-      };
-      saveJSON(STORAGE_KEYS.PARAMS_BY_MODEL, persisted);
-      saveJSON(STORAGE_KEYS.LAST_PARAMS, persisted.v2);
-    }, 500);
-    return () => window.clearTimeout(t);
+    // Save every committed edit without waiting: a fast submit -> timeout ->
+    // page reload must not lose its prompt and turn retry into a no-op.
+    const persisted = {
+      v2: stripEphemeralImages(paramsByModel.v2),
+      flash25: stripEphemeralImages(paramsByModel.flash25),
+      paid25: stripEphemeralImages(paramsByModel.paid25),
+    };
+    saveJSON(STORAGE_KEYS.PARAMS_BY_MODEL, persisted);
+    saveJSON(STORAGE_KEYS.LAST_PARAMS, persisted.v2);
   }, [paramsByModel]);
 
   useEffect(() => {
