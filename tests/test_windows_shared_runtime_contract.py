@@ -29,7 +29,7 @@ def test_shared_python_runtime_installer_avoids_per_version_editable_installs() 
     assert "ANIFLOW_CURRENT_SOURCE_OK" in probe
     assert "AniFlow\\python-env" in runtime
     assert "dependencies-sha256.txt" in runtime
-    assert "project" in runtime and "dependencies" in runtime
+    assert 'spec["project"]["dependencies"]' in probe
     assert "PASS_ANIFLOW_SHARED_RUNTIME_REUSED_NO_PIP" in runtime
     assert "if ($CurrentFingerprint -eq $Fingerprint -and $Healthy)" in runtime
     assert "pip install --disable-pip-version-check @Requirements" in runtime
