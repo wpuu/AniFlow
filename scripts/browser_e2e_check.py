@@ -116,8 +116,22 @@ def test_browser(screenshot: Path) -> None:
                               "__e2e_fake_video.mp4", "ceramic water bowl"):
                 assert protected not in clipboard, "Private task material leaked in copied summary"
 
+            editor = page.get_by_test_id("video-prompt")
+            editor.evaluate("""el => {
+                el.style.height = '345px';
+                el.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
+            }""")
+            page.wait_for_timeout(60)
             page.reload(wait_until="domcontentloaded")
             page.locator('video[src*="/__e2e_fake_video.mp4"]').wait_for(timeout=15_000)
+            editor = page.get_by_test_id("video-prompt")
+            assert editor.evaluate("el => getComputedStyle(el).resize") == "vertical"
+            assert abs(editor.bounding_box()["height"] - 345) < 5
+            original_prompt = editor.input_value()
+            page.get_by_role("button", name="保存当前提示词").click()
+            editor.fill("new prompt to verify history switch")
+            page.get_by_label("切换历史提示词").select_option(index=1)
+            assert editor.input_value() == original_prompt, "Saved prompt switch failed"
             assert mock_state()["create_calls"] == 1, "Reload must not create another task"
             page.evaluate("""() => {
                 const tag = document.createElement('div');
@@ -274,6 +288,27 @@ def test_browser(screenshot: Path) -> None:
             assert mock_state()["create_calls"] == before, "Dismissing paid confirmation must send zero POST"
             oldctx.close()
 
+            # Local file -> video directly; no S3/R2/media-upload endpoint used.
+            imagectx = browser.new_context(viewport={"width": 1150, "height": 900})
+            configure_local_only_network(imagectx)
+            image = imagectx.new_page()
+            fill_single_key_and_first_shot(image, FAKE_VALID)
+            image.get_by_role("button", name="单图生视频", exact=False).click()
+            image.get_by_test_id("video-single-file").set_input_files(
+                str(ROOT / "assets" / "character" / "agnes-felt-test-frame.png")
+            )
+            image.locator('img[src^="data:image/"]').first.wait_for(timeout=15_000)
+            before_img = mock_state()["create_calls"]
+            image.get_by_role("button", name="生成视频", exact=True).click()
+            image.locator('video[src*="/__e2e_fake_video.mp4"]').wait_for(timeout=25_000)
+            last_payload = mock_state()["last_payload"]
+            assert mock_state()["create_calls"] == before_img + 1
+            assert last_payload["mode"] == "keyframe"
+            assert last_payload["first_frame"].startswith("data:image/")
+            imagectx.close()
+
+            print("PASS_REAL_BROWSER_LOCAL_IMAGE_BASE64_NO_S3_UPLOAD")
+            print("PASS_REAL_BROWSER_PROMPT_RESIZE_PERSIST_AND_HISTORY_SWITCH")
             print("PASS_REAL_BROWSER_MOCK_AGNES_FIRST_SHOT_CREATE_QUERY_VIDEO_RELOAD")
             print("PASS_REAL_BROWSER_TIMEOUT_EXPLICIT_RETRY_WITHOUT_UNLOCK")
             print("PASS_REAL_BROWSER_REFERENCE_VS_FIRST_FRAME_AND_DUPLICATE_KEY_BLOCK")

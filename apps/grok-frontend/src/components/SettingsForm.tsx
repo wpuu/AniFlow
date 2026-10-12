@@ -155,6 +155,7 @@ export default function SettingsForm({
               最可靠的方式仍是填写公开HTTPS图片URL。
             </p>
             <ImageUploadSlot
+              fileInputTestId="video-single-file"
               label={isModern && params.mode === 'reference' ? '角色参考图片（images[0]；不固定首帧）' : isModern ? '首帧图片（first_frame）' : '待生成动画的图片'}
               imageUrl={params.singleImage}
               fileName={params.singleImageFileName}
