@@ -377,3 +377,56 @@ def test_base64_bad_format_rejected_before_provider() -> None:
             })
             assert result.status_code == 422
     assert called == 0
+
+
+def test_video_api_domains_use_exact_allowlist_and_keep_status_on_selected_site() -> None:
+    requests: list[httpx.Request] = []
+
+    def observe(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        if request.method == "GET":
+            return httpx.Response(200, json={"video_id": "mock_china_1", "status": "queued"})
+        return httpx.Response(200, json={"video_id": "mock_china_1", "status": "queued"})
+
+    with client_for(observe) as client:
+        for domain, expected in (
+            ("global", "apihub.agnes-ai.com"),
+            ("china", "api.agnes-ai.cn"),
+            ("fallback", "apihub.agnes-ai.cn"),
+        ):
+            result = client.post("/api/video/create", json={
+                "api_key": FAKE_KEY, "api_domain": domain, "payload": GOOD_PAYLOAD,
+            })
+            assert result.status_code == 200
+            assert requests[-1].url.host == expected
+            status = client.post("/api/video/status", json={
+                "api_key": FAKE_KEY, "api_domain": domain,
+                "video_id": "mock_china_1", "model_name": "agnes-video-2.5-flash",
+            })
+            assert status.status_code == 200
+            assert requests[-1].url.host == expected
+            assert requests[-1].method == "GET"
+        before = len(requests)
+        for forbidden in ("https://attacker.example", "other", "http://localhost:8888"):
+            assert client.post("/api/video/create", json={
+                "api_key": FAKE_KEY, "api_domain": forbidden, "payload": GOOD_PAYLOAD,
+            }).status_code == 422
+        assert len(requests) == before
+
+
+def test_http_200_business_queue_full_is_forwarded_as_rejection_envelope() -> None:
+    called = 0
+
+    def reject(_request: httpx.Request) -> httpx.Response:
+        nonlocal called
+        called += 1
+        return httpx.Response(200, json={"code": "video_queue_full",
+                                        "message": "video queue is full",
+                                        "data": None})
+
+    with client_for(reject) as client:
+        result = client.post("/api/video/create",
+                             json={"api_key": FAKE_KEY, "payload": GOOD_PAYLOAD})
+    assert result.status_code == 200
+    assert result.json()["code"] == "video_queue_full"
+    assert called == 1  # frontend classifies business rejection; no automatic retry

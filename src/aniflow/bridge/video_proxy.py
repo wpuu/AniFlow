@@ -19,6 +19,13 @@ from pydantic import BaseModel, Field
 from aniflow.config import Settings
 
 VideoModel = Literal["agnes-video-2.5-flash", "agnes-video-2.5", "agnes-video-v2.0"]
+VideoDomain = Literal["global", "china", "fallback"]
+
+# Exact allowlist; never accept an arbitrary client-supplied API host or URL.
+VIDEO_API_ROOTS: dict[str, str] = {
+    "china": "https://api.agnes-ai.cn",
+    "fallback": "https://apihub.agnes-ai.cn",
+}
 
 
 def _valid_image_source(source: object) -> bool:
@@ -36,17 +43,19 @@ def _valid_image_source(source: object) -> bool:
 
 class CreateVideoRequest(BaseModel):
     api_key: str = Field(min_length=1, max_length=4096)
+    api_domain: VideoDomain = "global"
     payload: dict[str, Any] = Field(min_length=1, max_length=24)
 
 
 class VideoStatusRequest(BaseModel):
     api_key: str = Field(min_length=1, max_length=4096)
+    api_domain: VideoDomain = "global"
     video_id: str = Field(min_length=1, max_length=256)
     model_name: VideoModel
 
 
-def _upstream_root(settings: Settings) -> str:
-    root = settings.agnes_api_root.rstrip("/")
+def _upstream_root(settings: Settings, api_domain: VideoDomain = "global") -> str:
+    root = VIDEO_API_ROOTS.get(api_domain, settings.agnes_api_root.rstrip("/"))
     root = root.removesuffix("/v1")
     if not root.startswith("https://"):
         raise HTTPException(status_code=500, detail="Agnes API must use HTTPS")
@@ -84,10 +93,11 @@ def video_proxy_router(
         path: str,
         api_key: str,
         *,
+        api_domain: VideoDomain = "global",
         payload: dict[str, Any] | None = None,
         params: dict[str, str] | None = None,
     ) -> JSONResponse:
-        url = _upstream_root(settings) + path
+        url = _upstream_root(settings, api_domain) + path
         try:
             async with httpx.AsyncClient(
                 timeout=httpx.Timeout(45.0, connect=10.0),
@@ -167,7 +177,10 @@ def video_proxy_router(
                 raise HTTPException(status_code=422, detail="Unsupported model size or output count")
             if str(request.payload.get("seconds")) not in {str(s) for s in range(4, 13)}:
                 raise HTTPException(status_code=422, detail="Flash length must be 4–12 seconds")
-        return await forward("POST", "/v1/videos", request.api_key, payload=request.payload)
+        return await forward(
+            "POST", "/v1/videos", request.api_key,
+            api_domain=request.api_domain, payload=request.payload,
+        )
 
     @router.post("/api/video/status")
     async def video_status(request: VideoStatusRequest) -> JSONResponse:
@@ -175,6 +188,7 @@ def video_proxy_router(
             "GET",
             "/agnesapi",
             request.api_key,
+            api_domain=request.api_domain,
             params={"video_id": request.video_id, "model_name": request.model_name},
         )
 

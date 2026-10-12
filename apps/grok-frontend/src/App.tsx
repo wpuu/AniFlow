@@ -12,17 +12,19 @@ import { getBridgeVersion } from './lib/bridge';
 import type { BridgeVersion } from './lib/bridge';
 import { genId } from './lib/imageUtils';
 import { rememberPrompt } from './lib/promptHistory';
+import { SNOW_DIRECTOR_AVOID } from './lib/negativePrompt';
+import { selectGeneratableKeys } from './lib/eligibleKeys';
 import type { SavedPrompt } from './lib/promptHistory';
 import { buildSafeTrialReport } from './lib/safeTrialReport';
 import {
   attachVideoId,
-  duplicateKeySlots,
   isValidSubmissionGuards,
   releaseAttempt,
   shouldReleaseVideoGuard,
 } from './lib/taskSafety';
 import type { SubmissionGuards } from './lib/taskSafety';
 import type {
+  AgnesApiDomain,
   GenerationParams,
   HistoryItem,
   TaskState,
@@ -99,6 +101,12 @@ export default function App() {
     const count = loadJSON(STORAGE_KEYS.KEY_COUNT, 1);
     return Array.from({ length: count }, (_, i) => saved[i] ?? '');
   });
+  const [apiDomains, setApiDomains] = useState<AgnesApiDomain[]>(() => {
+    const saved = loadJSON<AgnesApiDomain[]>(STORAGE_KEYS.KEY_DOMAINS, []);
+    const count = loadJSON<number>(STORAGE_KEYS.KEY_COUNT, 1);
+    return Array.from({ length: count }, (_, i) =>
+      saved[i] === 'china' || saved[i] === 'fallback' ? saved[i] : 'global');
+  });
 
   const [modelKey, setModelKey] = useState<VideoModelKey>(() =>
     normalizeModelKey(loadJSON<unknown>(STORAGE_KEYS.ACTIVE_MODEL, 'flash25')),
@@ -116,7 +124,24 @@ export default function App() {
 
   const params = paramsByModel[modelKey];
 
-  const [tasksByKey, setTasksByKey] = useState<Record<number, TaskState>>({});
+  const [tasksByKey, setTasksByKey] = useState<Record<number, TaskState>>(() => {
+    // A browser refresh does not cancel already accepted Agnes tasks.
+    // Only restore genuinely accepted video IDs; old no-ID attempts never lock the UI.
+    const saved = loadJSON<HistoryItem[]>(STORAGE_KEYS.HISTORY, []);
+    const latestKeys = new Set<number>();
+    const active: Record<number, TaskState> = {};
+    for (const item of [...saved].sort((a, b) => b.createdAt - a.createdAt)) {
+      if (!Number.isInteger(item.keyIndex) || item.keyIndex < 0 || item.keyIndex > 8
+        || latestKeys.has(item.keyIndex)) continue;
+      latestKeys.add(item.keyIndex);
+      if (!item.videoId || !BUSY_STATUSES.has(item.status)) continue;
+      active[item.keyIndex] = {
+        status: item.status, progress: item.progress, videoId: item.videoId,
+        taskId: item.taskId, videoUrl: item.videoUrl, error: null, modelKey: item.modelKey,
+      };
+    }
+    return active;
+  });
   const [submissionGuards, setSubmissionGuards] = useState<SubmissionGuards>(
     () => readSubmissionGuards() ?? {},
   );
@@ -138,6 +163,30 @@ export default function App() {
   useEffect(() => {
     saveJSON(STORAGE_KEYS.API_KEYS, apiKeys);
   }, [apiKeys]);
+
+  useEffect(() => {
+    saveJSON(STORAGE_KEYS.KEY_DOMAINS, apiDomains);
+  }, [apiDomains]);
+
+  useEffect(() => {
+    if (loadJSON(STORAGE_KEYS.NEGATIVE_PROMPT_MIGRATED, false)) return;
+    // Existing P0-031 settings contain an empty legacy negativePrompt field.
+    // Populate it exactly once, then respect later edits or an intentional clear.
+    setParamsByModel((current) => ({
+      ...current,
+      flash25: {
+        ...current.flash25,
+        negativePrompt: current.flash25.negativePrompt?.trim()
+          ? current.flash25.negativePrompt : SNOW_DIRECTOR_AVOID,
+      },
+      paid25: {
+        ...current.paid25,
+        negativePrompt: current.paid25.negativePrompt?.trim()
+          ? current.paid25.negativePrompt : SNOW_DIRECTOR_AVOID,
+      },
+    }));
+    saveJSON(STORAGE_KEYS.NEGATIVE_PROMPT_MIGRATED, true);
+  }, []);
 
   useEffect(() => {
     // Display the actual localhost build. Never infer "latest" from a PR title.
@@ -306,6 +355,7 @@ export default function App() {
     }
     setApiKeyCount(count);
     setApiKeys((prev) => Array.from({ length: count }, (_, i) => prev[i] ?? ''));
+    setApiDomains((prev) => Array.from({ length: count }, (_, i) => prev[i] ?? 'global'));
     setSelectedKeyTab((prev) => Math.min(prev, count - 1));
   }
 
@@ -313,6 +363,14 @@ export default function App() {
     setApiKeys((prev) => {
       const next = [...prev];
       next[index] = value;
+      return next;
+    });
+  }
+
+  function handleDomainChange(index: number, domain: AgnesApiDomain) {
+    setApiDomains((prev) => {
+      const next = [...prev];
+      next[index] = domain;
       return next;
     });
   }
@@ -381,12 +439,13 @@ export default function App() {
       videoId: string,
       historyId: string,
       taskModelKey: VideoModelKey,
+      apiDomain: AgnesApiDomain,
       retriesLeft = 5,
     ) => {
       const run = async () => {
         if (stopFlags.current[keyIndex]) return;
         try {
-          const result = await getVideoResult(apiKey, videoId, taskModelKey);
+          const result = await getVideoResult(apiKey, videoId, taskModelKey, apiDomain);
           if (stopFlags.current[keyIndex]) return;
           const status = mapStatus(result.status);
           const patch: Partial<TaskState> = {
@@ -421,14 +480,14 @@ export default function App() {
             return;
           }
           pollTimers.current[keyIndex] = window.setTimeout(
-            () => poll(keyIndex, apiKey, videoId, historyId, taskModelKey, 5),
+            () => poll(keyIndex, apiKey, videoId, historyId, taskModelKey, apiDomain, 5),
             3000,
           );
         } catch (err) {
           if (stopFlags.current[keyIndex]) return;
           if (retriesLeft > 0) {
             pollTimers.current[keyIndex] = window.setTimeout(
-              () => poll(keyIndex, apiKey, videoId, historyId, taskModelKey, retriesLeft - 1),
+              () => poll(keyIndex, apiKey, videoId, historyId, taskModelKey, apiDomain, retriesLeft - 1),
               4000,
             );
           } else {
@@ -457,6 +516,12 @@ export default function App() {
       }
       // A double click must not create two requests before React re-renders.
       if (submittingKeysRef.current.has(keyIndex)) return;
+
+      // Share the exact same decision with compact single-Key and batch buttons.
+      if (!selectGeneratableKeys(apiKeys, apiKeyCount, tasksByKey, submittingKeysRef.current).includes(keyIndex)) {
+        notify(`Key ${keyIndex + 1} 当前不可提交：未配置、生成中或密钥重复`, 'error');
+        return;
+      }
 
       if (BUSY_STATUSES.has(tasksByKey[keyIndex]?.status ?? 'idle')) {
         notify(`Key ${keyIndex + 1} 正在生成，请勿重复创建`, 'error');
@@ -513,6 +578,7 @@ export default function App() {
         setSelectedKeyTab(keyIndex);
 
         const modelName = VIDEO_MODELS[modelKey].apiModel;
+        const apiDomain = apiDomains[keyIndex] ?? 'global';
         const newItem: HistoryItem = {
           id: historyId,
           keyIndex,
@@ -520,6 +586,7 @@ export default function App() {
           promptPreview: requestParams.prompt.trim().slice(0, 100),
           modelKey,
           modelName,
+          apiDomain,
           mode: requestParams.mode,
           ratio: requestParams.ratio,
           resolution: requestParams.resolution,
@@ -542,7 +609,7 @@ export default function App() {
         });
 
         try {
-          const created = await createVideoTask(apiKey, modelKey, requestParams);
+          const created = await createVideoTask(apiKey, modelKey, requestParams, apiDomain);
           // Agnes GET needs video_id, NOT its potentially different task_id.
           const videoId = typeof created.video_id === 'string' ? created.video_id.trim() : '';
           if (!videoId) {
@@ -555,10 +622,11 @@ export default function App() {
           const status = mapStatus(created.status);
           updateTaskState(keyIndex, { status, progress: created.progress ?? 0, videoId, taskId, modelKey });
           updateHistoryItem(historyId, { status, progress: created.progress ?? 0, videoId, taskId });
-          poll(keyIndex, apiKey, videoId, historyId, modelKey);
+          poll(keyIndex, apiKey, videoId, historyId, modelKey, apiDomain);
         } catch (err) {
           const reason = err instanceof Error ? err.message : '创建响应不确定';
-          const knownFailure = /^HTTP (400|401|403|404|409|422|429|503)\b/.test(reason);
+          const knownFailure = /^HTTP (400|401|403|404|409|422|429|503)\b/.test(reason)
+            || reason.startsWith('Agnes明确拒绝');
           const status: TaskStatus = knownFailure ? 'failed' : 'submission_unknown';
           const explanation = knownFailure
             ? `提交失败：${reason}。可以再次点击生成。`
@@ -573,7 +641,7 @@ export default function App() {
         submittingKeysRef.current.delete(keyIndex);
       }
     },
-    [apiKeys, modelKey, params, poll, tasksByKey],
+    [apiKeys, apiDomains, apiKeyCount, modelKey, params, poll, tasksByKey],
   );
 
   function stopGeneration(keyIndex: number) {
@@ -589,7 +657,9 @@ export default function App() {
       return { ...prev, [keyIndex]: { ...cur, status: 'stopped' } };
     });
 
-    const activeId = activeHistoryIdByKey.current[keyIndex];
+    const activeId = activeHistoryIdByKey.current[keyIndex]
+      ?? history.find((item) => item.keyIndex === keyIndex
+        && item.videoId && item.videoId === tasksByKey[keyIndex]?.videoId)?.id;
     if (activeId) {
       setHistory((prev) =>
         prev.map((h) =>
@@ -603,27 +673,20 @@ export default function App() {
   }
 
   function generateAll() {
-    if (duplicateKeySlots(apiKeys.slice(0, apiKeyCount)).length) {
-      notify('检测到重复 Agnes API Key；请保留每条 Key 一个槽位。本次未发送任何生成请求', 'error');
-      return;
-    }
-    const eligible = Array.from({ length: apiKeyCount }, (_, index) => index)
-      .filter((index) => (
-        !!apiKeys[index]?.trim()
-        && !BUSY_STATUSES.has(tasksByKey[index]?.status ?? 'idle')
-        && !submittingKeysRef.current.has(index)
-      ));
+    // Running and submitting slots, duplicate credentials and empty slots are
+    // intentionally skipped. No existing poller is stopped or restarted.
+    const eligible = selectGeneratableKeys(
+      apiKeys, apiKeyCount, tasksByKey, submittingKeysRef.current,
+    );
     if (!eligible.length) {
-      notify('没有可用 Key：请先核实原任务或检查密钥配置', 'error');
+      notify('当前没有可生成的 Key；正在生成的不受影响', 'error');
       return;
     }
-    // One click on the free Flash model is the user's explicit batch action.
-    // Do not make a free 9-Key test navigate an irrelevant billing dialogue.
     if (modelKey === 'paid25') {
       const estimated = ((params.resolution === '1080p' ? 0.040 : 0.025)
         * params.seconds * eligible.length).toFixed(3);
       if (!window.confirm(
-        `当前是付费 Agnes Video 2.5，${eligible.length} 条视频官方预估约 ${estimated}。确认提交？`,
+        `当前是付费 Agnes Video 2.5，只提交 ${eligible.length} 个可用 Key，官方预估约 ${estimated}。确认提交？`,
       )) return;
     }
     eligible.forEach((index) => { void startGeneration(index, true); });
@@ -636,7 +699,7 @@ export default function App() {
       return;
     }
     const itemModelKey = item.modelKey ?? 'v2';
-    getVideoResult(apiKey, item.videoId, itemModelKey)
+    getVideoResult(apiKey, item.videoId, itemModelKey, item.apiDomain ?? 'global')
       .then((result) => {
         const status = mapStatus(result.status);
         const patch: Partial<HistoryItem> = {
@@ -664,7 +727,8 @@ export default function App() {
             ? { finishedAt: item.finishedAt ?? Date.now() } : {}),
         });
 
-        if (activeHistoryIdByKey.current[item.keyIndex] === item.id) {
+        if (activeHistoryIdByKey.current[item.keyIndex] === item.id
+          || tasksByKey[item.keyIndex]?.videoId === item.videoId) {
           updateTaskState(item.keyIndex, patch as Partial<TaskState>);
         }
       })
@@ -758,9 +822,6 @@ export default function App() {
                 <h1 className="text-base font-bold leading-tight text-zinc-900 sm:text-lg">
                   AniFlow 动画工厂
                 </h1>
-                <p className="text-xs text-zinc-400">
-                  当前视频：{VIDEO_MODELS[modelKey].label} · 多 Key 并行 · 生图 Provider 可切换
-                </p>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -809,7 +870,6 @@ export default function App() {
               apiKeys={apiKeys}
               tasksByKey={tasksByKey}
               onGenerate={startGeneration}
-              onStop={stopGeneration}
               onGenerateAll={generateAll}
             />
           </div>
@@ -826,12 +886,13 @@ export default function App() {
         </div>
       </header>
 
-      <main className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
-          <CollapsibleSection title="API Key 设置" subtitle="配置生成所需的 API Key" defaultOpen badge={`${apiKeyCount} 个`}>
+      <main className="mx-auto grid max-w-[1440px] grid-cols-1 gap-5 px-4 py-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+        <div className="order-2 min-w-0 space-y-4 lg:order-1">
+          <CollapsibleSection title="API Key 设置" subtitle="仅在新增或修改 Key 时展开" badge={`${apiKeyCount} 个`}>
             <KeySettings
               keyCount={apiKeyCount}
               apiKeys={apiKeys}
+              apiDomains={apiDomains}
               busyKeyIndexes={new Set([
                 ...Object.entries(tasksByKey)
                   .filter(([, task]) => BUSY_STATUSES.has(task.status))
@@ -839,6 +900,7 @@ export default function App() {
               ])}
               onKeyCountChange={handleKeyCountChange}
               onKeyChange={handleKeyChange}
+              onDomainChange={handleDomainChange}
             />
           </CollapsibleSection>
 
@@ -866,8 +928,8 @@ export default function App() {
           />
         </div>
 
-        <div className="lg:col-span-1">
-          <div className="lg:sticky lg:top-[9.5rem] lg:max-h-[calc(100vh-10.5rem)]">
+        <div className="order-1 min-w-0 lg:order-2">
+          <div className="lg:sticky lg:top-[10.5rem]">
             <RightPanel
               keyCount={apiKeyCount}
               selectedKeyTab={selectedKeyTab}
@@ -877,6 +939,7 @@ export default function App() {
               selectedHistoryIdByKey={selectedHistoryIdByKey}
               onSelectHistory={selectHistory}
               onRefreshHistory={refreshHistoryItem}
+              onStopTracking={stopGeneration}
             />
           </div>
         </div>

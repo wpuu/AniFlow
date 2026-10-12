@@ -13,9 +13,12 @@ function safeStatus(value: unknown): TaskStatus | 'unknown' {
 function errorClass(value: unknown): string {
   if (value === null || value === undefined || value === '') return 'none';
   if (typeof value !== 'string') return 'other';
-  if (/queue[_ -]?full|video_queue_full|排队|队列/.test(value.toLowerCase())) return 'queue_full';
-  if (/401|403|invalid.?key|unauthoriz|forbidden/.test(value.toLowerCase())) return 'auth';
-  if (/timed? ?out|网络|network|断开|cors/.test(value.toLowerCase())) return 'network';
+  if (/queue[_ -]?full|video_queue_full|队列已满/.test(value.toLowerCase())) return 'queue_full';
+  if (/401|403|invalid.?key|unauthoriz|forbidden|令牌无效/.test(value.toLowerCase())) return 'auth';
+  if (/429|rate.limit|too.many.requests/.test(value.toLowerCase())) return 'rate_limited';
+  if (/400|404|409|422|invalid.?parameter|invalid.?payload/.test(value.toLowerCase())) return 'invalid_request';
+  if (/502|503|504|server.error|service.unavailable/.test(value.toLowerCase())) return 'provider_or_bridge';
+  if (/timed? ?out|网络|network|断开|cors|failed to fetch|连接失败/.test(value.toLowerCase())) return 'network';
   return 'other';
 }
 
@@ -27,7 +30,8 @@ function elapsedSeconds(begin: unknown, finish: unknown): number | null {
 
 function safeModel(model: unknown): string {
   return model === 'flash25' ? 'Agnes Video 2.5 Flash'
-    : model === 'v2' ? 'Agnes Video V2.0' : 'unknown';
+    : model === 'paid25' ? 'Agnes Video 2.5 paid'
+      : model === 'v2' ? 'Agnes Video V2.0' : 'unknown';
 }
 
 export interface SafeTrialItem {

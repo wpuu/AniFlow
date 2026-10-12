@@ -1,6 +1,7 @@
 export type Ratio = '16:9' | '9:16' | '1:1' | '4:3' | '3:4';
 export type ResolutionTier = '480p' | '720p' | '1080p';
 export type VideoModelKey = 'v2' | 'flash25' | 'paid25';
+export type AgnesApiDomain = 'global' | 'china' | 'fallback';
 export type GenMode = 't2v' | 'i2v' | 'keyframes' | 'reference';
 export type DurationPresetKey = '3' | '5' | '10' | '18' | 'custom';
 
@@ -59,6 +60,7 @@ export interface HistoryItem {
   promptPreview: string;
   modelKey?: VideoModelKey;
   modelName?: string;
+  apiDomain?: AgnesApiDomain;
   mode: GenMode | 'unknown';
   ratio: Ratio | 'unknown';
   resolution: ResolutionTier | 'unknown';

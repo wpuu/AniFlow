@@ -1,3 +1,4 @@
+import { SNOW_DIRECTOR_AVOID } from './negativePrompt';
 import type {
   DurationPresetKey,
   GenerationParams,
@@ -29,7 +30,7 @@ export const VIDEO_MODELS: Record<
     description: '旧版记录兼容查看，已从可选模型移除',
   },
   flash25: {
-    label: 'Agnes Video 2.5 Flash · 限时免费（默认）',
+    label: 'Flash',
     apiModel: 'agnes-video-2.5-flash',
     description: '720P · 官方当前限时 $0/秒；价格可变化，支持文生/首尾帧/参考图',
   },
@@ -144,6 +145,7 @@ export const DEFAULT_PARAMS_FLASH25: GenerationParams = {
   width: 720,
   height: 1280,
   seconds: 5,
+  negativePrompt: SNOW_DIRECTOR_AVOID,
   keyframeScenes: [
     { id: 'flash-first', imageUrl: '', fileName: '' },
     { id: 'flash-last', imageUrl: '', fileName: '' },

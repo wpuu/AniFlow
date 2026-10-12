@@ -14,6 +14,8 @@ export const STORAGE_KEYS = {
   IMAGE_PROMPT: 'aniflow_image_prompt_v1',
   PROMPT_HISTORY: 'aniflow_prompt_history_v1',
   PROMPT_HEIGHT: 'aniflow_prompt_height_v1',
+  KEY_DOMAINS: 'aniflow_key_domains_v1',
+  NEGATIVE_PROMPT_MIGRATED: 'aniflow_modern_negative_prompt_initialized_v1',
 };
 
 export function loadJSON<T>(key: string, fallback: T): T {

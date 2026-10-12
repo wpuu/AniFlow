@@ -1,4 +1,5 @@
 import type { TaskState } from '../lib/types';
+import { selectGeneratableKeys } from '../lib/eligibleKeys';
 import { cn } from '../utils/cn';
 
 interface Props {
@@ -6,68 +7,49 @@ interface Props {
   apiKeys: string[];
   tasksByKey: Record<number, TaskState>;
   onGenerate: (keyIndex: number) => void;
-  onStop: (keyIndex: number) => void;
   onGenerateAll: () => void;
 }
 
-const BUSY_STATUSES = new Set(['creating', 'queued', 'in_progress']);
-
-export default function GenerateBar({ keyCount, apiKeys, tasksByKey, onGenerate, onStop, onGenerateAll }: Props) {
-  const hasRunnableKey = Array.from({ length: keyCount }).some((_, i) => {
-    const busy = BUSY_STATUSES.has(tasksByKey[i]?.status ?? 'idle');
-    return !busy && !!apiKeys[i]?.trim();
-  });
-
+export default function GenerateBar({ keyCount, apiKeys, tasksByKey, onGenerate, onGenerateAll }: Props) {
+  const ready = new Set(selectGeneratableKeys(apiKeys, keyCount, tasksByKey));
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-1" aria-label="生成任务操作">
       {Array.from({ length: keyCount }).map((_, i) => {
-        const state = tasksByKey[i];
-        const busy = BUSY_STATUSES.has(state?.status ?? 'idle');
-        const hasKey = !!apiKeys[i]?.trim();
+        const status = tasksByKey[i]?.status ?? 'idle';
+        const available = ready.has(i);
+        const active = ['creating', 'queued', 'in_progress'].includes(status);
+        const label = `key${i + 1}`;
         return (
           <button
             key={i}
             type="button"
-            disabled={state?.status === 'creating' || (!hasKey && !busy)}
-            onClick={() => (busy ? onStop(i) : onGenerate(i))}
-            title={busy ? '停止状态查询不等于取消远端已创建的视频' : !hasKey ? `请先填写 Key ${i + 1}` : undefined}
+            data-testid={`generate-key-${i + 1}`}
+            disabled={!available}
+            onClick={() => onGenerate(i)}
+            aria-label={label}
+            title={active
+              ? `${label} 正在生成或等待中，不中断现有任务`
+              : !apiKeys[i]?.trim()
+                ? `${label} 未填写 API Key`
+                : !available ? '当前 Key 与其他槽位重复或已有相同密钥在运行' : `${label} 创建一个视频`}
             className={cn(
-              'flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-40',
-              busy
-                ? 'bg-rose-600 text-white hover:bg-rose-700'
-                : 'bg-indigo-600 text-white hover:bg-indigo-700',
+              'shrink-0 rounded-md px-2.5 py-1.5 text-xs font-semibold transition',
+              available
+                ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                : active ? 'cursor-not-allowed bg-amber-100 text-amber-700'
+                  : 'cursor-not-allowed bg-zinc-100 text-zinc-400',
             )}
-          >
-            {busy ? (
-              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-              </svg>
-            ) : (
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path d="m5 3 14 9-14 9V3z" />
-              </svg>
-            )}
-            <span>
-              {state?.status === 'creating' ? '正在提交' : busy ? '停止跟踪' : '生成视频'}
-              {keyCount > 1 ? ` · Key${i + 1}` : ''}
-            </span>
-          </button>
+          >{label}</button>
         );
       })}
-      {keyCount > 1 ? (
-        <button
-          type="button"
-          onClick={onGenerateAll}
-          disabled={!hasRunnableKey}
-          className="flex items-center gap-2 rounded-lg border-2 border-indigo-600 bg-white px-4 py-2.5 text-sm font-semibold text-indigo-600 shadow-sm transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-            <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" />
-          </svg>
-          一键生成全部可用 Key
-        </button>
-      ) : null}
+      <button
+        type="button"
+        data-testid="generate-ready-all"
+        onClick={onGenerateAll}
+        disabled={ready.size === 0}
+        title="只提交当前可用且不重复的 Key；不会停止或重启正在生成的任务"
+        className="shrink-0 rounded-md border border-indigo-600 bg-white px-2.5 py-1.5 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-40"
+      >一键生成</button>
     </div>
   );
 }

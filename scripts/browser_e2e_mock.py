@@ -19,6 +19,9 @@ from aniflow.config import Settings
 FAKE_VALID_KEY = "E2E_MOCK_VALID_KEY_NOT_A_REAL_SECRET"
 FAKE_TIMEOUT_KEY = "E2E_MOCK_TIMEOUT_KEY_NOT_A_REAL_SECRET"
 FAKE_QUEUE_FULL_KEY = "E2E_MOCK_QUEUE_FULL_NOT_A_REAL_SECRET"
+FAKE_BUSINESS_QUEUE_KEY = "E2E_MOCK_BUSINESS_QUEUE_KEY"
+FAKE_CHINA_KEY = "E2E_MOCK_CHINA_KEY"
+FAKE_SLOW_KEY = "E2E_MOCK_SLOW_KEY"
 STATE: dict[str, object] = {
     "create_calls": 0,
     "status_calls": 0,
@@ -26,6 +29,7 @@ STATE: dict[str, object] = {
     "batch_video_ids": [],
     "last_payload": None,
     "has_seen_timeout": False,
+    "slow_create_calls": 0,
 }
 
 
@@ -42,8 +46,15 @@ def fake_agnes_provider(request: httpx.Request) -> httpx.Response:
         authorization = request.headers.get("Authorization", "")
         if authorization == f"Bearer {FAKE_QUEUE_FULL_KEY}":
             return httpx.Response(503, json={"error": {"message": "video_queue_full"}})
+        if authorization == f"Bearer {FAKE_BUSINESS_QUEUE_KEY}":
+            return httpx.Response(200, json={"code": "video_queue_full", "message": "video queue is full", "data": None})
+        if authorization == f"Bearer {FAKE_CHINA_KEY}" and request.url.host != "api.agnes-ai.cn":
+            return httpx.Response(401, json={"error": {"message": "domain mismatch"}})
+        if authorization == f"Bearer {FAKE_SLOW_KEY}":
+            STATE["slow_create_calls"] = int(STATE["slow_create_calls"]) + 1
+            return httpx.Response(200, json={"video_id": "e2e_local_mock_slow_key", "status": "queued"})
         slot = re.fullmatch(r"Bearer E2E_MOCK_SLOT_KEY_([1-9])", authorization)
-        if authorization != f"Bearer {FAKE_VALID_KEY}" and not slot:
+        if authorization not in (f"Bearer {FAKE_VALID_KEY}", f"Bearer {FAKE_CHINA_KEY}") and not slot:
             return httpx.Response(401, json={"error": {"message": "fake key was incorrect"}})
         payload = json.loads(request.content)
         STATE["last_payload"] = payload
@@ -59,6 +70,8 @@ def fake_agnes_provider(request: httpx.Request) -> httpx.Response:
     if request.method == "GET" and request.url.path == "/agnesapi":
         STATE["status_calls"] = int(STATE["status_calls"]) + 1
         video_id = request.url.params.get("video_id", "")
+        if video_id == "e2e_local_mock_slow_key":
+            return httpx.Response(200, json={"video_id": video_id, "status": "in_progress", "progress": 42})
         if video_id != "e2e_local_mock_video_1" and not re.fullmatch(
             r"e2e_local_mock_batch_[1-9]", video_id
         ):

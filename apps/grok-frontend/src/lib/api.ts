@@ -1,6 +1,8 @@
 import { MAX_NUM_FRAMES, VIDEO_MODELS } from './constants';
 import { DEFAULT_BRIDGE_URL } from './bridge';
+import { combineVideoPrompt } from './negativePrompt';
 import type {
+  AgnesApiDomain,
   CreateVideoTaskResponse,
   GenerationParams,
   VideoModelKey,
@@ -30,7 +32,7 @@ export function buildRequestBody(
   if (modelKey !== 'v2') {
     const body: Record<string, unknown> = {
       model,
-      prompt: params.prompt.trim(),
+      prompt: combineVideoPrompt(params.prompt, params.negativePrompt),
       seconds: String(clampFlashSeconds(params.seconds)),
       size: modelKey === 'flash25' ? '720P' : params.resolution === '1080p' ? '1080P' : '720P',
       aspect_ratio: params.ratio,
@@ -112,6 +114,7 @@ export async function createVideoTask(
   apiKey: string,
   modelKey: VideoModelKey,
   params: GenerationParams,
+  apiDomain: AgnesApiDomain = 'global',
 ): Promise<CreateVideoTaskResponse> {
   // Only the local loopback Bridge can forward Authorization: Agnes' public
   // preflight wildcard does not authorize bearer headers in a web browser.
@@ -119,11 +122,15 @@ export async function createVideoTask(
   const res = await fetch(`${DEFAULT_BRIDGE_URL}/api/video/create`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ api_key: apiKey, payload: buildRequestBody(modelKey, params) }),
+    body: JSON.stringify({ api_key: apiKey, api_domain: apiDomain, payload: buildRequestBody(modelKey, params) }),
   });
   const data = await parseJsonSafe(res);
   if (!res.ok) {
     throw new Error(`HTTP ${res.status}：${apiError(data, '创建任务失败').message}`);
+  }
+  // Agnes can reject a request with a business code in an HTTP 200 envelope.
+  if (!data?.video_id && typeof data?.code === 'string' && data.code !== '0') {
+    throw new Error(`Agnes明确拒绝（${data.code}）：${apiError(data, '创建被拒绝').message}`);
   }
   return (data || {}) as CreateVideoTaskResponse;
 }
@@ -132,13 +139,14 @@ export async function getVideoResult(
   apiKey: string,
   videoId: string,
   modelKey: VideoModelKey,
+  apiDomain: AgnesApiDomain = 'global',
 ): Promise<VideoResultResponse> {
   const modelName = VIDEO_MODELS[modelKey].apiModel;
   // Local POST transports a read-only GET to Agnes; it never creates a task.
   const res = await fetch(`${DEFAULT_BRIDGE_URL}/api/video/status`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ api_key: apiKey, video_id: videoId, model_name: modelName }),
+    body: JSON.stringify({ api_key: apiKey, api_domain: apiDomain, video_id: videoId, model_name: modelName }),
   });
   const data = await parseJsonSafe(res);
   if (!res.ok) {

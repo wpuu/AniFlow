@@ -14,6 +14,7 @@ import {
 import type { GenerationParams, VideoModelKey } from '../lib/types';
 import type { SavedPrompt } from '../lib/promptHistory';
 import { safePromptHeight } from '../lib/promptHistory';
+import { SNOW_DIRECTOR_AVOID } from '../lib/negativePrompt';
 import { STORAGE_KEYS, loadJSON, saveJSON } from '../lib/storage';
 import { clampFlashSeconds, clampNumFrames } from '../lib/api';
 import RatioSelector from './RatioSelector';
@@ -205,6 +206,7 @@ export default function SettingsForm({
                 onChange((prev) => ({
                   ...prev,
                   prompt: MYCL001_SHOT1_FROZEN_PROMPT,
+                   negativePrompt: SNOW_DIRECTOR_AVOID,
                   mode: 't2v',
                   ratio: '9:16',
                   resolution: '720p',
@@ -221,6 +223,7 @@ export default function SettingsForm({
                 onChange((prev) => ({
                   ...prev,
                   prompt: MYCL001_SHOT1_REFERENCE_PROMPT,
+                   negativePrompt: SNOW_DIRECTOR_AVOID,
                   mode: 'reference',
                   singleImage: MYCL001_CHARACTER_REFERENCE_URL,
                   singleImageFileName: '',
@@ -400,10 +403,27 @@ export default function SettingsForm({
 
       <CollapsibleSection
         title="高级设置"
-        subtitle={isModern ? '随机种子' : '反向提示词 / 推理步数 / 随机种子'}
+        subtitle={isModern ? '画面排除项 / 随机种子' : '反向提示词 / 推理步数 / 随机种子'}
       >
         <div className="space-y-3">
-          {!isModern ? (
+          {isModern ? (
+            <label className="block text-xs text-zinc-500">
+              <span className="flex items-center justify-between gap-2">
+                <span>反向提示词（避免出现的画面，可编辑）</span>
+                <button type="button" onClick={() => onChange((prev) => ({ ...prev, negativePrompt: SNOW_DIRECTOR_AVOID }))}
+                  className="text-indigo-600 hover:underline">恢复雪所长预设</button>
+              </span>
+              <textarea
+                value={params.negativePrompt}
+                onChange={(e) => onChange((prev) => ({ ...prev, negativePrompt: e.target.value }))}
+                rows={3}
+                className="mt-1 w-full resize-y rounded-md border border-zinc-300 px-2.5 py-1.5 text-sm outline-none focus:border-indigo-500"
+              />
+              <span className="mt-1 block text-[11px] text-zinc-400">
+                Agnes 2.5未公布独立negative_prompt参数；实际提交时作为文字约束附在主提示词后。
+              </span>
+            </label>
+          ) : (
             <>
               <label className="block text-xs text-zinc-500">
                 反向提示词 negative_prompt
