@@ -2,6 +2,9 @@
 
 This directory contains the owner's Grok 4.6 generated Agnes workbench, now adapted as AniFlow's private interactive animation frontend.
 
+**P0-028 operational fix (2026-10-12):** Use the latest successful CI ZIP, not previous P0-027 packages. Agnes Video 2.5 Flash remains the default promotionally free option; paid Agnes Video 2.5 requires explicit price confirmation; V2.0 creation is not offered. Legacy no-video-id submission guards are archived and locally unlocked with one confirmation and a durable browser-only backup; known video IDs remain available to resume status-only. Numeric 1–9 tabs display per-Key 0–100% provider progress. **Text-to-video never needs R2**; Agnes Image now returns a clearly flagged temporary public HTTPS URL when R2 is not configured (the owner should promptly save it). Local file uploads still need public media storage. [中文恢复指南](../../docs/runbooks/2026-10-11-nine-key-frontend-test.md).
+
+
 > **2026-10-11 P0-021**: Use this branch's **new local Bridge and rebuilt frontend together**. A real headless Chrome test showed Agnes public cross-origin `Authorization` browser fetch is blocked despite OPTIONS 204, so video create/status now go through same-origin `http://127.0.0.1:8765/api/video/*`. The Bridge sends **one** upstream POST per explicitly approved creation and one GET for each status query; it never automatically retries a create. No R2 is needed for text-to-video. [中文操作卡](../../docs/runbooks/2026-10-11-nine-key-frontend-test.md).
 
 ## Video models
