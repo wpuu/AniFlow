@@ -128,9 +128,49 @@ jobs:
         run: aniflow doctor
 
 
+  browser_e2e:
+    name: Real Chromium E2E with fake Agnes only (never reads real Keys)
+    needs: [frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install only browser test packages and local app (no credentials)
+        run: python -m pip install -e . playwright==1.56.0
+      - name: Verify Chrome and FFmpeg
+        shell: bash
+        run: |
+          command -v google-chrome
+          if ! command -v ffmpeg; then
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg
+          fi
+      - name: Download the SAME frontend build as the nine-Key Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: internal-compiled-nine-key-ui
+          path: apps/grok-frontend/dist
+      - name: Click through actual browser: first shot, recovery, reference, duplicate keys
+        shell: bash
+        env:
+          AGNES_API_KEYS: ''
+          ANIFLOW_SINGLE_SHOT_API_KEY: ''
+        run: python scripts/browser_e2e_check.py --screenshot e2e-results/MOCK-NO-REAL-AGNES-VIDEO.png
+      - name: Share explicitly labeled simulated UI screenshot (not a generated video)
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: browser-mock-proof
+          path: e2e-results/MOCK-NO-REAL-AGNES-VIDEO.png
+          if-no-files-found: error
+          retention-days: 7
+
   bundle:
     name: Package existing nine-Key UI for Windows (no secrets)
-    needs: [lint, frontend, tests]
+    needs: [lint, frontend, tests, browser_e2e]
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
