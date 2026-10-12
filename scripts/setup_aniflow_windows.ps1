@@ -33,7 +33,14 @@ if (Test-Path $PrebuiltManifest) {
     $Manifest = Get-Content -LiteralPath $PrebuiltManifest -Raw -Encoding UTF8 | ConvertFrom-Json
     $Expected = [string]($Manifest.frontend_sha256)
     if ($Expected -notmatch '^[a-fA-F0-9]{64}$') { throw "Invalid prebuilt manifest SHA-256." }
-    $Actual = (Get-FileHash -LiteralPath $FrontendIndex -Algorithm SHA256).Hash
+    $Hasher = [System.Security.Cryptography.SHA256]::Create()
+try {
+    $HashBytes = $Hasher.ComputeHash([System.IO.File]::ReadAllBytes($FrontendIndex))
+    $Actual = [System.BitConverter]::ToString($HashBytes).Replace("-", "")
+}
+finally {
+    $Hasher.Dispose()
+}
     if ($Actual -ine $Expected) { throw "Prebuilt frontend checksum mismatch. Do not launch." }
     Write-Host "[AniFlow] CI prebuilt frontend validated; Node/npm is NOT required."
 }

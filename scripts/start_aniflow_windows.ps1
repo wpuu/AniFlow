@@ -27,7 +27,15 @@ if (Test-Path $PrebuiltManifest) {
     $Manifest = Get-Content -LiteralPath $PrebuiltManifest -Raw -Encoding UTF8 | ConvertFrom-Json
     $Expected = [string]($Manifest.frontend_sha256)
     if ($Expected -notmatch '^[a-fA-F0-9]{64}$') { throw "Invalid prebuilt checksum metadata." }
-    if ((Get-FileHash -LiteralPath $FrontendIndex -Algorithm SHA256).Hash -ine $Expected) {
+    $Hasher = [System.Security.Cryptography.SHA256]::Create()
+try {
+    $HashBytes = $Hasher.ComputeHash([System.IO.File]::ReadAllBytes($FrontendIndex))
+    $Actual = [System.BitConverter]::ToString($HashBytes).Replace("-", "")
+}
+finally {
+    $Hasher.Dispose()
+}
+    if ($Actual -ine $Expected) {
         throw "Prebuilt frontend checksum mismatch. Re-download the complete bundle."
     }
 }

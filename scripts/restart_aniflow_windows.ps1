@@ -25,7 +25,15 @@ $Expected = [string]$Manifest.frontend_sha256
 if ($Commit -notmatch '^[0-9a-fA-F]{40}$' -or $Expected -notmatch '^[0-9a-fA-F]{64}$') {
     throw "Invalid AniFlow build manifest. Do not start an unknown version."
 }
-$Actual = (Get-FileHash -LiteralPath $IndexFile -Algorithm SHA256).Hash
+$Hasher = [System.Security.Cryptography.SHA256]::Create()
+try {
+    $HashBytes = $Hasher.ComputeHash([System.IO.File]::ReadAllBytes($IndexFile))
+    $Actual = [System.BitConverter]::ToString($HashBytes).Replace("-", "")
+}
+finally {
+    $Hasher.Dispose()
+}
+    if ($Actual -ine $Expected) {
 if ($Actual -ine $Expected) {
     throw "Frontend SHA256 mismatch. Do not launch a mixed old/new app. Re-extract a complete ZIP."
 }
