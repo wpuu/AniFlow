@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import ipaddress
 import tempfile
-from urllib.parse import urlsplit
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urlsplit
 from uuid import uuid4
 
 import httpx
