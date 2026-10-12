@@ -148,7 +148,7 @@ def test_browser(screenshot: Path) -> None:
             page2 = uncertain.new_page()
             fill_single_key_and_first_shot(page2, FAKE_TIMEOUT)
             page2.get_by_role("button", name="生成视频", exact=True).click()
-            page2.get_by_text("未收到编号·可重试").wait_for(timeout=15_000)
+            page2.locator("#aniflow-key-details").get_by_text("未收到编号·可重试").wait_for(timeout=15_000)
             assert page2.get_by_role("button", name="生成视频", exact=True).is_enabled()
             after_uncertain = mock_state()
             assert after_uncertain["create_calls"] == 2
