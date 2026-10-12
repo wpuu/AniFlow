@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BASE = "http://127.0.0.1:8765"
 FAKE_VALID = "E2E_MOCK_VALID_KEY_NOT_A_REAL_SECRET"
 FAKE_TIMEOUT = "E2E_MOCK_TIMEOUT_KEY_NOT_A_REAL_SECRET"
+FAKE_QUEUE_FULL = "E2E_MOCK_QUEUE_FULL_NOT_A_REAL_SECRET"
 
 
 def mock_state() -> dict:
@@ -306,6 +307,24 @@ def test_browser(screenshot: Path) -> None:
             assert last_payload["first_frame"].startswith("data:image/")
             imagectx.close()
 
+            # Agnes might reject all nine queued jobs with HTTP 503. This must
+            # be a readable per-Key failure with a clickable retry, never a lock.
+            queuectx = browser.new_context(viewport={"width": 1100, "height": 850})
+            configure_local_only_network(queuectx)
+            queued = queuectx.new_page()
+            fill_single_key_and_first_shot(queued, FAKE_QUEUE_FULL)
+            queue_before = mock_state()["create_calls"]
+            queued.get_by_role("button", name="生成视频", exact=True).click()
+            queued.locator("#aniflow-key-details").get_by_text(
+                "HTTP 503", exact=False
+            ).wait_for(timeout=15_000)
+            assert queued.get_by_role("button", name="生成视频", exact=True).is_enabled()
+            assert mock_state()["create_calls"] == queue_before + 1
+            queued.get_by_role("button", name="生成视频", exact=True).click()
+            assert mock_state()["create_calls"] == queue_before + 2
+            queuectx.close()
+
+            print("PASS_REAL_BROWSER_HTTP503_QUEUE_FULL_DISPLAYED_NO_HARD_LOCK")
             print("PASS_REAL_BROWSER_LOCAL_IMAGE_BASE64_NO_S3_UPLOAD")
             print("PASS_REAL_BROWSER_PROMPT_RESIZE_PERSIST_AND_HISTORY_SWITCH")
             print("PASS_REAL_BROWSER_MOCK_AGNES_FIRST_SHOT_CREATE_QUERY_VIDEO_RELOAD")
@@ -316,7 +335,7 @@ def test_browser(screenshot: Path) -> None:
             print("PASS_REAL_BROWSER_NINE_UNIQUE_KEYS_BATCH_NINE_IDS_NO_DUPLICATES")
             print("PASS_REAL_BROWSER_NINE_STALE_GUARDS_DO_NOT_BLOCK_NEW_POST")
             print("PASS_REAL_BROWSER_FLASH_DEFAULT_PAID_CONFIRM_CANCELS_WITH_NO_POST")
-            print("BROWSER_MOCK_CREATE_CALLS=15, REAL_AGNES_CREATE_CALLS=0")
+            print("BROWSER_MOCK_CREATE_CALLS=17, REAL_AGNES_CREATE_CALLS=0")
         finally:
             browser.close()
 

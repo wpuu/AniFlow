@@ -18,6 +18,7 @@ from aniflow.config import Settings
 
 FAKE_VALID_KEY = "E2E_MOCK_VALID_KEY_NOT_A_REAL_SECRET"
 FAKE_TIMEOUT_KEY = "E2E_MOCK_TIMEOUT_KEY_NOT_A_REAL_SECRET"
+FAKE_QUEUE_FULL_KEY = "E2E_MOCK_QUEUE_FULL_NOT_A_REAL_SECRET"
 STATE: dict[str, object] = {
     "create_calls": 0,
     "status_calls": 0,
@@ -39,6 +40,8 @@ def fake_agnes_provider(request: httpx.Request) -> httpx.Response:
             # On a later EXPLICIT owner click, pretend Agnes returns a video_id.
             return httpx.Response(200, json={"video_id": "e2e_local_mock_video_1", "status": "queued"})
         authorization = request.headers.get("Authorization", "")
+        if authorization == f"Bearer {FAKE_QUEUE_FULL_KEY}":
+            return httpx.Response(503, json={"error": {"message": "video_queue_full"}})
         slot = re.fullmatch(r"Bearer E2E_MOCK_SLOT_KEY_([1-9])", authorization)
         if authorization != f"Bearer {FAKE_VALID_KEY}" and not slot:
             return httpx.Response(401, json={"error": {"message": "fake key was incorrect"}})
