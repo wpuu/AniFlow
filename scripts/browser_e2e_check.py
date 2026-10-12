@@ -180,6 +180,7 @@ def test_browser(screenshot: Path) -> None:
             configure_local_only_network(refctx)
             page3 = refctx.new_page()
             page3.goto(BASE + "/", wait_until="domcontentloaded")
+            page3.get_by_text("API Key 设置", exact=True).click()
             page3.get_by_placeholder("请输入 Key 1（API Key）").fill(FAKE_VALID)
             page3.get_by_role("button", name="载入角色参考图测试 · 5秒").click()
             prompt = page3.get_by_placeholder("描述画面、动作、镜头、光线与风格。").input_value()
