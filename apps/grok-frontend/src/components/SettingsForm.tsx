@@ -401,29 +401,33 @@ export default function SettingsForm({
         )}
       </div>
 
+      {isModern ? (
+        <div className="rounded-xl border border-zinc-200 bg-white p-4" data-testid="visible-negative-prompt">
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <label className="text-sm font-semibold text-zinc-700" htmlFor="aniflow-negative-prompt">
+              反向提示词（画面排除项）
+            </label>
+            <button type="button" onClick={() => onChange((prev) => ({ ...prev, negativePrompt: SNOW_DIRECTOR_AVOID }))}
+              className="text-xs text-indigo-600 hover:underline">恢复雪所长预设</button>
+          </div>
+          <textarea id="aniflow-negative-prompt" data-testid="negative-prompt"
+            value={params.negativePrompt}
+            onChange={(e) => onChange((prev) => ({ ...prev, negativePrompt: e.target.value }))}
+            rows={3}
+            className="w-full resize-y rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+          />
+          <p className="mt-1 text-[11px] text-zinc-500">
+            自动保存；作为避免事项附在创建请求的提示词内，不发送未确认支持的额外接口参数。
+          </p>
+        </div>
+      ) : null}
+
       <CollapsibleSection
         title="高级设置"
-        subtitle={isModern ? '画面排除项 / 随机种子' : '反向提示词 / 推理步数 / 随机种子'}
+        subtitle={isModern ? '随机种子' : '旧版反向提示词 / 推理步数 / 随机种子'}
       >
         <div className="space-y-3">
-          {isModern ? (
-            <label className="block text-xs text-zinc-500">
-              <span className="flex items-center justify-between gap-2">
-                <span>反向提示词（避免出现的画面，可编辑）</span>
-                <button type="button" onClick={() => onChange((prev) => ({ ...prev, negativePrompt: SNOW_DIRECTOR_AVOID }))}
-                  className="text-indigo-600 hover:underline">恢复雪所长预设</button>
-              </span>
-              <textarea
-                value={params.negativePrompt}
-                onChange={(e) => onChange((prev) => ({ ...prev, negativePrompt: e.target.value }))}
-                rows={3}
-                className="mt-1 w-full resize-y rounded-md border border-zinc-300 px-2.5 py-1.5 text-sm outline-none focus:border-indigo-500"
-              />
-              <span className="mt-1 block text-[11px] text-zinc-400">
-                Agnes 2.5未公布独立negative_prompt参数；实际提交时作为文字约束附在主提示词后。
-              </span>
-            </label>
-          ) : (
+          {!isModern ? (
             <>
               <label className="block text-xs text-zinc-500">
                 反向提示词 negative_prompt

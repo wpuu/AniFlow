@@ -65,5 +65,16 @@ else {
 }
 
 Write-Host "[AniFlow] Local setup complete."
+Write-Host "[AniFlow] Update checker: double-click the new package's update launcher."
+if ($env:ANIFLOW_SKIP_UPDATE_CHECK -ne "1") {
+    $UpdateCheck = Join-Path $PSScriptRoot "check_aniflow_update_windows.ps1"
+    if (Test-Path -LiteralPath $UpdateCheck -PathType Leaf) {
+        Write-Host "[AniFlow] Checking whether a newer verified build exists (non-blocking)..."
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $UpdateCheck -Mode Check -NoBrowser
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "[AniFlow] Update check unavailable; this does not affect installation."
+        }
+    }
+}
 Write-Host "[AniFlow] Text-to-video does NOT require S3/R2. For image uploads, configure public media separately."
 Write-Host "[AniFlow] Start by double-clicking 启动AniFlow.cmd."

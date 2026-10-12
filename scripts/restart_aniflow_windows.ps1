@@ -131,6 +131,16 @@ try {
         Start-Process "$Base/?v=$($Commit.Substring(0,12))"
     }
     Write-Host "PASS_ANIFLOW_VERIFIED_RESTART_ACTIVE_BUILD"
+    if ($env:ANIFLOW_SKIP_UPDATE_CHECK -ne "1") {
+        $UpdateCheck = Join-Path $PSScriptRoot "check_aniflow_update_windows.ps1"
+        if (Test-Path -LiteralPath $UpdateCheck -PathType Leaf) {
+            Write-Host "[AniFlow] Checking for a newer verified version (will NOT auto-restart)..."
+            & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $UpdateCheck -Mode Check -NoBrowser
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "[AniFlow] Update check unavailable; running version remains active."
+            }
+        }
+    }
 } catch {
     Stop-Process -Id $Process.Id -Force -ErrorAction SilentlyContinue
     throw

@@ -111,6 +111,9 @@ def test_browser(screenshot: Path) -> None:
             assert "Avoid these unwanted visual elements" in current["last_payload"]["prompt"]
             assert "extra legs or paws" in current["last_payload"]["prompt"]
             assert "negative_prompt" not in current["last_payload"]
+            assert page.get_by_test_id("visible-negative-prompt").is_visible()
+            assert page.get_by_test_id("negative-prompt").input_value()
+            assert "photorealistic live cats" in page.get_by_test_id("negative-prompt").input_value()
             assert page.get_by_test_id("quick-play-video").is_visible()
             assert page.locator('[aria-label="历史记录（1）"]').is_visible()
             assert page.get_by_test_id("aniflow-video-preview").bounding_box()["height"] <= 320

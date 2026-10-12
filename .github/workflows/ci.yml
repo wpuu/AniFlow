@@ -228,6 +228,8 @@ jobs:
     name: Verify downloaded Node-free Windows bundle (no credentials)
     needs: [bundle]
     runs-on: windows-latest
+    env:
+      ANIFLOW_SKIP_UPDATE_CHECK: '1'
     timeout-minutes: 15
     steps:
       - uses: actions/setup-python@v5
@@ -246,13 +248,23 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Windows bundle installer failed" }
           & ".\.venv\Scripts\python.exe" -c "from aniflow.bridge.app import create_bridge_app; from fastapi.testclient import TestClient; app=create_bridge_app(); c=TestClient(app); assert c.get('/').status_code == 200; assert c.get('/api/health').json()['frontend_ready']; paths=c.get('/openapi.json').json()['paths']; assert '/api/video/create' in paths; assert '/api/video/status' in paths; print('PASS_WINDOWS_BUNDLE_NO_NODE_NO_KEY')"
           if ($LASTEXITCODE -ne 0) { throw "Windows built-bundle Bridge smoke test failed" }
-          foreach ($cmd in @("启动AniFlow.cmd", "首次安装AniFlow.cmd", "一键重启当前AniFlow.cmd")) {
+          foreach ($cmd in @("启动AniFlow.cmd", "首次安装AniFlow.cmd", "一键重启当前AniFlow.cmd", "检查更新AniFlow.cmd")) {
             $bytes = [System.IO.File]::ReadAllBytes((Resolve-Path $cmd).Path)
             if (@($bytes | Where-Object { $_ -gt 127 }).Count -ne 0) {
               throw "Windows launcher $cmd is not pure ASCII; cmd.exe may misparse Chinese characters"
             }
           }
           Write-Host "PASS_WINDOWS_LAUNCHER_SCRIPTS_ASCII_NO_MOJIBAKE"
+          $tokens = $null
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path "scripts\check_aniflow_update_windows.ps1").Path,
+            [ref]$tokens, [ref]$parseErrors
+          ) | Out-Null
+          if (@($parseErrors).Count -ne 0) {
+            throw "Windows update helper has invalid PowerShell syntax: $parseErrors"
+          }
+          Write-Host "PASS_WINDOWS_UPDATE_HELPER_POWERSHELL_PARSE"
           & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\restart_aniflow_windows.ps1" -ValidateOnly
           if ($LASTEXITCODE -ne 0) { throw "Safe restart version validation failed" }
           if (-not (Test-Path "一键重启当前AniFlow.cmd")) { throw "User one-click launcher is missing" }

@@ -21,6 +21,8 @@ REQUIRED = (
     "首次安装AniFlow.cmd",
     "启动AniFlow.cmd",
     "一键重启当前AniFlow.cmd",
+    "检查更新AniFlow.cmd",
+    "scripts/check_aniflow_update_windows.ps1",
     "scripts/restart_aniflow_windows.ps1",
     "scripts/setup_aniflow_windows.ps1",
     "scripts/start_aniflow_windows.ps1",
@@ -31,8 +33,8 @@ REQUIRED = (
 INSTRUCTIONS = """AniFlow 雪所长｜9-Key 视频测试包（非已生成的视频）
 
 1. 解压整个文件夹。需要 Windows、Python 3.11+ 和首次安装时可访问的 Python 包下载源。
-2. 双击“首次安装AniFlow.cmd”。前端已由 GitHub CI 预构建，不需 Node/npm。
-3. 安装成功后以后统一双击“一键重启当前AniFlow.cmd”，它只会关闭已确认的旧 AniFlow 服务，校验当前包版本号、Git提交及前端哈希再打开浏览器，不清空 Key/历史。
+2. 双击“首次安装AniFlow.cmd”。前端已由 GitHub CI 预构建，不需 Node/npm。安装及重启都会检查是否有更新，但不会悄悄覆盖旧文件。
+3. 更新：双击“检查更新AniFlow.cmd”。若已经在下载文件夹找到官方成功CI的ZIP，则会核验后安装到旁边的新文件夹；若浏览器须登录GitHub，会打开下载页面。\n4. 安装成功后双击新版文件夹的“一键重启当前AniFlow.cmd”，它只结束已确认的旧 AniFlow 服务，核对运行版本再打开浏览器，不清空Key/历史。
    “启动AniFlow.cmd”仍保留兼容。
 4. 选择 Agnes Video 2.5 Flash，点击“载入雪所长首镜头 · 5秒”。
 5. 在自己可信的浏览器填写Key。Flash当前限时免费，单Key与一键生成全部无需余额确认；付费2.5才提示费用。9条不同Key一键生成将发送9条真实创建请求。
