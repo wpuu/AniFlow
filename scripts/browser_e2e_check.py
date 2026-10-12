@@ -255,28 +255,24 @@ def test_browser(screenshot: Path) -> None:
                 JSON.stringify(Array.from({length: 9}, (_, i) => 'E2E_MOCK_SLOT_KEY_' + (i+1))));
             }""")
             old.reload(wait_until="domcontentloaded")
-            action = old.get_by_role("button", name="一次整理无编号旧记录（保留备份）")
-            action.wait_for(timeout=12_000)
+            # Old localStorage flags are historical evidence, not a submission ban.
+            assert old.get_by_role("button", name="一次整理无编号旧记录（保留备份）").count() == 0
+            assert "检测到以前未结束的视频提交记录" not in old.content()
             assert old.get_by_test_id("key-progress-9").inner_text() == "0%"
-            assert "人工核实后解锁" not in old.content()
+            for idx in range(1, 10):
+                assert old.get_by_role(
+                    "button", name=f"生成视频 · Key{idx}", exact=True
+                ).is_enabled()
+            old.get_by_role("button", name="载入雪所长首镜头 · 5秒").click()
             before = mock_state()["create_calls"]
-            old.once("dialog", lambda dialog: dialog.accept())
-            action.click()
-            action.wait_for(state="detached", timeout=12_000)
-            audit = old.evaluate("""() => ({
-              remaining: Object.keys(JSON.parse(localStorage.getItem('aniflow_video_submission_guards_v1'))),
-              archived: JSON.parse(localStorage.getItem('aniflow_video_archived_noid_attempts_v1')),
-            })""")
-            assert audit["remaining"] == []
-            assert len(audit["archived"]) == 9
-            assert all(a["videoId"] is None for a in audit["archived"])
-            assert mock_state()["create_calls"] == before, "Archiving must never create another video"
+            old.get_by_role("button", name="生成视频 · Key1", exact=True).click()
+            old.locator('video[src*="/__e2e_fake_video.mp4"]').wait_for(timeout=25_000)
+            assert mock_state()["create_calls"] == before + 1
             old.get_by_test_id("key-tab-9").click()
             assert "第 9 个 Key · 视频预览" in old.content()
-            assert old.get_by_test_id("selected-progress").inner_text() == "0%"
             old.reload(wait_until="domcontentloaded")
-            assert old.get_by_test_id("key-tab-9").is_visible()
-            assert old.get_by_role("button", name="一次整理无编号旧记录（保留备份）").count() == 0
+            assert old.get_by_role("button", name="生成视频 · Key9", exact=True).is_enabled()
+            assert mock_state()["create_calls"] == before + 1
 
             # Only the documented two video models; paid selection must require opt-in.
             assert old.get_by_text("Agnes Video 2.5 · 付费", exact=True).is_visible()
@@ -285,7 +281,7 @@ def test_browser(screenshot: Path) -> None:
             old.get_by_role("button", name="载入雪所长首镜头 · 5秒").click()
             old.once("dialog", lambda dialog: dialog.dismiss())
             old.get_by_role("button", name="生成视频 · Key1").click()
-            assert mock_state()["create_calls"] == before, "Dismissing paid confirmation must send zero POST"
+            assert mock_state()["create_calls"] == before + 1, "Paid opt-out should not create another POST"
             oldctx.close()
 
             # Local file -> video directly; no S3/R2/media-upload endpoint used.
@@ -315,9 +311,9 @@ def test_browser(screenshot: Path) -> None:
             print("PASS_REAL_BROWSER_REDACTED_CLIPBOARD_SUMMARY")
             print("PASS_REAL_BROWSER_FREE_FLASH_BATCH_NO_BILLING_DIALOG")
             print("PASS_REAL_BROWSER_NINE_UNIQUE_KEYS_BATCH_NINE_IDS_NO_DUPLICATES")
-            print("PASS_REAL_BROWSER_NINE_OLD_GUARDS_SINGLE_ARCHIVE_NUMERIC_TABS_PROGRESS")
+            print("PASS_REAL_BROWSER_NINE_STALE_GUARDS_DO_NOT_BLOCK_NEW_POST")
             print("PASS_REAL_BROWSER_FLASH_DEFAULT_PAID_CONFIRM_CANCELS_WITH_NO_POST")
-            print("BROWSER_MOCK_CREATE_CALLS=14, REAL_AGNES_CREATE_CALLS=0")
+            print("BROWSER_MOCK_CREATE_CALLS=15, REAL_AGNES_CREATE_CALLS=0")
         finally:
             browser.close()
 
