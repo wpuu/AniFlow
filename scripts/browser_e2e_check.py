@@ -202,19 +202,78 @@ def test_browser(screenshot: Path) -> None:
                 f"e2e_local_mock_batch_{idx}" for idx in range(1, 10)
             }
             for idx in range(1, 10):
-                batch.get_by_role("button", name=f"Key {idx}", exact=True).click()
+                batch.get_by_test_id(f"key-tab-{idx}").click()
                 batch.locator('video[src*="/__e2e_fake_video.mp4"]').wait_for(timeout=25_000)
-                assert f"历史记录（Key {idx}）" in batch.content()
+                assert f"历史记录（{idx}）" in batch.content()
+                assert batch.get_by_test_id(f"key-progress-{idx}").inner_text() == "100%"
+                assert batch.get_by_test_id("selected-progress").inner_text() == "100%"
             assert mock_state()["create_calls"] == prior + 9, (
                 "Switching Key tabs must not submit another generation"
             )
             batchctx.close()
+
+            # Reproduce the user's screenshot: nine stored attempts without video IDs.
+            oldctx = browser.new_context(viewport={"width": 1500, "height": 920})
+            configure_local_only_network(oldctx)
+            old = oldctx.new_page()
+            old.goto(BASE + "/", wait_until="domcontentloaded")
+            old.evaluate("""() => {
+              const attempts = {};
+              for (let i = 0; i < 9; i++) {
+                attempts[String(i)] = {
+                  attemptId: 'old-task-without-id-' + i,
+                  keyIndex: i,
+                  modelKey: 'flash25',
+                  createdAt: Date.now() - 3600000,
+                  videoId: null,
+                };
+              }
+              localStorage.setItem('aniflow_video_submission_guards_v1', JSON.stringify(attempts));
+              localStorage.setItem('agnes_video_key_count_v1', '9');
+              localStorage.setItem('agnes_video_api_keys_v1',
+                JSON.stringify(Array.from({length: 9}, (_, i) => 'E2E_MOCK_SLOT_KEY_' + (i+1))));
+            }""")
+            old.reload(wait_until="domcontentloaded")
+            action = old.get_by_role("button", name="一次整理无编号旧记录（保留备份）")
+            action.wait_for(timeout=12_000)
+            assert old.get_by_test_id("key-progress-9").inner_text() == "0%"
+            assert "人工核实后解锁" not in old.content()
+            before = mock_state()["create_calls"]
+            old.once("dialog", lambda dialog: dialog.accept())
+            action.click()
+            action.wait_for(state="detached", timeout=12_000)
+            audit = old.evaluate("""() => ({
+              remaining: Object.keys(JSON.parse(localStorage.getItem('aniflow_video_submission_guards_v1'))),
+              archived: JSON.parse(localStorage.getItem('aniflow_video_archived_noid_attempts_v1')),
+            })""")
+            assert audit["remaining"] == []
+            assert len(audit["archived"]) == 9
+            assert all(a["videoId"] is None for a in audit["archived"])
+            assert mock_state()["create_calls"] == before, "Archiving must never create another video"
+            old.get_by_test_id("key-tab-9").click()
+            assert "第 9 个 Key · 视频预览" in old.content()
+            assert old.get_by_test_id("selected-progress").inner_text() == "0%"
+            old.reload(wait_until="domcontentloaded")
+            assert old.get_by_test_id("key-tab-9").is_visible()
+            assert old.get_by_role("button", name="一次整理无编号旧记录（保留备份）").count() == 0
+
+            # Only the documented two video models; paid selection must require opt-in.
+            assert old.get_by_text("Agnes Video 2.5 · 付费", exact=True).is_visible()
+            assert old.get_by_text("Agnes Video V2.0", exact=True).count() == 0
+            old.get_by_text("Agnes Video 2.5 · 付费", exact=True).click()
+            old.get_by_role("button", name="载入雪所长首镜头 · 5秒").click()
+            old.once("dialog", lambda dialog: dialog.dismiss())
+            old.get_by_role("button", name="生成视频 · Key1").click()
+            assert mock_state()["create_calls"] == before, "Dismissing paid confirmation must send zero POST"
+            oldctx.close()
 
             print("PASS_REAL_BROWSER_MOCK_AGNES_FIRST_SHOT_CREATE_QUERY_VIDEO_RELOAD")
             print("PASS_REAL_BROWSER_AMBIGUOUS_POST_FAIL_CLOSED_NO_RESUBMIT")
             print("PASS_REAL_BROWSER_REFERENCE_VS_FIRST_FRAME_AND_DUPLICATE_KEY_BLOCK")
             print("PASS_REAL_BROWSER_REDACTED_CLIPBOARD_SUMMARY")
             print("PASS_REAL_BROWSER_NINE_UNIQUE_KEYS_BATCH_NINE_IDS_NO_DUPLICATES")
+            print("PASS_REAL_BROWSER_NINE_OLD_GUARDS_SINGLE_ARCHIVE_NUMERIC_TABS_PROGRESS")
+            print("PASS_REAL_BROWSER_FLASH_DEFAULT_PAID_CONFIRM_CANCELS_WITH_NO_POST")
             print("BROWSER_MOCK_CREATE_CALLS=12, REAL_AGNES_CREATE_CALLS=0")
         finally:
             browser.close()

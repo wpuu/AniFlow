@@ -33,7 +33,7 @@ function isPublicUrl(value: string): boolean {
 
 export default function ImageGeneratorPanel({ apiKeys, onUseResult }: Props) {
   const [provider, setProvider] = useState<ImageProviderKey>(() =>
-    loadJSON<ImageProviderKey>(STORAGE_KEYS.IMAGE_PROVIDER, 'capcut'),
+    loadJSON<ImageProviderKey>(STORAGE_KEYS.IMAGE_PROVIDER, 'agnes'),
   );
   const [capcutModel, setCapcutModel] = useState(() =>
     loadJSON<string>(STORAGE_KEYS.CAPCUT_IMAGE_MODEL, ''),
@@ -150,6 +150,10 @@ export default function ImageGeneratorPanel({ apiKeys, onUseResult }: Props) {
 
   return (
     <div className="space-y-4">
+      <p className="text-xs text-zinc-500">
+        这里是独立的图片生成工具。选择视频 Flash 不会改变本面板的生图提供方；
+        仅普通 Flash 文生视频完全不需要 R2/S3。Agnes 生图无R2时使用临时URL。
+      </p>
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-zinc-50 px-3 py-2">
         <div className="flex items-center gap-2 text-xs">
           <span

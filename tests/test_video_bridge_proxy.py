@@ -295,3 +295,42 @@ def test_valid_loopback_host_still_accepts_one_explicit_mocked_create() -> None:
     assert response.status_code == 200
     assert response.json()["video_id"] == "mock_existing_one"
     assert len(calls) == 1
+
+
+
+def test_paid_agnes_25_accepts_documented_720p_and_1080p_without_autoretry() -> None:
+    actual: list[dict] = []
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        actual.append(json.loads(request.content))
+        return httpx.Response(200, json={"video_id": "paid_video_fake_1", "status": "queued"})
+
+    with client_for(respond) as client:
+        result = client.post("/api/video/create", json={
+            "api_key": FAKE_KEY,
+            "payload": {**GOOD_PAYLOAD, "model": "agnes-video-2.5", "size": "1080P"},
+        })
+    assert result.status_code == 200
+    assert len(actual) == 1
+    assert actual[0]["model"] == "agnes-video-2.5"
+    assert actual[0]["size"] == "1080P"
+
+
+def test_v2_legacy_creation_and_invalid_paid_resolutions_block_before_post() -> None:
+    attempts: list[httpx.Request] = []
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        attempts.append(request)
+        return httpx.Response(200, json={})
+
+    with client_for(respond) as client:
+        for payload in (
+            {**GOOD_PAYLOAD, "model": "agnes-video-v2.0"},
+            {**GOOD_PAYLOAD, "model": "agnes-video-2.5", "size": "480P"},
+            {**GOOD_PAYLOAD, "model": "agnes-video-2.5", "size": "2K"},
+        ):
+            result = client.post("/api/video/create", json={
+                "api_key": FAKE_KEY, "payload": payload,
+            })
+            assert result.status_code == 422
+    assert not attempts
