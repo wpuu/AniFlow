@@ -3,12 +3,11 @@ from __future__ import annotations
 import asyncio
 import json
 import statistics
-from typing import Iterable
+from collections.abc import Iterable
 
 from aniflow.agnes.http import AgnesApiError, AgnesHttpClient
 from aniflow.config import Settings
 from aniflow.models import JudgeScores
-
 
 JUDGE_FOCI = (
     "character identity, material/style consistency, and preservation of the subject",

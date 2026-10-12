@@ -1,11 +1,16 @@
-name: Daily Animation Factory
+name: Legacy Animation Factory (manual opt-in only)
 
+# P0-023: do not schedule production before one real Agnes video, MP4 and
+# current billing/rights acceptance. This draft-branch change does NOT disable
+# the older scheduled workflow that still exists on main.
 on:
-  schedule:
-    # Default: 02:30 Asia/Shanghai (18:30 UTC). Change later if desired.
-    - cron: '30 18 * * *'
   workflow_dispatch:
     inputs:
+      confirm_single_batch:
+        description: 'I checked real billing, rights and want to run a live manual batch'
+        type: boolean
+        required: true
+        default: false
       character_id:
         description: 'Character ID; empty uses repository variable ANIFLOW_CHARACTER_ID'
         required: false
@@ -15,12 +20,14 @@ on:
         required: false
         type: string
       count:
-        description: 'Episode count; empty uses ANIFLOW_DAILY_COUNT or 3'
+        description: 'Episode count; for this manual-only legacy path default 1'
         required: false
+        default: '1'
         type: string
       concurrency:
-        description: 'Parallel episode count; empty uses ANIFLOW_DAILY_CONCURRENCY or 2'
+        description: 'Parallel episode count; for this manual-only legacy path default 1'
         required: false
+        default: '1'
         type: string
 
 permissions:
@@ -32,6 +39,7 @@ concurrency:
 
 jobs:
   generate:
+    if: ${{ inputs.confirm_single_batch == true }}
     runs-on: ubuntu-latest
     timeout-minutes: 360
     env:
@@ -55,8 +63,8 @@ jobs:
       S3_REGION: ${{ vars.S3_REGION || 'auto' }}
       ANIFLOW_CHARACTER_ID: ${{ inputs.character_id || vars.ANIFLOW_CHARACTER_ID }}
       ANIFLOW_STYLE: ${{ inputs.style || vars.ANIFLOW_STYLE }}
-      ANIFLOW_DAILY_COUNT: ${{ inputs.count || vars.ANIFLOW_DAILY_COUNT || '3' }}
-      ANIFLOW_DAILY_CONCURRENCY: ${{ inputs.concurrency || vars.ANIFLOW_DAILY_CONCURRENCY || '2' }}
+      ANIFLOW_DAILY_COUNT: ${{ inputs.count || '1' }}
+      ANIFLOW_DAILY_CONCURRENCY: ${{ inputs.concurrency || '1' }}
 
     steps:
       - uses: actions/checkout@v4

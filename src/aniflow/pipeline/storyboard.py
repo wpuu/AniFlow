@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from aniflow.agnes.http import AgnesApiError, AgnesHttpClient
 from aniflow.config import Settings

@@ -123,3 +123,143 @@ def test_bridge_upload_rejects_non_image_payload() -> None:
     )
 
     assert response.status_code == 415
+
+
+def test_agnes_image_without_s3_can_return_temporary_url(monkeypatch) -> None:
+    import importlib
+
+    module = importlib.import_module("aniflow.bridge.app")
+
+    class FakeProvider:
+        async def generate(self, **_kwargs) -> str:
+            return "https://cdn.example.org/test-image.png?expires=short"
+
+    monkeypatch.setattr(module, "AgnesImageProvider", lambda *_args: FakeProvider())
+    settings = Settings(_env_file=None, s3_endpoint_url="", s3_access_key_id="",
+                        s3_secret_access_key="", s3_bucket="", s3_public_base_url="")
+    with TestClient(create_bridge_app(settings=settings)) as client:
+        result = client.post("/api/images/generate", json={
+            "provider": "agnes", "api_key": "FAKE_LOCAL_TEST_KEY",
+            "prompt": "needle felt cat and bowl",
+        })
+        assert result.status_code == 200
+        body = result.json()
+        assert body["url"].startswith("https://cdn.example.org/")
+        assert body["temporary"] is True
+        assert "临时" in body["warning"]
+        assert client.get("/api/health").json()["media_ready"] is False
+
+
+def test_agnes_image_missing_key_reports_key_not_r2() -> None:
+    settings = Settings(_env_file=None, s3_endpoint_url="", s3_access_key_id="",
+                        s3_secret_access_key="", s3_bucket="", s3_public_base_url="")
+    with TestClient(create_bridge_app(settings=settings)) as client:
+        result = client.post("/api/images/generate", json={
+            "provider": "agnes", "prompt": "needle felt cat",
+        })
+    assert result.status_code == 400
+    assert "api_key" in result.json()["detail"]
+    assert "S3" not in result.json()["detail"]
+
+
+def test_agnes_image_refuses_private_upstream_image_link(monkeypatch) -> None:
+    import importlib
+
+    module = importlib.import_module("aniflow.bridge.app")
+
+    class FakeProvider:
+        async def generate(self, **_kwargs) -> str:
+            return "http://127.0.0.1/private.png"
+
+    monkeypatch.setattr(module, "AgnesImageProvider", lambda *_args: FakeProvider())
+    settings = Settings(_env_file=None, s3_endpoint_url="", s3_access_key_id="",
+                        s3_secret_access_key="", s3_bucket="", s3_public_base_url="")
+    with TestClient(create_bridge_app(settings=settings)) as client:
+        result = client.post("/api/images/generate", json={
+            "provider": "agnes", "api_key": "FAKE_LOCAL_TEST_KEY",
+            "prompt": "cat",
+        })
+    assert result.status_code == 502
+    assert "S3" not in result.json()["detail"]
+
+
+def test_version_api_reports_noncached_source_frontend(tmp_path: Path) -> None:
+    frontend = tmp_path / "apps" / "grok-frontend" / "dist" / "index.html"
+    frontend.parent.mkdir(parents=True)
+    frontend.write_text("<html>AniFlow</html>", encoding="utf-8")
+    app = create_bridge_app(settings=Settings(aniflow_frontend_index=str(frontend)))
+    with TestClient(app) as client:
+        response = client.get("/api/version")
+        page = client.get("/")
+    assert response.status_code == 200
+    assert response.json()["source_commit"] is None
+    assert response.json()["build_type"] == "source"
+    assert response.json()["frontend_verified"] is True
+    assert page.headers["cache-control"].startswith("no-store")
+
+
+def test_version_api_hash_matches_bundled_html_and_detects_tampering(tmp_path: Path) -> None:
+    import hashlib
+    import json
+
+    frontend = tmp_path / "apps" / "grok-frontend" / "dist" / "index.html"
+    frontend.parent.mkdir(parents=True)
+    frontend.write_text("<html>AniFlow</html>", encoding="utf-8")
+    digest = hashlib.sha256(frontend.read_bytes()).hexdigest()
+    manifest = tmp_path / "prebuilt_frontend.json"
+    manifest.write_text(json.dumps({"source_commit": "a" * 40, "frontend_sha256": digest}))
+    app = create_bridge_app(settings=Settings(aniflow_frontend_index=str(frontend)))
+    with TestClient(app) as client:
+        verified = client.get("/api/version").json()
+        assert verified["source_commit"] == "a" * 40
+        assert verified["frontend_verified"] is True
+        assert verified["build_type"] == "prebuilt"
+        frontend.write_text("<html>tampered</html>", encoding="utf-8")
+        tampered = client.get("/api/version").json()
+        assert tampered["frontend_verified"] is False
+
+
+def test_missing_media_store_explains_local_images_not_video_require_r2() -> None:
+    settings = Settings(
+        _env_file=None, s3_endpoint_url="", s3_access_key_id="",
+        s3_secret_access_key="", s3_bucket="", s3_public_base_url="",
+    )
+    with TestClient(create_bridge_app(settings=settings)) as client:
+        result = client.post(
+            "/api/media/upload",
+            files={"file": ("test.png", _png_bytes(), "image/png")},
+        )
+    assert result.status_code == 422
+    message = result.json()["detail"]
+    assert "local image uploads" in message
+    assert "text-to-video does not need S3/R2" in message
+
+
+def test_semantic_version_is_read_from_the_actual_windows_bundle(tmp_path: Path) -> None:
+    import hashlib
+    import json
+
+    frontend = tmp_path / "apps" / "grok-frontend" / "dist" / "index.html"
+    frontend.parent.mkdir(parents=True)
+    frontend.write_text("<html>new version</html>", encoding="utf-8")
+    version = {"app_version": "0.32.0", "release_stage": "P0-032"}
+    (tmp_path / "version.json").write_text(json.dumps(version), encoding="utf-8")
+    manifest = {
+        "source_commit": "a" * 40,
+        "frontend_sha256": hashlib.sha256(frontend.read_bytes()).hexdigest(),
+        **version,
+    }
+    (tmp_path / "prebuilt_frontend.json").write_text(json.dumps(manifest), encoding="utf-8")
+    app = create_bridge_app(settings=Settings(aniflow_frontend_index=str(frontend)))
+    with TestClient(app) as client:
+        good = client.get("/api/version").json()
+        assert good["app_version"] == "0.32.0"
+        assert good["release_stage"] == "P0-032"
+        assert good["frontend_verified"] is True
+        (tmp_path / "version.json").write_text(
+            json.dumps({"app_version": "0.31.0", "release_stage": "P0-031"}),
+            encoding="utf-8",
+        )
+        wrong = client.get("/api/version").json()
+        assert wrong["frontend_verified"] is False
+        assert wrong["app_version"] == "0.32.0"

@@ -8,8 +8,8 @@ import pytest
 from aniflow.queue_probe import (
     CAPACITY_AVAILABLE,
     INCONCLUSIVE_SATURATED,
+    MIXED_OBSERVED,
     NO_KEYS,
-    PER_ACCOUNT,
     Attempt,
     Round,
     decide,
@@ -31,19 +31,18 @@ def make_round(index: int, pattern: list[bool], code: str = "video_queue_full") 
 # --- the verdict logic is the whole product; test it hard -----------------
 
 
-def test_mixed_round_proves_per_account():
-    """Some accepted AND some queue_full at the same instant is only possible
-    if the limit is enforced per account."""
-    assert decide([make_round(1, [True, False, False])]) == PER_ACCOUNT
+def test_mixed_round_cannot_prove_per_account():
+    """One spare slot in a GLOBAL queue can also accept one, reject two."""
+    assert decide([make_round(1, [True, False, False])]) == MIXED_OBSERVED
 
 
 def test_mixed_in_any_round_is_enough():
     rounds = [
         make_round(1, [False, False, False]),
-        make_round(2, [False, True, False]),  # the smoking gun
+        make_round(2, [False, True, False]),  # a mixed sample, not proof of queue isolation
         make_round(3, [False, False, False]),
     ]
-    assert decide(rounds) == PER_ACCOUNT
+    assert decide(rounds) == MIXED_OBSERVED
 
 
 def test_all_rejected_is_inconclusive_not_global():
@@ -115,7 +114,7 @@ def test_run_round_fires_every_key_and_parses_both_outcomes():
     assert rnd.accepted[0].account_label == "account-2"
     assert all(a.is_queue_full for a in rnd.rejected)
     assert rnd.is_mixed
-    assert decide([rnd]) == PER_ACCOUNT
+    assert decide([rnd]) == MIXED_OBSERVED
 
 
 def test_probe_uses_text_mode_so_no_media_layer_is_required():
@@ -184,3 +183,92 @@ def test_audio_detection_returns_none_when_unknown(tmp_path):
 @pytest.mark.parametrize("missing", ["nope.mp4"])
 def test_audio_detection_handles_missing_file(tmp_path, missing):
     assert has_audio_track(tmp_path / missing) is None
+
+
+def test_audio_detection_ffprobe_failure_still_inspects_mp4_handler(tmp_path, monkeypatch):
+    """A failed ffprobe must not turn unknown/corrupt media into 'no audio'."""
+    from subprocess import CompletedProcess
+
+    f = tmp_path / "mp4-sample.mp4"
+    f.write_bytes(b"\x00" * 100 + b"hdlr" + b"\x00" * 8 + b"soun")
+    monkeypatch.setattr("aniflow.queue_probe.shutil.which", lambda _: "ffprobe")
+    monkeypatch.setattr(
+        "aniflow.queue_probe.subprocess.run",
+        lambda *args, **kwargs: CompletedProcess(args=args, returncode=1, stdout="", stderr="invalid MP4"),
+    )
+    assert has_audio_track(f) is True
+
+
+def test_audio_detection_ffprobe_success_disambiguates_no_audio(tmp_path, monkeypatch):
+    from subprocess import CompletedProcess
+
+    f = tmp_path / "realistic-media.mp4"
+    f.write_bytes(b"hdlr" + b"\x00" * 8 + b"soun")
+    monkeypatch.setattr("aniflow.queue_probe.shutil.which", lambda _: "ffprobe")
+    monkeypatch.setattr(
+        "aniflow.queue_probe.subprocess.run",
+        lambda *args, **kwargs: CompletedProcess(args=args, returncode=0, stdout="", stderr=""),
+    )
+    # A successfully parsed real MP4 with zero audio streams wins over the heuristic.
+    assert has_audio_track(f) is False
+
+
+def test_audio_detection_unrelated_soun_string_not_a_real_handler(tmp_path, monkeypatch):
+    f = tmp_path / "random.bin"
+    f.write_bytes(b"this is not a handler: soun")
+    monkeypatch.setattr("aniflow.queue_probe.shutil.which", lambda _: None)
+    assert has_audio_track(f) is None
+
+
+def test_audio_detection_missing_file_does_not_claim_no_audio(tmp_path, monkeypatch):
+    from subprocess import CompletedProcess
+
+    monkeypatch.setattr("aniflow.queue_probe.shutil.which", lambda _: "ffprobe")
+    monkeypatch.setattr(
+        "aniflow.queue_probe.subprocess.run",
+        lambda *args, **kwargs: CompletedProcess(args=args, returncode=1, stdout="", stderr="not found"),
+    )
+    assert has_audio_track(tmp_path / "missing.mp4") is None
+
+
+def test_shared_global_one_slot_is_counterexample_to_per_account_claim():
+    # A global queue with exactly one slot left admits the first concurrent
+    # request and rejects other accounts. That is indistinguishable here.
+    globally_shared_result = make_round(1, [True, False, False, False])
+    assert globally_shared_result.is_mixed
+    assert decide([globally_shared_result]) == MIXED_OBSERVED
+
+
+def test_legacy_queue_probe_requires_explicit_consent(monkeypatch):
+    """The old CLI must not create video tasks just by being invoked."""
+    from typer.testing import CliRunner
+
+    import aniflow.queue_probe as qp
+    from aniflow.cli import app
+
+    def must_not_fire(*args, **kwargs):
+        raise AssertionError("No video submission is authorized")
+
+    monkeypatch.setattr(qp, "run_round", must_not_fire)
+    result = CliRunner().invoke(app, ["queue-probe"])
+    assert result.exit_code == 2
+
+
+def test_legacy_queue_probe_watch_remains_disabled_even_with_acknowledgement(monkeypatch):
+    """An indefinite watch loop could submit an unbounded number of paid tasks."""
+    from typer.testing import CliRunner
+
+    import aniflow.queue_probe as qp
+    from aniflow.cli import app
+
+    def must_not_fire(*args, **kwargs):
+        raise AssertionError("No video submission is authorized")
+
+    monkeypatch.setattr(qp, "run_round", must_not_fire)
+    result = CliRunner().invoke(
+        app, [
+            "queue-probe", "--watch", "--rounds", "1",
+            "--acknowledge-multiple-video-submissions",
+        ]
+    )
+    assert result.exit_code == 2

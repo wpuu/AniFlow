@@ -1,7 +1,8 @@
 export type Ratio = '16:9' | '9:16' | '1:1' | '4:3' | '3:4';
 export type ResolutionTier = '480p' | '720p' | '1080p';
-export type VideoModelKey = 'v2' | 'flash25';
-export type GenMode = 't2v' | 'i2v' | 'keyframes';
+export type VideoModelKey = 'v2' | 'flash25' | 'paid25';
+export type AgnesApiDomain = 'global' | 'china' | 'fallback';
+export type GenMode = 't2v' | 'i2v' | 'keyframes' | 'reference';
 export type DurationPresetKey = '3' | '5' | '10' | '18' | 'custom';
 
 export type TaskStatus =
@@ -11,7 +12,8 @@ export type TaskStatus =
   | 'in_progress'
   | 'completed'
   | 'failed'
-  | 'stopped';
+  | 'stopped'
+  | 'submission_unknown';
 
 export interface KeyframeScene {
   id: string;
@@ -54,12 +56,14 @@ export interface HistoryItem {
   id: string;
   keyIndex: number;
   createdAt: number;
+  finishedAt?: number;
   promptPreview: string;
   modelKey?: VideoModelKey;
   modelName?: string;
-  mode: GenMode;
-  ratio: Ratio;
-  resolution: ResolutionTier;
+  apiDomain?: AgnesApiDomain;
+  mode: GenMode | 'unknown';
+  ratio: Ratio | 'unknown';
+  resolution: ResolutionTier | 'unknown';
   status: TaskStatus;
   progress: number;
   videoUrl: string | null;
@@ -85,6 +89,7 @@ export interface CreateVideoTaskResponse {
 }
 
 export interface VideoResultResponse {
+  url?: string;
   id?: string;
   video_id?: string;
   task_id?: string;
@@ -100,5 +105,5 @@ export interface VideoResultResponse {
     url?: string;
     size_mapping?: Record<string, unknown>;
   };
-  error?: { message?: string } | null;
+  error?: { message?: string } | string | null;
 }

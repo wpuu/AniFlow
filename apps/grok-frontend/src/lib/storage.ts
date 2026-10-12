@@ -4,12 +4,18 @@ export const STORAGE_KEYS = {
   API_KEYS: 'agnes_video_api_keys_v1',
   KEY_COUNT: 'agnes_video_key_count_v1',
   HISTORY: 'agnes_video_history_v1',
+  SUBMISSION_GUARDS: 'aniflow_video_submission_guards_v1',
+  ARCHIVED_GUARDS: 'aniflow_video_archived_noid_attempts_v1',
   ACTIVE_MODEL: 'agnes_video_active_model_v1',
   PARAMS_BY_MODEL: 'agnes_video_params_by_model_v1',
   DEFAULT_PARAMS_BY_MODEL: 'agnes_video_default_params_by_model_v1',
   IMAGE_PROVIDER: 'aniflow_image_provider_v1',
   CAPCUT_IMAGE_MODEL: 'aniflow_capcut_image_model_v1',
   IMAGE_PROMPT: 'aniflow_image_prompt_v1',
+  PROMPT_HISTORY: 'aniflow_prompt_history_v1',
+  PROMPT_HEIGHT: 'aniflow_prompt_height_v1',
+  KEY_DOMAINS: 'aniflow_key_domains_v1',
+  NEGATIVE_PROMPT_MIGRATED: 'aniflow_modern_negative_prompt_initialized_v1',
 };
 
 export function loadJSON<T>(key: string, fallback: T): T {

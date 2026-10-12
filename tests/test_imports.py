@@ -1,7 +1,13 @@
+from importlib import import_module
+
+
 def test_core_modules_import():
-    import aniflow.cli  # noqa: F401
-    import aniflow.pipeline.episode  # noqa: F401
-    import aniflow.pipeline.segment  # noqa: F401
-    import aniflow.pipeline.keyframes  # noqa: F401
-    import aniflow.agnes.video  # noqa: F401
-    import aniflow.agnes.vision  # noqa: F401
+    for name in (
+        "aniflow.cli",
+        "aniflow.pipeline.episode",
+        "aniflow.pipeline.segment",
+        "aniflow.pipeline.keyframes",
+        "aniflow.agnes.video",
+        "aniflow.agnes.vision",
+    ):
+        assert import_module(name) is not None

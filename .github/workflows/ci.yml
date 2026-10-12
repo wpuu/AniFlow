@@ -1,24 +1,392 @@
 name: CI
 
+# One run per PR commit; avoid duplicate push + pull_request runs.
 on:
   push:
+    branches: [main]
   pull_request:
+    branches: [main]
+
+# Read-only checks only: no API keys, publishing, releases, or uploads.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
+  lint:
+    name: Ruff (Python static checks)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install ffmpeg
+      - name: Install lint tool
+        run: python -m pip install 'ruff>=0.9,<1'
+      - name: Ruff (must be independently fixed, never disabled)
+        run: python -m ruff check src tests scripts/one_agnes_real_shot.py scripts/audit_wan_reference_assets.py scripts/build_nine_key_bundle.py
+
+      - name: Verify pinned publicly reachable Agnes portrait URL (read-only, no Agnes Key)
+        shell: bash
+        run: |
+          curl -fLsS --max-time 35 -o /tmp/agnes-pinned-portrait.png 'https://raw.githubusercontent.com/wpuu/AniFlow/4a09aa3d93f25f753c3379fd8bf4501427a266a0/assets/character/agnes-felt-test-frame.png'
+          echo 'f0c2b7c330c10c6c2640934b75e66b572e47e578805a978a84c907aada9db60e  /tmp/agnes-pinned-portrait.png' | sha256sum -c -
+
+      - name: Read-only Wan first-frame PNG technical audit (no Key or requests)
+        run: python scripts/audit_wan_reference_assets.py
+
+  frontend:
+    name: Nine-Key Agnes frontend TypeScript and Vite build
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/grok-frontend/package-lock.json
+      - name: Install pinned frontend dependencies
+        working-directory: apps/grok-frontend
+        run: npm ci
+      - name: Unit-test persistent nine-Key video guard (no API/Key)
+        working-directory: apps/grok-frontend
+        run: node --experimental-strip-types --test tests/taskSafety.test.mjs tests/safeTrialReport.test.mjs tests/statusProgress.test.mjs tests/promptHistory.test.mjs tests/eligibleKeys.test.mjs tests/negativePrompt.test.mjs tests/pollPolicy.test.mjs
+      - name: Type-check and build standalone frontend (no API/Key)
+        working-directory: apps/grok-frontend
+        run: npm run build
+      - name: Share public compiled frontend within this CI run
+        uses: actions/upload-artifact@v4
+        with:
+          name: internal-compiled-nine-key-ui
+          path: apps/grok-frontend/dist/index.html
+          retention-days: 1
+          if-no-files-found: error
+
+  tests:
+    name: Pytest + doctor (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install FFmpeg (Linux)
+        if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - name: Install package
-        run: pip install -e '.[dev]'
-      - name: Ruff
-        run: ruff check src tests
-      - name: Pytest
-        run: pytest -q
-      - name: Doctor
+      - name: Install FFmpeg (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+            # Chocolatey may transiently return HTTP 504. Retry only this
+            # dependency fetch; no product API/Key is involved.
+            $installed = $false
+            for ($attempt = 1; $attempt -le 3; $attempt++) {
+              choco install ffmpeg -y --no-progress
+              if ($LASTEXITCODE -eq 0) { $installed = $true; break }
+              Write-Warning "Chocolatey FFmpeg attempt $attempt failed; retrying limited times"
+              Start-Sleep -Seconds (5 * $attempt)
+            }
+            if (-not $installed) { throw "FFmpeg dependency install failed after 3 bounded attempts" }
+            $env:PATH = [Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" + [Environment]::GetEnvironmentVariable("PATH", "User")
+          }
+          ffmpeg -version
+          ffprobe -version
+      - name: Install project and test dependencies
+        run: python -m pip install -e ".[dev]"
+      - name: Full repository Pytest suite (no private keys)
+        run: python -m pytest -q
+      - name: Locked first-shot plan-only preview (never reads secrets or sends POST)
+        shell: bash
+        if: runner.os == 'Linux'
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          import sys
+          run = subprocess.run(
+              [sys.executable, "scripts/one_agnes_real_shot.py"],
+              capture_output=True,
+              check=True,
+              text=True,
+          )
+          plan = json.loads(run.stdout)
+          assert plan["result"] == "PLAN_ONLY_NO_REQUESTS"
+          assert plan["submissions"] == 0
+          assert plan["episode_id"] == "MYCL-001"
+          assert plan["seconds"] == 5
+          assert plan["model"] == "agnes-video-2.5-flash"
+          assert plan["mode"] == "text"
+          assert plan["resolution"] == "720P"
+          assert plan["aspect_ratio"] == "9:16"
+          assert not any("api_key" in key.lower() for key in plan)
+          print("PASS_CLOUD_FIRST_SHOT_PLAN_ONLY_ZERO_POST")
+          PY
+      - name: AniFlow doctor
         run: aniflow doctor
+
+
+  browser_e2e:
+    name: Real Chromium E2E with fake Agnes only (never reads real Keys)
+    needs: [frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install only browser test packages and local app (no credentials)
+        run: python -m pip install -e . playwright==1.56.0
+      - name: Verify Chrome (use checked-in valid synthetic MP4; no apt required)
+        shell: bash
+        run: command -v google-chrome
+      - name: Download the SAME frontend build as the nine-Key Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: internal-compiled-nine-key-ui
+          path: apps/grok-frontend/dist
+      - name: "Click through actual browser: first shot, recovery, reference, duplicate keys"
+        shell: bash
+        env:
+          AGNES_API_KEYS: ''
+          ANIFLOW_SINGLE_SHOT_API_KEY: ''
+        run: python scripts/browser_e2e_check.py --screenshot e2e-results/MOCK-NO-REAL-AGNES-VIDEO.png
+      - name: Share explicitly labeled simulated UI screenshot (not a generated video)
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: browser-mock-proof
+          path: e2e-results/MOCK-NO-REAL-AGNES-VIDEO.png
+          if-no-files-found: error
+          retention-days: 7
+
+  bundle:
+    name: Package existing nine-Key UI for Windows (no secrets)
+    needs: [lint, frontend, tests, browser_e2e]
+    outputs:
+      artifact_name: ${{ steps.release_meta.outputs.artifact_name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate release identity and build version
+        id: release_meta
+        shell: bash
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import re
+          import tomllib
+          from pathlib import Path
+          meta = json.loads(Path("version.json").read_text(encoding="utf-8"))
+          version, stage = meta["app_version"], meta["release_stage"]
+          assert re.fullmatch(r"0\.[0-9]+\.[0-9]+", version)
+          assert re.fullmatch(r"P0-[0-9]{3}", stage)
+          pyproject = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+          package = json.loads(Path("apps/grok-frontend/package.json").read_text(encoding="utf-8"))
+          lock = json.loads(Path("apps/grok-frontend/package-lock.json").read_text(encoding="utf-8"))
+          assert pyproject["project"]["version"] == version
+          assert package["version"] == version == lock["version"] == lock["packages"][""]["version"]
+          print(f"artifact_name=AniFlow-v{version}-{stage}-Windows-${{ github.event.pull_request.head.sha || github.sha }}")
+          PY
+      - name: Fetch compiled frontend from this CI run
+        uses: actions/download-artifact@v4
+        with:
+          name: internal-compiled-nine-key-ui
+          path: apps/grok-frontend/dist
+      - name: Build strict public-source-only test bundle
+        shell: bash
+        run: |
+          python3 scripts/build_nine_key_bundle.py \
+            --output-dir bundle-out/AniFlow-9Key \
+            --source-commit "${{ github.event.pull_request.head.sha || github.sha }}"
+      - name: Upload temporary CI test artifact (not a deployment or release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.release_meta.outputs.artifact_name }}
+          path: bundle-out/AniFlow-9Key/
+          if-no-files-found: error
+          retention-days: 14
+
+  windows_bundle_smoke:
+    name: Verify downloaded Node-free Windows bundle (no credentials)
+    needs: [bundle]
+    runs-on: windows-latest
+    env:
+      ANIFLOW_SKIP_UPDATE_CHECK: '1'
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.bundle.outputs.artifact_name }}
+          path: bundle
+      - name: Run actual Windows installer, validate local HTML and video routes
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Set-Location bundle
+          & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\setup_aniflow_windows.ps1"
+          if ($LASTEXITCODE -ne 0) { throw "Windows bundle installer failed" }
+          $secondRun = & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\setup_aniflow_windows.ps1" 2>&1
+          if ($LASTEXITCODE -ne 0) { throw "Second setup should reuse existing dependencies" }
+          if (($secondRun -join [Environment]::NewLine) -notmatch "PASS_ANIFLOW_SHARED_RUNTIME_REUSED_NO_PIP") {
+            throw "Installer re-downloaded Python dependencies instead of reusing shared runtime"
+          }
+          Write-Host "PASS_WINDOWS_SECOND_INSTALL_REUSES_SHARED_RUNTIME_NO_PIP"
+          # The user's actual upgrade extracts each version to a different folder.
+          # Prove that a separate copy reuses dependencies and still binds its OWN src.
+          $here = (Get-Location).Path
+          $next = Join-Path (Split-Path -Parent $here) "bundle-second-folder"
+          Copy-Item -LiteralPath $here -Destination $next -Recurse -ErrorAction Stop
+          try {
+            Set-Location -LiteralPath $next
+            $nextSetup = & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\setup_aniflow_windows.ps1" 2>&1
+            if ($LASTEXITCODE -ne 0) { throw "Install in another release folder failed" }
+            if (($nextSetup -join [Environment]::NewLine) -notmatch "PASS_ANIFLOW_SHARED_RUNTIME_REUSED_NO_PIP") {
+              throw "Second version folder reinstalled identical Python dependencies"
+            }
+            if (($nextSetup -join [Environment]::NewLine) -notmatch "PASS_ANIFLOW_CURRENT_SOURCE_BOUND_SHARED_RUNTIME") {
+              throw "Second version folder imported stale source"
+            }
+            Write-Host "PASS_WINDOWS_DIFFERENT_RELEASE_FOLDER_REUSES_PIP_AND_BINDS_SOURCE"
+          }
+          finally {
+            Set-Location -LiteralPath $here
+          }
+          $python = Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "AniFlow\python-env\Scripts\python.exe"
+          if (-not (Test-Path -LiteralPath $python -PathType Leaf)) { throw "Shared Python was not installed" }
+          $env:PYTHONPATH = Join-Path (Get-Location).Path "src"
+          & $python -c "from aniflow.bridge.app import create_bridge_app; from fastapi.testclient import TestClient; app=create_bridge_app(); c=TestClient(app); assert c.get('/').status_code == 200; assert c.get('/api/health').json()['frontend_ready']; paths=c.get('/openapi.json').json()['paths']; assert '/api/video/create' in paths; assert '/api/video/status' in paths; print('PASS_WINDOWS_BUNDLE_NO_NODE_NO_KEY')"
+          if ($LASTEXITCODE -ne 0) { throw "Windows built-bundle Bridge smoke test failed" }
+          foreach ($cmd in @("启动AniFlow.cmd", "首次安装AniFlow.cmd", "一键重启当前AniFlow.cmd", "检查更新AniFlow.cmd")) {
+            $bytes = [System.IO.File]::ReadAllBytes((Resolve-Path $cmd).Path)
+            if (@($bytes | Where-Object { $_ -gt 127 }).Count -ne 0) {
+              throw "Windows launcher $cmd is not pure ASCII; cmd.exe may misparse Chinese characters"
+            }
+          }
+          Write-Host "PASS_WINDOWS_LAUNCHER_SCRIPTS_ASCII_NO_MOJIBAKE"
+          $tokens = $null
+          $parseErrors = $null
+          foreach ($candidate in @("check_aniflow_update_windows.ps1", "aniflow_shared_runtime.ps1", "setup_aniflow_windows.ps1", "restart_aniflow_windows.ps1")) {
+            $tokens = $null
+            $parseErrors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path ("scripts\" + $candidate)).Path,
+              [ref]$tokens, [ref]$parseErrors
+            ) | Out-Null
+            if (@($parseErrors).Count -ne 0) {
+              throw ("Invalid PowerShell syntax in " + $candidate + ": " + $parseErrors)
+            }
+          }
+          Write-Host "PASS_WINDOWS_UPDATE_HELPER_POWERSHELL_PARSE"
+          & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\restart_aniflow_windows.ps1" -ValidateOnly
+          if ($LASTEXITCODE -ne 0) { throw "Safe restart version validation failed" }
+          if (-not (Test-Path "一键重启当前AniFlow.cmd")) { throw "User one-click launcher is missing" }
+
+      - name: Start real Windows Bridge on localhost and GET compiled UI (zero Agnes calls)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Set-Location bundle
+          $python = (Resolve-Path (Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "AniFlow\python-env\Scripts\python.exe")).Path
+          $env:PYTHONPATH = Join-Path (Get-Location).Path "src"
+          $bridge = Start-Process -FilePath $python -ArgumentList @("-m", "aniflow.cli", "bridge") -WorkingDirectory (Get-Location).Path -PassThru -RedirectStandardOutput "bridge-smoke-out.txt" -RedirectStandardError "bridge-smoke-err.txt"
+          try {
+            $base = "http://127.0.0.1:8765"
+            $healthy = $false
+            for ($i = 0; $i -lt 35; $i++) {
+              if ($bridge.HasExited) { throw "Bridge process exited before HTTP health became ready" }
+              try {
+                $h = Invoke-RestMethod -Uri "$base/api/health" -TimeoutSec 2
+                if ($h.ok -eq $true -and $h.frontend_ready -eq $true) {
+                  $healthy = $true
+                  break
+                }
+              }
+              catch { }
+              Start-Sleep -Milliseconds 700
+            }
+            if (-not $healthy) { throw "Real Bridge never opened localhost:8765" }
+            $page = Invoke-WebRequest -Uri "$base/" -UseBasicParsing -TimeoutSec 10
+            if ($page.StatusCode -ne 200) { throw "Real Bridge did not serve the compiled UI" }
+            if ($page.Content -notmatch "AniFlow") { throw "Compiled AniFlow frontend not found in live response" }
+            $api = Invoke-RestMethod -Uri "$base/openapi.json" -TimeoutSec 10
+            $routes = $api.paths.PSObject.Properties.Name
+            if ($routes -notcontains "/api/video/create" -or
+                $routes -notcontains "/api/video/status" -or
+                $routes -notcontains "/api/version") {
+              throw "Real server is missing version or video routes"
+            }
+            $active = Invoke-RestMethod -Uri "$base/api/version" -TimeoutSec 5
+            $manifest = Get-Content -LiteralPath "prebuilt_frontend.json" -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($active.source_commit -ne $manifest.source_commit -or
+                $active.app_version -ne $manifest.app_version -or
+                $active.release_stage -ne $manifest.release_stage -or
+                -not $active.frontend_verified) {
+              throw "Running Bridge does not match packaged HTML"
+            }
+            if ($page.Headers["Cache-Control"] -notmatch "no-store") {
+              throw "Compiled HTML can be cached as an old version"
+            }
+            $client = [System.Net.Http.HttpClient]::new()
+            try {
+              $request = [System.Net.Http.HttpRequestMessage]::new(
+                [System.Net.Http.HttpMethod]::Get, "$base/api/health"
+              )
+              $request.Headers.Host = "127.0.0.1.rebind.invalid"
+              $reply = $client.SendAsync($request).GetAwaiter().GetResult()
+              if ([int]$reply.StatusCode -ne 400) { throw "DNS rebinding Host was not rejected" }
+              $reply.Dispose()
+              $request.Dispose()
+            }
+            finally { $client.Dispose() }
+            Write-Host "PASS_WINDOWS_REAL_LOCALHOST_BRIDGE_UI_ROUTES_HOST_GUARD_ZERO_AGNES_REQUESTS"
+          }
+          finally {
+            Stop-Process -Id $bridge.Id -Force -ErrorAction SilentlyContinue
+            Wait-Process -Id $bridge.Id -ErrorAction SilentlyContinue
+          }
+
+
+      - name: Run one-click restart twice and verify active build SHA (no Agnes traffic)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Set-Location bundle
+          & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\restart_aniflow_windows.ps1" -NoBrowser
+          if ($LASTEXITCODE -ne 0) { throw "First verified one-click restart failed" }
+          $manifest = Get-Content "prebuilt_frontend.json" -Raw -Encoding UTF8 | ConvertFrom-Json
+          $v = Invoke-RestMethod "http://127.0.0.1:8765/api/version"
+          if ($v.source_commit -ne $manifest.source_commit -or -not $v.frontend_verified) {
+            throw "First restart showed stale HTML"
+          }
+          & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\restart_aniflow_windows.ps1" -NoBrowser
+          if ($LASTEXITCODE -ne 0) { throw "Second verified one-click restart failed" }
+          $again = Invoke-RestMethod "http://127.0.0.1:8765/api/version"
+          if ($again.source_commit -ne $manifest.source_commit -or -not $again.frontend_verified) {
+            throw "Repeated restart showed a stale service"
+          }
+          Write-Host "PASS_WINDOWS_ONECLICK_RESTART_TWICE_ACTIVE_SHA_MATCH"
+          # This used to call the old port-fail launcher and corrupt Chinese echo.
+          $env:ANIFLOW_NO_BROWSER = "1"
+          & cmd.exe /d /c "启动AniFlow.cmd"
+          if ($LASTEXITCODE -ne 0) { throw "Ordinary CMD startup failed to hand off to safe restart" }
+          $normal = Invoke-RestMethod "http://127.0.0.1:8765/api/version"
+          if ($normal.source_commit -ne $manifest.source_commit -or -not $normal.frontend_verified) {
+            throw "Ordinary CMD startup served an old build"
+          }
+          Write-Host "PASS_WINDOWS_ORDINARY_CMD_AUTO_RESTART_CORRECT_VERSION"

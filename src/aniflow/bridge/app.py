@@ -1,18 +1,26 @@
 from __future__ import annotations
 
+import hashlib
+import ipaddress
+import json
 import tempfile
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urlsplit
 from uuid import uuid4
 
+import httpx
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 
+from aniflow import __version__
 from aniflow.agnes.http import AgnesHttpClient
 from aniflow.agnes.image import AgnesImageClient
 from aniflow.agnes.key_pool import KeyPool
+from aniflow.bridge.video_proxy import video_proxy_router
 from aniflow.capcut.provider import CapCutSeedreamProvider, SubprocessCapCutRunner
 from aniflow.config import Settings, get_settings
 from aniflow.image_provider import AgnesImageProvider
@@ -26,6 +34,16 @@ DEV_FRONTEND_ORIGINS = [
     "http://localhost:4173",
     "http://127.0.0.1:4173",
 ]
+
+
+class BuildVersionResponse(BaseModel):
+    source_commit: str | None
+    app_version: str | None = None
+    release_stage: str | None = None
+    frontend_sha256: str | None
+    frontend_verified: bool
+    build_type: Literal["prebuilt", "source"]
+    bridge: str = "aniflow-local"
 
 
 class HealthResponse(BaseModel):
@@ -58,6 +76,35 @@ class GenerateImageResponse(BaseModel):
     provider: Literal["agnes", "capcut"]
     model: str
     url: str
+    temporary: bool = False
+    warning: str | None = None
+
+
+def _safe_temporary_image_url(value: str) -> str:
+    """Never expose a private/credential-bearing Agnes URL as a browser image."""
+    try:
+        uri = urlsplit(value)
+        host = uri.hostname or ""
+        try:
+            ip = ipaddress.ip_address(host)
+        except ValueError:
+            ip = None
+        if (
+            uri.scheme != "https"
+            or not host
+            or "." not in host
+            or uri.username
+            or uri.password
+            or uri.port not in (None, 443)
+            or host.lower().endswith((".local", ".internal", ".localhost"))
+            or (ip is not None and not ip.is_global)
+        ):
+            raise ValueError("unsafe image URL")
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=502, detail="Agnes returned an invalid public image URL"
+        ) from exc
+    return value
 
 
 def _detect_suffix(data: bytes) -> str:
@@ -74,9 +121,11 @@ def create_bridge_app(
     *,
     settings: Settings | None = None,
     media_store: PublicMediaStore | None = None,
+    video_transport: httpx.AsyncBaseTransport | None = None,
 ) -> FastAPI:
     cfg = settings or get_settings()
-    app = FastAPI(title="AniFlow Local Bridge", version="0.1.0")
+    app = FastAPI(title="AniFlow Local Bridge", version=__version__)
+    app.include_router(video_proxy_router(cfg, transport=video_transport))
     app.add_middleware(
         CORSMiddleware,
         allow_origins=DEV_FRONTEND_ORIGINS,
@@ -84,21 +133,92 @@ def create_bridge_app(
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["*"],
     )
+    # Bind-to-loopback is necessary but insufficient against DNS rebinding.
+    # The synthetic testserver host is used only by Starlette's TestClient.
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=["127.0.0.1", "localhost", "testserver"],
+        www_redirect=False,
+    )
 
     def resolve_store() -> PublicMediaStore:
         if media_store is not None:
             return media_store
         if not cfg.s3_ready:
             raise HTTPException(
-                status_code=503,
-                detail="Public media storage is not configured; set the S3/R2 environment variables first",
+                status_code=422,
+                detail=(
+                    "Only local image uploads or persistent CapCut media require S3/R2. "
+                    "Agnes Video 2.5 Flash text-to-video does not need S3/R2. "
+                    "Choose text-to-video or provide an already public HTTPS image URL."
+                ),
             )
         return PublicMediaStore(cfg)
+
+
+    @app.get("/api/version", response_model=BuildVersionResponse)
+    async def active_version() -> BuildVersionResponse:
+        # The allowlisted ZIP is unpacked with the manifest at its root.
+        # Manifest provenance and exact HTML SHA are verifiable locally.
+        frontend = cfg.frontend_index_path
+        root = frontend.parent.parent.parent.parent
+        manifest_path = root / "prebuilt_frontend.json"
+        if not manifest_path.is_file():
+            return BuildVersionResponse(
+                source_commit=None, frontend_sha256=None,
+                frontend_verified=frontend.is_file(), build_type="source",
+            )
+        try:
+            data = json.loads(manifest_path.read_text(encoding="utf-8"))
+            expected = data.get("frontend_sha256")
+            commit = data.get("source_commit")
+            app_version = data.get("app_version")
+            release_stage = data.get("release_stage")
+            actual = hashlib.sha256(frontend.read_bytes()).hexdigest()
+            version_file = root / "version.json"
+            if version_file.is_file():
+                version_data = json.loads(version_file.read_text(encoding="utf-8"))
+                version_valid = (
+                    app_version == version_data.get("app_version")
+                    and release_stage == version_data.get("release_stage")
+                    and isinstance(app_version, str)
+                    and isinstance(release_stage, str)
+                )
+            else:
+                # Old P0-031 bundles have no semantic version; stay readable
+                # while refusing any new manifest whose version file is missing.
+                version_valid = app_version is None and release_stage is None
+            valid = (
+                isinstance(expected, str) and len(expected) == 64
+                and isinstance(commit, str) and len(commit) == 40
+                and expected.lower() == actual
+                and version_valid
+            )
+            return BuildVersionResponse(
+                source_commit=commit if isinstance(commit, str) else None,
+                app_version=app_version if isinstance(app_version, str) else None,
+                release_stage=release_stage if isinstance(release_stage, str) else None,
+                frontend_sha256=actual, frontend_verified=bool(valid),
+                build_type="prebuilt",
+            )
+        except (OSError, ValueError, TypeError):
+            return BuildVersionResponse(
+                source_commit=None, frontend_sha256=None,
+                frontend_verified=False, build_type="prebuilt",
+            )
 
     @app.get("/", include_in_schema=False)
     async def frontend_root():
         if cfg.frontend_ready:
-            return FileResponse(cfg.frontend_index_path, media_type="text/html")
+            return FileResponse(
+                cfg.frontend_index_path,
+                media_type="text/html",
+                headers={
+                    "Cache-Control": "no-store, max-age=0",
+                    "Pragma": "no-cache",
+                    "Expires": "0",
+                },
+            )
         return JSONResponse(
             status_code=503,
             content={
@@ -141,9 +261,8 @@ def create_bridge_app(
 
     @app.post("/api/images/generate", response_model=GenerateImageResponse)
     async def generate_image(request: GenerateImageRequest) -> GenerateImageResponse:
-        store = resolve_store()
-
         if request.provider == "capcut":
+            store = resolve_store()
             model = (request.model or cfg.capcut_seedream_model).strip()
             if not cfg.capcut_runner_ready or not model:
                 raise HTTPException(
@@ -182,11 +301,14 @@ def create_bridge_app(
                 size=request.size,
                 ratio=request.ratio,
             )
-            public_url = await persist_remote_image(
-                media_store=store,
-                source_url=temporary_url,
-                object_key_without_suffix=f"aniflow/bridge/agnes/{uuid4().hex}",
-            )
+            public_url = _safe_temporary_image_url(temporary_url)
+            is_temporary = not (media_store is not None or cfg.s3_ready)
+            if not is_temporary:
+                public_url = await persist_remote_image(
+                    media_store=resolve_store(),
+                    source_url=public_url,
+                    object_key_without_suffix=f"aniflow/bridge/agnes/{uuid4().hex}",
+                )
         except Exception as exc:
             raise HTTPException(status_code=502, detail=f"Agnes image generation failed: {exc}") from exc
         finally:
@@ -196,6 +318,12 @@ def create_bridge_app(
             provider="agnes",
             model=cfg.agnes_image_model,
             url=public_url,
+            temporary=is_temporary,
+            warning=(
+                "Agnes 图片返回的是临时公网链接，可能过期；请尽快在本机保存。"
+                "作为视频参考帧时须确认生成期间链接仍有效。"
+                if is_temporary else None
+            ),
         )
 
     return app

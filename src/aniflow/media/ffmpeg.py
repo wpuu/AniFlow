@@ -9,12 +9,14 @@ import httpx
 
 async def download_video(url: str, destination: Path) -> Path:
     destination.parent.mkdir(parents=True, exist_ok=True)
-    async with httpx.AsyncClient(timeout=httpx.Timeout(180.0)) as client:
-        async with client.stream("GET", url) as response:
-            response.raise_for_status()
-            with destination.open("wb") as handle:
-                async for chunk in response.aiter_bytes():
-                    handle.write(chunk)
+    async with (
+        httpx.AsyncClient(timeout=httpx.Timeout(180.0)) as client,
+        client.stream("GET", url) as response,
+    ):
+        response.raise_for_status()
+        with destination.open("wb") as handle:
+            async for chunk in response.aiter_bytes():
+                handle.write(chunk)
     return destination
 
 

@@ -1,5 +1,8 @@
-import { API_BASE, MAX_NUM_FRAMES, VIDEO_MODELS } from './constants';
+import { MAX_NUM_FRAMES, VIDEO_MODELS } from './constants';
+import { DEFAULT_BRIDGE_URL } from './bridge';
+import { combineVideoPrompt } from './negativePrompt';
 import type {
+  AgnesApiDomain,
   CreateVideoTaskResponse,
   GenerationParams,
   VideoModelKey,
@@ -26,12 +29,12 @@ export function buildRequestBody(
 ): Record<string, unknown> {
   const model = VIDEO_MODELS[modelKey].apiModel;
 
-  if (modelKey === 'flash25') {
+  if (modelKey !== 'v2') {
     const body: Record<string, unknown> = {
       model,
-      prompt: params.prompt.trim(),
+      prompt: combineVideoPrompt(params.prompt, params.negativePrompt),
       seconds: String(clampFlashSeconds(params.seconds)),
-      size: '720P',
+      size: modelKey === 'flash25' ? '720P' : params.resolution === '1080p' ? '1080P' : '720P',
       aspect_ratio: params.ratio,
       n: 1,
     };
@@ -41,6 +44,9 @@ export function buildRequestBody(
     } else if (params.mode === 'i2v') {
       body.mode = 'keyframe';
       if (params.singleImage) body.first_frame = params.singleImage;
+    } else if (params.mode === 'reference') {
+      body.mode = 'reference';
+      if (params.singleImage) body.images = [params.singleImage];
     } else {
       const images = validImages(params);
       body.mode = 'keyframe';
@@ -95,9 +101,11 @@ async function parseJsonSafe(res: Response): Promise<Record<string, unknown> | n
 }
 
 function apiError(data: Record<string, unknown> | null, fallback: string): Error {
+  const rawError = data?.error;
   const message =
-    (data?.error as { message?: string } | undefined)?.message ||
+    (typeof rawError === 'string' ? rawError : (rawError as { message?: string } | undefined)?.message) ||
     (data?.message as string | undefined) ||
+    (typeof data?.detail === 'string' ? data.detail : undefined) ||
     fallback;
   return new Error(message);
 }
@@ -106,18 +114,23 @@ export async function createVideoTask(
   apiKey: string,
   modelKey: VideoModelKey,
   params: GenerationParams,
+  apiDomain: AgnesApiDomain = 'global',
 ): Promise<CreateVideoTaskResponse> {
-  const res = await fetch(`${API_BASE}/v1/videos`, {
+  // Only the local loopback Bridge can forward Authorization: Agnes' public
+  // preflight wildcard does not authorize bearer headers in a web browser.
+  // The Bridge issues exactly one upstream POST and never retries automatically.
+  const res = await fetch(`${DEFAULT_BRIDGE_URL}/api/video/create`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(buildRequestBody(modelKey, params)),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ api_key: apiKey, api_domain: apiDomain, payload: buildRequestBody(modelKey, params) }),
   });
   const data = await parseJsonSafe(res);
   if (!res.ok) {
-    throw apiError(data, `创建任务失败（状态码 ${res.status}）`);
+    throw new Error(`HTTP ${res.status}：${apiError(data, '创建任务失败').message}`);
+  }
+  // Agnes can reject a request with a business code in an HTTP 200 envelope.
+  if (!data?.video_id && typeof data?.code === 'string' && data.code !== '0') {
+    throw new Error(`Agnes明确拒绝（${data.code}）：${apiError(data, '创建被拒绝').message}`);
   }
   return (data || {}) as CreateVideoTaskResponse;
 }
@@ -126,17 +139,27 @@ export async function getVideoResult(
   apiKey: string,
   videoId: string,
   modelKey: VideoModelKey,
+  apiDomain: AgnesApiDomain = 'global',
 ): Promise<VideoResultResponse> {
   const modelName = VIDEO_MODELS[modelKey].apiModel;
-  const url = `${API_BASE}/agnesapi?video_id=${encodeURIComponent(videoId)}&model_name=${encodeURIComponent(
-    modelName,
-  )}`;
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${apiKey}` },
+  // Local POST transports a read-only GET to Agnes; it never creates a task.
+  const res = await fetch(`${DEFAULT_BRIDGE_URL}/api/video/status`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ api_key: apiKey, api_domain: apiDomain, video_id: videoId, model_name: modelName }),
   });
   const data = await parseJsonSafe(res);
   if (!res.ok) {
-    throw apiError(data, `查询结果失败（状态码 ${res.status}）`);
+    throw new Error(`HTTP ${res.status}：${apiError(data, '查询结果失败').message}`);
+  }
+  if (data?.code && !data?.status && data.code !== 0 && data.code !== '0') {
+    const code = typeof data.code === 'string' ? data.code : String(data.code);
+    const failure = apiError(data, 'Agnes查询返回业务错误');
+    // A known video_id may be temporarily unavailable right after creation.
+    if (/not.?found|404|task.?missing/i.test(code + ' ' + failure.message)) {
+      throw new Error(`HTTP 404：${failure.message}`);
+    }
+    throw new Error(`Agnes查询错误（${code}）：${failure.message}`);
   }
   return (data || {}) as VideoResultResponse;
 }
