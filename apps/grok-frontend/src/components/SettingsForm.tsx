@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   DURATION_PRESETS,
   FLASH_SECONDS_PRESETS,
@@ -12,6 +12,9 @@ import {
   modeOptions,
 } from '../lib/constants';
 import type { GenerationParams, VideoModelKey } from '../lib/types';
+import type { SavedPrompt } from '../lib/promptHistory';
+import { safePromptHeight } from '../lib/promptHistory';
+import { STORAGE_KEYS, loadJSON, saveJSON } from '../lib/storage';
 import { clampFlashSeconds, clampNumFrames } from '../lib/api';
 import RatioSelector from './RatioSelector';
 import KeyframeManager from './KeyframeManager';
@@ -24,10 +27,30 @@ interface Props {
   onModelChange: (modelKey: VideoModelKey) => void;
   params: GenerationParams;
   onChange: (updater: (prev: GenerationParams) => GenerationParams) => void;
+  promptHistory: SavedPrompt[];
+  onSavePrompt: () => void;
+  onLoadPrompt: (prompt: string) => void;
 }
 
-export default function SettingsForm({ modelKey, onModelChange, params, onChange }: Props) {
+export default function SettingsForm({
+  modelKey, onModelChange, params, onChange,
+  promptHistory, onSavePrompt, onLoadPrompt,
+}: Props) {
   const negRef = useRef<HTMLTextAreaElement>(null);
+  const promptRef = useRef<HTMLTextAreaElement>(null);
+  const [promptHeight, setPromptHeight] = useState<number>(() =>
+    safePromptHeight(loadJSON(STORAGE_KEYS.PROMPT_HEIGHT, 180)),
+  );
+
+  useEffect(() => {
+    if (promptRef.current) promptRef.current.style.height = `${promptHeight}px`;
+  }, [promptHeight]);
+
+  function saveTextareaHeight() {
+    const size = safePromptHeight(promptRef.current?.getBoundingClientRect().height);
+    setPromptHeight(size);
+    saveJSON(STORAGE_KEYS.PROMPT_HEIGHT, size);
+  }
   const modes = modeOptions(modelKey);
   const isFlash = modelKey === 'flash25';
   const isModern = modelKey !== 'v2';
@@ -209,13 +232,41 @@ export default function SettingsForm({ modelKey, onModelChange, params, onChange
             <span className="text-[11px] text-zinc-400">按钮只填参数；参考图不是合格首帧，也未完成商用权利核实</span>
           </div>
         ) : null}
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <label className="text-xs font-medium text-zinc-600" htmlFor="aniflow-prompt-history">提示词历史</label>
+          <select id="aniflow-prompt-history" aria-label="切换历史提示词"
+            defaultValue="" onChange={(event) => {
+              const saved = promptHistory.find((item) => item.id === event.target.value);
+              if (saved) onLoadPrompt(saved.prompt);
+              event.currentTarget.value = '';
+            }}
+            className="min-w-0 max-w-full flex-1 rounded border border-zinc-300 bg-white px-2 py-1.5 text-xs">
+            <option value="">选择已保存的提示词（最多40条）</option>
+            {promptHistory.map((entry) => (
+              <option key={entry.id} value={entry.id}>
+                {new Date(entry.savedAt).toLocaleString('zh-CN')} · {entry.prompt.slice(0, 66)}
+              </option>
+            ))}
+          </select>
+          <button type="button" onClick={onSavePrompt} disabled={!params.prompt.trim()}
+            className="rounded border border-indigo-400 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 disabled:opacity-50">
+            保存当前提示词
+          </button>
+        </div>
         <textarea
+          ref={promptRef}
+          data-testid="video-prompt"
           value={params.prompt}
           onChange={(e) => onChange((prev) => ({ ...prev, prompt: e.target.value }))}
+          onMouseUp={saveTextareaHeight}
+          onTouchEnd={saveTextareaHeight}
+          onBlur={saveTextareaHeight}
           placeholder="描述画面、动作、镜头、光线与风格。"
           rows={4}
-          className="w-full resize-none rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+          style={{ height: `${promptHeight}px` }}
+          className="min-h-[120px] max-h-[80vh] w-full resize-y overflow-auto rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
         />
+        <p className="mt-1 text-[11px] text-zinc-400">拖动输入框右下角调整高度，刷新后保持；提交过的提示词会自动进入历史。</p>
       </div>
 
       <div className="rounded-xl border border-zinc-200 bg-white p-4">
