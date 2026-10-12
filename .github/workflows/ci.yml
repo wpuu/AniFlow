@@ -55,7 +55,7 @@ jobs:
         run: npm ci
       - name: Unit-test persistent nine-Key video guard (no API/Key)
         working-directory: apps/grok-frontend
-        run: node --experimental-strip-types --test tests/taskSafety.test.mjs tests/safeTrialReport.test.mjs
+        run: node --experimental-strip-types --test tests/taskSafety.test.mjs tests/safeTrialReport.test.mjs tests/statusProgress.test.mjs
       - name: Type-check and build standalone frontend (no API/Key)
         working-directory: apps/grok-frontend
         run: npm run build

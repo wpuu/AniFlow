@@ -13,6 +13,7 @@ import { genId } from './lib/imageUtils';
 import { buildSafeTrialReport } from './lib/safeTrialReport';
 import {
   attachVideoId,
+  collectNoIdArchives,
   duplicateKeySlots,
   isValidSubmissionGuards,
   releaseAttempt,
@@ -675,9 +676,80 @@ export default function App() {
     poll(keyIndex, apiKey, guard.videoId, guard.attemptId, guard.modelKey);
   }
 
+  function archiveUnknownGuards() {
+    const stored = readSubmissionGuards();
+    if (!stored) {
+      notify('旧提交安全记录损坏，已保留原数据；无法安全整理', 'error');
+      return;
+    }
+    const busy = new Set<number>([
+      ...submittingKeysRef.current,
+      ...Object.entries(tasksByKey)
+        .filter(([, state]) => BUSY_STATUSES.has(state.status))
+        .map(([index]) => Number(index)),
+    ]);
+    const { remaining, archived } = collectNoIdArchives(stored, busy);
+    if (!archived.length) {
+      notify('没有可整理的无编号旧记录。已有视频编号的任务可直接继续查询');
+      return;
+    }
+    if (!window.confirm(
+      `将整理 ${archived.length} 条没有 video_id 的旧提交记录，仅解除浏览器本地锁。\n`
+      + '会保留旧记录备份；不会取消 Agnes 服务器上的任务，也不自动重新生成。'
+      + '\n以前的提交可能已被接受；再次生成可能重复计费。确认整理？',
+    )) return;
+    const existing: unknown = loadJSON(STORAGE_KEYS.ARCHIVED_GUARDS, []);
+    if (!Array.isArray(existing) || existing.length + archived.length > 1000) {
+      notify('旧记录备份区格式异常或已满，不会清除任何锁', 'error');
+      return;
+    }
+    const now = Date.now();
+    const known = new Set(existing.map((entry: { attemptId?: string }) => entry.attemptId));
+    const backup = [
+      ...existing,
+      ...archived.filter((g) => !known.has(g.attemptId)).map((g) => ({
+        attemptId: g.attemptId,
+        keyIndex: g.keyIndex,
+        modelKey: g.modelKey,
+        createdAt: g.createdAt,
+        archivedAt: now,
+        videoId: null,
+        note: '浏览器原请求未确认，仍可能有 Agnes 服务端任务',
+      })),
+    ];
+    if (!saveJSON(STORAGE_KEYS.ARCHIVED_GUARDS, backup)) {
+      notify('旧提交备份失败：未解除本地锁', 'error');
+      return;
+    }
+    if (!persistSubmissionGuards(remaining)) return;
+    const archivedIds = new Set(archived.map((g) => g.attemptId));
+    const archivedKeyIndexes = new Set(archived.map((g) => g.keyIndex));
+    setHistory((prev) => prev.map((item) => (
+      archivedIds.has(item.id)
+        ? { ...item, status: 'stopped',
+            error: '旧提交无视频编号，已归档并解锁本地按钮；无法证明 Agnes 任务已取消。' }
+        : item
+    )));
+    setTasksByKey((prev) => {
+      const next = { ...prev };
+      archivedKeyIndexes.forEach((idx) => {
+        next[idx] = {
+          ...emptyTask(),
+          status: 'stopped',
+          error: '旧请求未知结果已归档。再次生成前请检查 Agnes 历史与费用。',
+        };
+      });
+      return next;
+    });
+    notify(`已保存并整理 ${archived.length} 条无编号旧记录，按钮恢复可用；不代表上游任务已取消`);
+  }
+
   function confirmUnlockGuard(keyIndex: number) {
     const guard = readSubmissionGuards()?.[String(keyIndex)];
-    if (!guard) return;
+    if (!guard?.videoId) {
+      notify('无编号旧记录请使用上方的“一次整理”，无需逐个核实', 'error');
+      return;
+    }
     const confirmed = window.confirm(
       `Key ${keyIndex + 1} 的视频提交记录仍未结案。只有在 Agnes 平台已核实没有正在运行/未回收的原任务`
       + '（或确认原任务已完成并已保存结果）之后，才允许解除安全锁。解除后再次生成可能产生第二条任务和费用。确认已经核实？',
@@ -876,28 +948,34 @@ export default function App() {
 
           {Object.keys(submissionGuards).length > 0 ? (
             <div className="mt-3 space-y-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
-              <p className="font-semibold">视频提交安全记录：这些 Key 在确认原任务状态前禁止重新提交。</p>
-              <p>刷新页面、停止跟踪、网络中断均不意味着服务器取消生成。继续查询只发送 GET，不创建视频。</p>
+              <p className="font-semibold">检测到以前未结束的视频提交记录</p>
+              <p>浏览器不能证明 Agnes 是否创建了任务。已取得编号的任务可继续查询；没有编号的旧记录可一次整理，不必逐个解锁9次。</p>
+              {Object.values(submissionGuards).some((g) => !g.videoId) ? (
+                <button type="button" onClick={archiveUnknownGuards}
+                  className="rounded-md border border-amber-500 bg-white px-3 py-2 font-semibold text-amber-800 hover:bg-amber-100">
+                  一次整理无编号旧记录（保留备份）
+                </button>
+              ) : null}
               <div className="flex flex-wrap gap-2">
                 {Object.values(submissionGuards)
+                  .filter((guard) => Boolean(guard.videoId))
                   .sort((a, b) => a.keyIndex - b.keyIndex)
                   .map((guard) => (
                     <div key={guard.attemptId} className="flex items-center gap-2 rounded bg-white px-2 py-1">
-                      <strong>Key {guard.keyIndex + 1}</strong>
-                      <span>{guard.videoId ? '有原视频 ID' : '提交结果不明'}</span>
-                      {guard.videoId ? (
-                        <button type="button" onClick={() => resumeExistingGuard(guard.keyIndex)}
-                          className="rounded border border-amber-500 px-2 py-1 hover:bg-amber-100">
-                          继续查原任务
-                        </button>
-                      ) : null}
+                      <strong>{guard.keyIndex + 1}</strong>
+                      <span>有任务编号</span>
+                      <button type="button" onClick={() => resumeExistingGuard(guard.keyIndex)}
+                        className="rounded border border-amber-500 px-2 py-1 hover:bg-amber-100">
+                        继续查询
+                      </button>
                       <button type="button" onClick={() => confirmUnlockGuard(guard.keyIndex)}
                         className="rounded border border-amber-500 px-2 py-1 hover:bg-amber-100">
-                        人工核实后解锁
+                        确认结束后解除
                       </button>
                     </div>
                   ))}
               </div>
+              <p className="text-amber-700">整理仅解除本地锁，不会取消服务端任务。再次生成前请确认原任务状态和实际费用。</p>
             </div>
           ) : null}
 

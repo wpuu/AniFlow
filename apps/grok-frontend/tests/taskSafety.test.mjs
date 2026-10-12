@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   attachVideoId,
+  collectNoIdArchives,
   duplicateKeySlots,
   isValidSubmissionGuards,
   releaseAttempt,
@@ -70,4 +71,16 @@ test('duplicate credential slots are detected without returning raw secrets', ()
   assert.deepEqual(indexes, [3, 4]);
   assert.equal(JSON.stringify(indexes).includes(a), false);
   assert.equal(JSON.stringify(indexes).includes(b), false);
+});
+
+test('bulk no-id archive preserves actual Agnes video IDs and busy slots', () => {
+  const guards = {
+    '0': { ...a, videoId: null },
+    '1': { ...a, keyIndex: 1, attemptId: 'id-1', videoId: 'video_1' },
+    '2': { ...a, keyIndex: 2, attemptId: 'id-2', videoId: null },
+  };
+  const result = collectNoIdArchives(guards, new Set([2]));
+  assert.deepEqual(result.archived.map(x => x.keyIndex), [0]);
+  assert.deepEqual(Object.keys(result.remaining), ['1', '2']);
+  assert.equal(result.remaining['1'].videoId, 'video_1');
 });

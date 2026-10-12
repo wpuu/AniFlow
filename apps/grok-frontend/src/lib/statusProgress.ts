@@ -21,14 +21,11 @@ export function keyProgressSummary(
   const recent = history
     .filter((item) => item.keyIndex === keyIndex)
     .sort((a, b) => b.createdAt - a.createdAt)[0];
-  const useLive = live && live.status !== 'idle'
+  const useLive = Boolean(live && live.status !== 'idle'
     && (!recent || recent.status === 'creating' || recent.status === live.status
-      || (live.videoId && live.videoId === recent.videoId));
-  const status = (useLive ? live.status : recent?.status) || 'idle';
-  const progress = percentValue(
-    useLive ? live.progress : recent?.progress,
-    status,
-    Boolean((useLive ? live.videoUrl : recent?.videoUrl)),
-  );
+      || (live.videoId && live.videoId === recent.videoId)));
+  const source = useLive && live ? live : recent;
+  const status = source?.status || 'idle';
+  const progress = percentValue(source?.progress, status, Boolean(source?.videoUrl));
   return { status, progress };
 }

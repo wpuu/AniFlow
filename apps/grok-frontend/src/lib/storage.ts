@@ -5,6 +5,7 @@ export const STORAGE_KEYS = {
   KEY_COUNT: 'agnes_video_key_count_v1',
   HISTORY: 'agnes_video_history_v1',
   SUBMISSION_GUARDS: 'aniflow_video_submission_guards_v1',
+  ARCHIVED_GUARDS: 'aniflow_video_archived_noid_attempts_v1',
   ACTIVE_MODEL: 'agnes_video_active_model_v1',
   PARAMS_BY_MODEL: 'agnes_video_params_by_model_v1',
   DEFAULT_PARAMS_BY_MODEL: 'agnes_video_default_params_by_model_v1',

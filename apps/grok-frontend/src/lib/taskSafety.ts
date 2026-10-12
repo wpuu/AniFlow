@@ -55,6 +55,23 @@ export function duplicateKeySlots(keys: readonly string[]): number[] {
   return duplicates;
 }
 
+/**
+ * Only no-video-id records can be archived. Keep all known video IDs (re-queryable)
+ * and all in-flight browser submissions. No network calls or automatic unlocks.
+ */
+export function collectNoIdArchives(
+  guards: SubmissionGuards,
+  busyKeys: ReadonlySet<number>,
+): { remaining: SubmissionGuards; archived: SubmissionGuard[] } {
+  const remaining: SubmissionGuards = {};
+  const archived: SubmissionGuard[] = [];
+  for (const [index, guard] of Object.entries(guards)) {
+    if (!guard.videoId && !busyKeys.has(guard.keyIndex)) archived.push(guard);
+    else remaining[index] = guard;
+  }
+  return { remaining, archived };
+}
+
 export function reserveAttempt(
   guards: SubmissionGuards,
   attempt: SubmissionGuard,
