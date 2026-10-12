@@ -50,8 +50,8 @@ if (-not (Test-Path -LiteralPath $RuntimeLoader -PathType Leaf)) {
 . $RuntimeLoader
 $Python = Get-AniFlowRuntimePython -RepoRoot $RepoRoot -AllowInstall
 $env:PYTHONPATH = Join-Path $RepoRoot "src"
-& $Python -c "import aniflow,pathlib,sys;sys.exit(0 if pathlib.Path(aniflow.__file__).resolve()==(pathlib.Path.cwd()/'src/aniflow/__init__.py').resolve() else 1)"
-if ($LASTEXITCODE -ne 0) {
+$SourceProbe = & $Python (Join-Path $PSScriptRoot "aniflow_runtime_probe.py") source $RepoRoot
+if ($LASTEXITCODE -ne 0 -or @($SourceProbe) -notcontains "ANIFLOW_CURRENT_SOURCE_OK") {
     throw "AniFlow Python import is not bound to the current release source."
 }
 Write-Host "PASS_ANIFLOW_CURRENT_SOURCE_BOUND_SHARED_RUNTIME"

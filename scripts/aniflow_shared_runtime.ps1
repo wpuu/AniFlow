@@ -35,17 +35,11 @@ function Get-AniFlowRuntimePython {
         }
     }
 
-    & $Python -c "import sys;sys.exit(0 if sys.version_info >= (3,11) else 1)"
-    if ($LASTEXITCODE -ne 0) { throw "AniFlow runtime requires Python 3.11 or later." }
-
-    $ReadRequirements = @'
-import json, pathlib, sys, tomllib
-spec = tomllib.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
-requirements = sorted(spec["project"]["dependencies"])
-print(json.dumps({"requirements": requirements, "python": list(sys.version_info[:2])}, separators=(",", ":")))
-'@
-    $SpecFile = Join-Path $RepoRoot "pyproject.toml"
-    $RequirementsJson = & $Python -c $ReadRequirements $SpecFile
+    $ProbeFile = Join-Path $PSScriptRoot "aniflow_runtime_probe.py"
+    if (-not (Test-Path -LiteralPath $ProbeFile -PathType Leaf)) {
+        throw "AniFlow runtime inspection script missing from the Windows package."
+    }
+    $RequirementsJson = & $Python $ProbeFile requirements $RepoRoot
     if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($RequirementsJson)) {
         throw "Cannot inspect dependency list in current AniFlow source."
     }
@@ -63,22 +57,7 @@ print(json.dumps({"requirements": requirements, "python": list(sys.version_info[
     if (Test-Path -LiteralPath $Stamp -PathType Leaf) {
         $CurrentFingerprint = ([System.IO.File]::ReadAllText($Stamp)).Trim()
     }
-    $CheckModules = @'
-import importlib.metadata as m
-required = ["boto3", "fastapi", "httpx", "pydantic", "pydantic-settings",
-            "python-dotenv", "python-multipart", "typer", "uvicorn"]
-missing = []
-for name in required:
-    try:
-        m.version(name)
-    except m.PackageNotFoundError:
-        missing.append(name)
-if missing:
-    print("ANIFLOW_SHARED_RUNTIME_MISSING")
-else:
-    print("ANIFLOW_SHARED_RUNTIME_HEALTH_OK")
-'@
-    $Health = & $Python -c $CheckModules
+    $Health = & $Python $ProbeFile health
     $Healthy = $LASTEXITCODE -eq 0 -and @($Health) -contains "ANIFLOW_SHARED_RUNTIME_HEALTH_OK"
     if ($CurrentFingerprint -eq $Fingerprint -and $Healthy) {
         Write-Host "[AniFlow] Reusing existing shared Python dependencies (NO pip)."
@@ -94,7 +73,7 @@ else:
     if ($LASTEXITCODE -ne 0) {
         throw "Third-party dependency installation failed; existing releases were not modified."
     }
-    $Health = & $Python -c $CheckModules
+    $Health = & $Python $ProbeFile health
     if ($LASTEXITCODE -ne 0 -or @($Health) -notcontains "ANIFLOW_SHARED_RUNTIME_HEALTH_OK") {
         throw "AniFlow dependency health check failed. No successful install stamp was written."
     }

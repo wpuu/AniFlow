@@ -61,8 +61,8 @@ if (-not (Test-Path -LiteralPath $RuntimeLoader -PathType Leaf)) {
 . $RuntimeLoader
 $Python = Get-AniFlowRuntimePython -RepoRoot $Root -AllowInstall
 $env:PYTHONPATH = Join-Path $Root "src"
-& $Python -c "import aniflow,pathlib,sys;sys.exit(0 if pathlib.Path(aniflow.__file__).resolve()==(pathlib.Path.cwd()/'src/aniflow/__init__.py').resolve() else 7)"
-if ($LASTEXITCODE -ne 0) {
+$SourceProbe = & $Python (Join-Path $PSScriptRoot "aniflow_runtime_probe.py") source $Root
+if ($LASTEXITCODE -ne 0 -or @($SourceProbe) -notcontains "ANIFLOW_CURRENT_SOURCE_OK") {
     throw "AniFlow current-release Python source binding failed. No foreign service was stopped."
 }
 Write-Host "PASS_ANIFLOW_SHARED_RUNTIME_CURRENT_SOURCE"

@@ -22,6 +22,11 @@ def test_shared_python_runtime_installer_avoids_per_version_editable_installs() 
         assert 'Join-Path $RepoRoot "src"' in script or 'Join-Path $Root "src"' in script
 
     assert "LocalApplicationData" in runtime
+    assert "aniflow_runtime_probe.py" in runtime
+    assert " $ProbeFile requirements $RepoRoot" in runtime
+    probe = (ROOT / "scripts/aniflow_runtime_probe.py").read_text(encoding="utf-8")
+    assert 'spec["project"]["dependencies"]' in probe
+    assert "ANIFLOW_CURRENT_SOURCE_OK" in probe
     assert "AniFlow\\python-env" in runtime
     assert "dependencies-sha256.txt" in runtime
     assert "project" in runtime and "dependencies" in runtime
@@ -35,5 +40,6 @@ def test_bundle_includes_shared_runtime_helper() -> None:
     from scripts.build_nine_key_bundle import REQUIRED
 
     assert "scripts/aniflow_shared_runtime.ps1" in REQUIRED
+    assert "scripts/aniflow_runtime_probe.py" in REQUIRED
     assert "scripts/setup_aniflow_windows.ps1" in REQUIRED
     assert "scripts/restart_aniflow_windows.ps1" in REQUIRED

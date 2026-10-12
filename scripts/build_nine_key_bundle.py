@@ -26,6 +26,7 @@ REQUIRED = (
     "scripts/restart_aniflow_windows.ps1",
     "scripts/setup_aniflow_windows.ps1",
     "scripts/aniflow_shared_runtime.ps1",
+    "scripts/aniflow_runtime_probe.py",
     "scripts/start_aniflow_windows.ps1",
     "apps/grok-frontend/dist/index.html",
     "content/shotlists/MYCL-001-cat-lapping.json",
