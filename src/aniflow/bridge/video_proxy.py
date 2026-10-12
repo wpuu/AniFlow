@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 
 from aniflow.config import Settings
 
-VideoModel = Literal["agnes-video-2.5-flash", "agnes-video-v2.0"]
+VideoModel = Literal["agnes-video-2.5-flash", "agnes-video-2.5", "agnes-video-v2.0"]
 
 
 class CreateVideoRequest(BaseModel):
@@ -102,11 +102,13 @@ def video_proxy_router(
     @router.post("/api/video/create")
     async def create_video(request: CreateVideoRequest) -> JSONResponse:
         model = request.payload.get("model")
-        if model not in ("agnes-video-2.5-flash", "agnes-video-v2.0"):
+        if model not in ("agnes-video-2.5-flash", "agnes-video-2.5"):
+            # Legacy v2.0 history can be displayed, but new paid requests must
+            # never accidentally fall through a legacy permissive path.
             raise HTTPException(status_code=422, detail="Unsupported Agnes video model")
         if not isinstance(request.payload.get("prompt"), str) or not request.payload["prompt"].strip():
             raise HTTPException(status_code=422, detail="Video prompt must be nonempty")
-        if model == "agnes-video-2.5-flash":
+        if model in ("agnes-video-2.5-flash", "agnes-video-2.5"):
             mode = request.payload.get("mode")
             if mode not in ("text", "keyframe", "reference"):
                 raise HTTPException(status_code=422, detail="Unsupported Flash video mode")
@@ -133,8 +135,9 @@ def video_proxy_router(
                     raise HTTPException(status_code=422, detail="Text mode excludes media")
             elif not (request.payload.get("first_frame") or request.payload.get("last_frame")):
                 raise HTTPException(status_code=422, detail="Keyframe mode needs a frame")
-            if request.payload.get("n") != 1 or request.payload.get("size") != "720P":
-                raise HTTPException(status_code=422, detail="Flash permits one 720P output per request")
+            permitted_sizes = ("720P",) if model.endswith("-flash") else ("720P", "1080P")
+            if request.payload.get("n") != 1 or request.payload.get("size") not in permitted_sizes:
+                raise HTTPException(status_code=422, detail="Unsupported model size or output count")
             if str(request.payload.get("seconds")) not in {str(s) for s in range(4, 13)}:
                 raise HTTPException(status_code=422, detail="Flash length must be 4–12 seconds")
         return await forward("POST", "/v1/videos", request.api_key, payload=request.payload)

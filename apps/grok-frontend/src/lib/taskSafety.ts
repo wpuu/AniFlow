@@ -23,7 +23,7 @@ export function isValidSubmissionGuards(value: unknown): value is SubmissionGuar
       && index === String(item.keyIndex)
       && typeof item.attemptId === 'string'
       && item.attemptId.length > 0
-      && (item.modelKey === 'flash25' || item.modelKey === 'v2')
+      && (item.modelKey === 'flash25' || item.modelKey === 'paid25' || item.modelKey === 'v2')
       && typeof item.createdAt === 'number'
       && Number.isFinite(item.createdAt)
       && (item.videoId === null || (typeof item.videoId === 'string' && item.videoId.length > 0));

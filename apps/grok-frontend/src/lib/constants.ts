@@ -16,6 +16,9 @@ export const MYCL001_CHARACTER_REFERENCE_URL = 'https://raw.githubusercontent.co
 export const MYCL001_SHOT1_REFERENCE_PROMPT =
   'Use <Picture 1> only as a character reference: preserve the silver tabby face, amber eyes and white lab coat. Do NOT copy the standing pose, left-side appliance, or missing bowl in the source image. ' + MYCL001_SHOT1_FROZEN_PROMPT;
 
+// Only documented current video models are selectable; v2 is kept solely to display legacy history.
+export const SELECTABLE_VIDEO_MODELS = ['flash25', 'paid25'] as const;
+
 export const VIDEO_MODELS: Record<
   VideoModelKey,
   { label: string; apiModel: string; description: string }
@@ -23,12 +26,17 @@ export const VIDEO_MODELS: Record<
   v2: {
     label: 'Agnes Video V2.0',
     apiModel: 'agnes-video-v2.0',
-    description: '旧版高级参数完整，保留分辨率、帧数、帧率和多关键帧能力',
+    description: '旧版记录兼容查看，已从可选模型移除',
   },
   flash25: {
-    label: 'Agnes Video 2.5 Flash',
+    label: 'Agnes Video 2.5 Flash · 限时免费（默认）',
     apiModel: 'agnes-video-2.5-flash',
-    description: '新版 Flash 接口，720P，4–12 秒，支持文生、首尾帧与可选角色参考图',
+    description: '720P · 官方当前限时 $0/秒；价格可变化，支持文生/首尾帧/参考图',
+  },
+  paid25: {
+    label: 'Agnes Video 2.5 · 付费',
+    apiModel: 'agnes-video-2.5',
+    description: '720P $0.025/秒、1080P $0.040/秒；每次生成前确认费用',
   },
 };
 
@@ -90,7 +98,7 @@ export function modeOptions(modelKey: VideoModelKey): {
   label: string;
   desc: string;
 }[] {
-  if (modelKey === 'flash25') {
+  if (modelKey !== 'v2') {
     return [
       { value: 't2v', label: '文生视频', desc: '2.5 Flash text 模式' },
       { value: 'i2v', label: '单图生视频', desc: '使用首帧 first_frame 让图片动起来' },
@@ -145,6 +153,7 @@ export const DEFAULT_PARAMS_FLASH25: GenerationParams = {
 export const DEFAULT_PARAMS_BY_MODEL: Record<VideoModelKey, GenerationParams> = {
   v2: DEFAULT_PARAMS_V2,
   flash25: DEFAULT_PARAMS_FLASH25,
+  paid25: { ...DEFAULT_PARAMS_FLASH25, resolution: '720p' },
 };
 
 // Backward compatibility for the imported Grok frontend.

@@ -61,7 +61,8 @@ function isPublicImageUrl(value: string): boolean {
 }
 
 function normalizeModelKey(value: unknown): VideoModelKey {
-  return value === 'v2' ? 'v2' : 'flash25';
+  // Migrate old v2 selection to the official free Flash variant.
+  return value === 'paid25' ? 'paid25' : 'flash25';
 }
 
 function mergeParams(
@@ -107,6 +108,7 @@ export default function App() {
     return {
       v2: mergeParams(DEFAULT_PARAMS_BY_MODEL.v2, saved.v2 ?? legacy),
       flash25: mergeParams(DEFAULT_PARAMS_BY_MODEL.flash25, saved.flash25),
+      paid25: mergeParams(DEFAULT_PARAMS_BY_MODEL.paid25, saved.paid25),
     };
   });
 
@@ -149,6 +151,7 @@ export default function App() {
       const persisted = {
         v2: stripEphemeralImages(paramsByModel.v2),
         flash25: stripEphemeralImages(paramsByModel.flash25),
+        paid25: stripEphemeralImages(paramsByModel.paid25),
       };
       saveJSON(STORAGE_KEYS.PARAMS_BY_MODEL, persisted);
       saveJSON(STORAGE_KEYS.LAST_PARAMS, persisted.v2);
@@ -437,7 +440,15 @@ export default function App() {
   );
 
   const startGeneration = useCallback(
-    async (keyIndex: number) => {
+    async (keyIndex: number, paidConfirmed = false) => {
+      if (modelKey === 'paid25' && !paidConfirmed) {
+        const perSecond = params.resolution === '1080p' ? 0.040 : 0.025;
+        const estimated = (perSecond * params.seconds).toFixed(3);
+        if (!window.confirm(
+          `你选择了付费 Agnes Video 2.5（${params.resolution}），单条${params.seconds}秒官方标价约 ${estimated}。`
+          + '实际按账户结算，确认创建这一条视频任务吗？',
+        )) return;
+      }
       // A double click must not create two requests before React re-renders.
       if (submittingKeysRef.current.has(keyIndex)) return;
 
@@ -483,7 +494,7 @@ export default function App() {
       submittingKeysRef.current.add(keyIndex);
       try {
         let requestParams = params;
-        if (modelKey === 'flash25') {
+        if (modelKey !== 'v2') {
           try {
             requestParams = await prepareFlashParams(params);
           } catch (err) {
@@ -607,11 +618,14 @@ export default function App() {
       notify('没有可用 Key：请先核实原任务或检查密钥配置', 'error');
       return;
     }
+    const amount = modelKey === 'paid25'
+      ? `当前为付费 Agnes 2.5，官方预估总价约 ${((params.resolution === '1080p' ? 0.040 : 0.025) * params.seconds * eligible.length).toFixed(3)}。 `
+      : 'Flash 当前标示限时免费，但结算可能变化。';
     if (!window.confirm(
-      `将使用 ${eligible.length} 条 Key，向 Agnes 分别提交 1 个视频生成任务（共 ${eligible.length} 次创建请求）。`
-      + '这是真实生成，不是健康检查；可能消耗额度或费用。是否确认发送？',
+      `将用 ${eligible.length} 条 Key 分别创建视频，共 ${eligible.length} 次真实请求。 `
+      + amount + '请确认账户实际费用。是否继续？',
     )) return;
-    eligible.forEach((index) => { void startGeneration(index); });
+    eligible.forEach((index) => { void startGeneration(index, true); });
   }
 
   function resumeExistingGuard(keyIndex: number) {
@@ -728,7 +742,7 @@ export default function App() {
     const safeParams = stripEphemeralImages(params);
     const next = { ...defaults, [modelKey]: safeParams };
     saveJSON(STORAGE_KEYS.DEFAULT_PARAMS_BY_MODEL, next);
-    if (modelKey === 'v2') saveJSON(STORAGE_KEYS.DEFAULT_PARAMS, safeParams);
+    // Old V2.0 settings are retained only for viewing history, never for new submissions.
     notify(`已将 ${VIDEO_MODELS[modelKey].label} 当前设置保存为默认设置`);
   }
 

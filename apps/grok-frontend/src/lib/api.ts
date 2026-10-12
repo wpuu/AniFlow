@@ -27,12 +27,12 @@ export function buildRequestBody(
 ): Record<string, unknown> {
   const model = VIDEO_MODELS[modelKey].apiModel;
 
-  if (modelKey === 'flash25') {
+  if (modelKey !== 'v2') {
     const body: Record<string, unknown> = {
       model,
       prompt: params.prompt.trim(),
       seconds: String(clampFlashSeconds(params.seconds)),
-      size: '720P',
+      size: modelKey === 'flash25' ? '720P' : params.resolution === '1080p' ? '1080P' : '720P',
       aspect_ratio: params.ratio,
       n: 1,
     };

@@ -8,6 +8,7 @@ import {
   RESOLUTION_OPTIONS,
   RESOLUTION_PRESETS,
   VIDEO_MODELS,
+  SELECTABLE_VIDEO_MODELS,
   modeOptions,
 } from '../lib/constants';
 import type { GenerationParams, VideoModelKey } from '../lib/types';
@@ -29,6 +30,7 @@ export default function SettingsForm({ modelKey, onModelChange, params, onChange
   const negRef = useRef<HTMLTextAreaElement>(null);
   const modes = modeOptions(modelKey);
   const isFlash = modelKey === 'flash25';
+  const isModern = modelKey !== 'v2';
 
   function setMode(mode: GenerationParams['mode']) {
     onChange((prev) => ({ ...prev, mode }));
@@ -76,7 +78,7 @@ export default function SettingsForm({ modelKey, onModelChange, params, onChange
       <div className="rounded-xl border border-zinc-200 bg-white p-4">
         <h3 className="mb-3 text-sm font-semibold text-zinc-800">视频模型</h3>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {(Object.keys(VIDEO_MODELS) as VideoModelKey[]).map((key) => {
+          {SELECTABLE_VIDEO_MODELS.map((key) => {
             const model = VIDEO_MODELS[key];
             return (
               <button
@@ -122,10 +124,10 @@ export default function SettingsForm({ modelKey, onModelChange, params, onChange
           ))}
         </div>
 
-        {(params.mode === 'i2v' || (isFlash && params.mode === 'reference')) ? (
+        {(params.mode === 'i2v' || (isModern && params.mode === 'reference')) ? (
           <div className="mt-3">
             <ImageUploadSlot
-              label={isFlash && params.mode === 'reference' ? '角色参考图片（images[0]；不固定首帧）' : isFlash ? '首帧图片（first_frame）' : '待生成动画的图片'}
+              label={isModern && params.mode === 'reference' ? '角色参考图片（images[0]；不固定首帧）' : isModern ? '首帧图片（first_frame）' : '待生成动画的图片'}
               imageUrl={params.singleImage}
               fileName={params.singleImageFileName}
               onChange={(url, fileName) =>
@@ -137,7 +139,7 @@ export default function SettingsForm({ modelKey, onModelChange, params, onChange
 
         {params.mode === 'keyframes' ? (
           <div className="mt-3">
-            {isFlash ? (
+            {isModern ? (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <ImageUploadSlot
                   label="首帧（first_frame）"
@@ -166,7 +168,7 @@ export default function SettingsForm({ modelKey, onModelChange, params, onChange
 
       <div className="rounded-xl border border-zinc-200 bg-white p-4">
         <h3 className="mb-2 text-sm font-semibold text-zinc-800">提示词</h3>
-        {isFlash ? (
+        {isModern ? (
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <button type="button" className="rounded-md border border-indigo-500 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50"
               onClick={() => {
@@ -226,7 +228,7 @@ export default function SettingsForm({ modelKey, onModelChange, params, onChange
               720P（2.5 Flash 固定）
             </span>
           ) : (
-            RESOLUTION_OPTIONS.map((opt) => (
+            RESOLUTION_OPTIONS.filter((opt) => isModern ? opt.value !== '480p' : true).map((opt) => (
               <button
                 key={opt.value}
                 type="button"
@@ -250,7 +252,7 @@ export default function SettingsForm({ modelKey, onModelChange, params, onChange
 
       <div className="rounded-xl border border-zinc-200 bg-white p-4">
         <h3 className="mb-3 text-sm font-semibold text-zinc-800">视频时长</h3>
-        {isFlash ? (
+        {isModern ? (
           <>
             <div className="flex flex-wrap gap-2">
               {FLASH_SECONDS_PRESETS.map((seconds) => (
@@ -343,10 +345,10 @@ export default function SettingsForm({ modelKey, onModelChange, params, onChange
 
       <CollapsibleSection
         title="高级设置"
-        subtitle={isFlash ? '随机种子' : '反向提示词 / 推理步数 / 随机种子'}
+        subtitle={isModern ? '随机种子' : '反向提示词 / 推理步数 / 随机种子'}
       >
         <div className="space-y-3">
-          {!isFlash ? (
+          {!isModern ? (
             <>
               <label className="block text-xs text-zinc-500">
                 反向提示词 negative_prompt
