@@ -321,6 +321,9 @@ def test_browser(screenshot: Path) -> None:
             assert queued.get_by_role("button", name="生成视频", exact=True).is_enabled()
             assert mock_state()["create_calls"] == queue_before + 1
             queued.get_by_role("button", name="生成视频", exact=True).click()
+            until = time.monotonic() + 8
+            while time.monotonic() < until and mock_state()["create_calls"] < queue_before + 2:
+                time.sleep(0.1)
             assert mock_state()["create_calls"] == queue_before + 2
             queuectx.close()
 
