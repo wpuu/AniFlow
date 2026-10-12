@@ -33,8 +33,11 @@ def fake_agnes_provider(request: httpx.Request) -> httpx.Response:
     if request.method == "POST" and request.url.path == "/v1/videos":
         STATE["create_calls"] = int(STATE["create_calls"]) + 1
         if request.headers.get("Authorization") == f"Bearer {FAKE_TIMEOUT_KEY}":
-            STATE["has_seen_timeout"] = True
-            raise httpx.ReadTimeout("mock ambiguous submit (zero real network)")
+            if not STATE["has_seen_timeout"]:
+                STATE["has_seen_timeout"] = True
+                raise httpx.ReadTimeout("mock ambiguous submit (zero real network)")
+            # On a later EXPLICIT owner click, pretend Agnes returns a video_id.
+            return httpx.Response(200, json={"video_id": "e2e_local_mock_video_1", "status": "queued"})
         authorization = request.headers.get("Authorization", "")
         slot = re.fullmatch(r"Bearer E2E_MOCK_SLOT_KEY_([1-9])", authorization)
         if authorization != f"Bearer {FAKE_VALID_KEY}" and not slot:

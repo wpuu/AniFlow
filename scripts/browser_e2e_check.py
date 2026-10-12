@@ -134,14 +134,17 @@ def test_browser(screenshot: Path) -> None:
             page2 = uncertain.new_page()
             fill_single_key_and_first_shot(page2, FAKE_TIMEOUT)
             page2.get_by_role("button", name="生成视频", exact=True).click()
-            page2.get_by_role("button", name="待核实·禁止重发", exact=True).wait_for(timeout=15_000)
-            assert page2.get_by_role("button", name="待核实·禁止重发", exact=True).is_disabled()
+            page2.get_by_text("未收到编号·可重试").wait_for(timeout=15_000)
+            assert page2.get_by_role("button", name="生成视频", exact=True).is_enabled()
             after_uncertain = mock_state()
             assert after_uncertain["create_calls"] == 2
             assert after_uncertain["has_seen_timeout"] is True
             page2.reload(wait_until="domcontentloaded")
-            assert page2.get_by_role("button", name="待核实·禁止重发", exact=True).is_disabled()
-            assert mock_state()["create_calls"] == 2, "Refresh must not repeat an ambiguous video POST"
+            assert page2.get_by_role("button", name="生成视频", exact=True).is_enabled()
+            assert mock_state()["create_calls"] == 2, "Reload must not auto-resubmit a task"
+            page2.get_by_role("button", name="生成视频", exact=True).click()
+            page2.locator('video[src*="/__e2e_fake_video.mp4"]').wait_for(timeout=25_000)
+            assert mock_state()["create_calls"] == 3, "One new manual click must retry exactly once"
             uncertain.close()
 
             refctx = browser.new_context(viewport={"width": 1150, "height": 850})
@@ -152,11 +155,11 @@ def test_browser(screenshot: Path) -> None:
             page3.get_by_role("button", name="载入角色参考图测试 · 5秒").click()
             prompt = page3.get_by_placeholder("描述画面、动作、镜头、光线与风格。").input_value()
             assert "<Picture 1>" in prompt
-            assert mock_state()["create_calls"] == 2, "Loading a reference must not submit"
+            assert mock_state()["create_calls"] == 3, "Loading a reference must not submit"
             page3.get_by_role("button", name="生成视频", exact=True).click()
             page3.locator('video[src*="/__e2e_fake_video.mp4"]').wait_for(timeout=25_000)
             payload = mock_state()["last_payload"]
-            assert mock_state()["create_calls"] == 3
+            assert mock_state()["create_calls"] == 4
             assert payload["mode"] == "reference"
             assert len(payload["images"]) == 1
             assert "agnes-felt-test-frame.png" in payload["images"][0]
@@ -173,7 +176,7 @@ def test_browser(screenshot: Path) -> None:
             page4.get_by_role("button", name="载入雪所长首镜头 · 5秒").click()
             page4.get_by_role("button", name="一键生成全部可用 Key").click()
             page4.get_by_text("检测到重复 Agnes API Key", exact=False).wait_for(timeout=10_000)
-            assert mock_state()["create_calls"] == 3, "Duplicate slots must block an entire batch"
+            assert mock_state()["create_calls"] == 4, "Duplicate slots must block an entire batch"
             dups.close()
 
             # Nine DISTINCT fake Keys simultaneously: actual browser click, exactly
@@ -272,14 +275,14 @@ def test_browser(screenshot: Path) -> None:
             oldctx.close()
 
             print("PASS_REAL_BROWSER_MOCK_AGNES_FIRST_SHOT_CREATE_QUERY_VIDEO_RELOAD")
-            print("PASS_REAL_BROWSER_AMBIGUOUS_POST_FAIL_CLOSED_NO_RESUBMIT")
+            print("PASS_REAL_BROWSER_TIMEOUT_EXPLICIT_RETRY_WITHOUT_UNLOCK")
             print("PASS_REAL_BROWSER_REFERENCE_VS_FIRST_FRAME_AND_DUPLICATE_KEY_BLOCK")
             print("PASS_REAL_BROWSER_REDACTED_CLIPBOARD_SUMMARY")
             print("PASS_REAL_BROWSER_FREE_FLASH_BATCH_NO_BILLING_DIALOG")
             print("PASS_REAL_BROWSER_NINE_UNIQUE_KEYS_BATCH_NINE_IDS_NO_DUPLICATES")
             print("PASS_REAL_BROWSER_NINE_OLD_GUARDS_SINGLE_ARCHIVE_NUMERIC_TABS_PROGRESS")
             print("PASS_REAL_BROWSER_FLASH_DEFAULT_PAID_CONFIRM_CANCELS_WITH_NO_POST")
-            print("BROWSER_MOCK_CREATE_CALLS=12, REAL_AGNES_CREATE_CALLS=0")
+            print("BROWSER_MOCK_CREATE_CALLS=14, REAL_AGNES_CREATE_CALLS=0")
         finally:
             browser.close()
 

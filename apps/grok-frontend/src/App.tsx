@@ -8,7 +8,7 @@ import ImageGeneratorPanel from './components/ImageGeneratorPanel';
 import { STORAGE_KEYS, loadJSON, saveJSON } from './lib/storage';
 import { DEFAULT_PARAMS_BY_MODEL, VIDEO_MODELS } from './lib/constants';
 import { createVideoTask, getVideoResult } from './lib/api';
-import { DEFAULT_BRIDGE_URL, getBridgeVersion, uploadDataUrlToBridge } from './lib/bridge';
+import { getBridgeVersion } from './lib/bridge';
 import type { BridgeVersion } from './lib/bridge';
 import { genId } from './lib/imageUtils';
 import { rememberPrompt } from './lib/promptHistory';
@@ -132,7 +132,6 @@ export default function App() {
   const pollTimers = useRef<Record<number, number>>({});
   const stopFlags = useRef<Record<number, boolean>>({});
   const activeHistoryIdByKey = useRef<Record<number, string>>({});
-  const mediaUploadCache = useRef<Map<string, Promise<string>>>(new Map());
   const submittingKeysRef = useRef<Set<number>>(new Set());
   const submissionGuardsRef = useRef(submissionGuards);
 
@@ -303,7 +302,7 @@ export default function App() {
       ([index, task]) => Number(index) >= count && BUSY_STATUSES.has(task.status),
     );
     if (hiddenBusyKey) {
-      notify('不能隐藏正在运行或有未回收任务的 Key；请先核实对应任务', 'error');
+      notify('请先停止所隐藏 Key 的当前任务跟踪', 'error');
       return;
     }
     setApiKeyCount(count);
@@ -317,20 +316,6 @@ export default function App() {
       next[index] = value;
       return next;
     });
-  }
-
-  function uploadLocalImage(dataUrl: string): Promise<string> {
-    const cached = mediaUploadCache.current.get(dataUrl);
-    if (cached) return cached;
-
-    const upload = uploadDataUrlToBridge(dataUrl, DEFAULT_BRIDGE_URL)
-      .then((result) => result.url)
-      .catch((error) => {
-        mediaUploadCache.current.delete(dataUrl);
-        throw error;
-      });
-    mediaUploadCache.current.set(dataUrl, upload);
-    return upload;
   }
 
   async function prepareFlashParams(source: GenerationParams): Promise<GenerationParams> {
@@ -416,8 +401,8 @@ export default function App() {
             patch.videoUrl = result.url || result.metadata?.url || null;
             patch.progress = 100;
             if (!shouldReleaseVideoGuard(status, patch.videoUrl)) {
-              patch.status = 'submission_unknown';
-              patch.error = '任务完成但无有效 MP4 地址：已保留安全锁，可继续查询原视频';
+              patch.status = 'stopped';
+              patch.error = 'Agnes 报告任务完成但没有视频链接；可以从历史记录重新查询。';
             }
           }
           if (status === 'failed') {
@@ -449,7 +434,7 @@ export default function App() {
             );
           } else {
             const msg = err instanceof Error ? err.message : '网络异常，查询进度失败';
-            const warning = `状态查询中断（${msg}）。原任务可能仍在服务器运行，请仅恢复查询，勿重新创建。`;
+            const warning = `状态查询中断：${msg}。已有的 video_id 保存在历史中，可刷新；也可以重新点击生成新任务。`;
             updateTaskState(keyIndex, { status: 'stopped', error: warning, modelKey: taskModelKey });
             updateHistoryItem(historyId, { status: 'stopped', error: warning });
             delete activeHistoryIdByKey.current[keyIndex];
@@ -664,8 +649,8 @@ export default function App() {
         if (status === 'completed') {
           patch.videoUrl = result.url || result.metadata?.url || null;
           if (!shouldReleaseVideoGuard(status, patch.videoUrl)) {
-            patch.status = 'submission_unknown';
-            patch.error = '任务完成但无有效 MP4 地址，已保留防重锁；请继续查原任务';
+            patch.status = 'stopped';
+            patch.error = 'Agnes 已报告完成，但未返回可播放地址；可点击历史记录里的刷新状态再次查询。';
           } else {
             patch.error = null;
           }
