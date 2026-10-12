@@ -8,7 +8,8 @@ import ImageGeneratorPanel from './components/ImageGeneratorPanel';
 import { STORAGE_KEYS, loadJSON, saveJSON } from './lib/storage';
 import { DEFAULT_PARAMS_BY_MODEL, VIDEO_MODELS } from './lib/constants';
 import { createVideoTask, getVideoResult } from './lib/api';
-import { DEFAULT_BRIDGE_URL, uploadDataUrlToBridge } from './lib/bridge';
+import { DEFAULT_BRIDGE_URL, getBridgeVersion, uploadDataUrlToBridge } from './lib/bridge';
+import type { BridgeVersion } from './lib/bridge';
 import { genId } from './lib/imageUtils';
 import { buildSafeTrialReport } from './lib/safeTrialReport';
 import {
@@ -123,6 +124,7 @@ export default function App() {
   const [selectedKeyTab, setSelectedKeyTab] = useState(0);
   const [selectedHistoryIdByKey, setSelectedHistoryIdByKey] = useState<Record<number, string | undefined>>({});
   const [message, setMessage] = useState<{ text: string; type: 'info' | 'error' } | null>(null);
+  const [runningBuild, setRunningBuild] = useState<BridgeVersion | null>(null);
 
   const pollTimers = useRef<Record<number, number>>({});
   const stopFlags = useRef<Record<number, boolean>>({});
@@ -134,6 +136,13 @@ export default function App() {
   useEffect(() => {
     saveJSON(STORAGE_KEYS.API_KEYS, apiKeys);
   }, [apiKeys]);
+
+  useEffect(() => {
+    // Display the actual localhost build. Never infer "latest" from a PR title.
+    void getBridgeVersion()
+      .then(setRunningBuild)
+      .catch(() => setRunningBuild(null));
+  }, []);
 
   useEffect(() => {
     saveJSON(STORAGE_KEYS.KEY_COUNT, apiKeyCount);
@@ -1043,7 +1052,14 @@ export default function App() {
       </main>
 
       <footer className="mx-auto max-w-7xl px-4 pb-8 pt-2 text-center text-[11px] text-zinc-400 sm:px-6">
-        当前视频模型：{VIDEO_MODELS[modelKey].label}。API Key 仅保存在本浏览器 localStorage；2.5 Flash 本地图片会自动经 {DEFAULT_BRIDGE_URL} 上传为公网 URL。
+        <span className="font-semibold">
+          正在运行版本：{runningBuild?.source_commit?.slice(0, 12)
+            ?? (runningBuild?.build_type === 'source' ? '本地源码版' : '未验证')}
+          {runningBuild?.build_type === 'prebuilt' && !runningBuild.frontend_verified
+            ? ' · 校验失败，请重装完整版' : ''}
+        </span>
+        <span className="mx-2">·</span>
+        当前视频模型：{VIDEO_MODELS[modelKey].label}。服务重启不会删除浏览器保存的 Key 和历史。
       </footer>
     </div>
   );
