@@ -123,3 +123,61 @@ def test_bridge_upload_rejects_non_image_payload() -> None:
     )
 
     assert response.status_code == 415
+
+
+def test_agnes_image_without_s3_can_return_temporary_url(monkeypatch) -> None:
+    import importlib
+
+    module = importlib.import_module("aniflow.bridge.app")
+
+    class FakeProvider:
+        async def generate(self, **_kwargs) -> str:
+            return "https://cdn.example.org/test-image.png?expires=short"
+
+    monkeypatch.setattr(module, "AgnesImageProvider", lambda *_args: FakeProvider())
+    settings = Settings(_env_file=None, s3_endpoint_url="", s3_access_key_id="",
+                        s3_secret_access_key="", s3_bucket="", s3_public_base_url="")
+    with TestClient(create_bridge_app(settings=settings)) as client:
+        result = client.post("/api/images/generate", json={
+            "provider": "agnes", "api_key": "FAKE_LOCAL_TEST_KEY",
+            "prompt": "needle felt cat and bowl",
+        })
+        assert result.status_code == 200
+        body = result.json()
+        assert body["url"].startswith("https://cdn.example.org/")
+        assert body["temporary"] is True
+        assert "临时" in body["warning"]
+        assert client.get("/api/health").json()["media_ready"] is False
+
+
+def test_agnes_image_missing_key_reports_key_not_r2() -> None:
+    settings = Settings(_env_file=None, s3_endpoint_url="", s3_access_key_id="",
+                        s3_secret_access_key="", s3_bucket="", s3_public_base_url="")
+    with TestClient(create_bridge_app(settings=settings)) as client:
+        result = client.post("/api/images/generate", json={
+            "provider": "agnes", "prompt": "needle felt cat",
+        })
+    assert result.status_code == 400
+    assert "api_key" in result.json()["detail"]
+    assert "S3" not in result.json()["detail"]
+
+
+def test_agnes_image_refuses_private_upstream_image_link(monkeypatch) -> None:
+    import importlib
+
+    module = importlib.import_module("aniflow.bridge.app")
+
+    class FakeProvider:
+        async def generate(self, **_kwargs) -> str:
+            return "http://127.0.0.1/private.png"
+
+    monkeypatch.setattr(module, "AgnesImageProvider", lambda *_args: FakeProvider())
+    settings = Settings(_env_file=None, s3_endpoint_url="", s3_access_key_id="",
+                        s3_secret_access_key="", s3_bucket="", s3_public_base_url="")
+    with TestClient(create_bridge_app(settings=settings)) as client:
+        result = client.post("/api/images/generate", json={
+            "provider": "agnes", "api_key": "FAKE_LOCAL_TEST_KEY",
+            "prompt": "cat",
+        })
+    assert result.status_code == 502
+    assert "S3" not in result.json()["detail"]

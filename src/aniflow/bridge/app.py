@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import ipaddress
 import tempfile
+from urllib.parse import urlsplit
 from pathlib import Path
 from typing import Literal
 from uuid import uuid4
@@ -61,6 +63,35 @@ class GenerateImageResponse(BaseModel):
     provider: Literal["agnes", "capcut"]
     model: str
     url: str
+    temporary: bool = False
+    warning: str | None = None
+
+
+def _safe_temporary_image_url(value: str) -> str:
+    """Never expose a private/credential-bearing Agnes URL as a browser image."""
+    try:
+        uri = urlsplit(value)
+        host = uri.hostname or ""
+        try:
+            ip = ipaddress.ip_address(host)
+        except ValueError:
+            ip = None
+        if (
+            uri.scheme != "https"
+            or not host
+            or "." not in host
+            or uri.username
+            or uri.password
+            or uri.port not in (None, 443)
+            or host.lower().endswith((".local", ".internal", ".localhost"))
+            or (ip is not None and not ip.is_global)
+        ):
+            raise ValueError("unsafe image URL")
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=502, detail="Agnes returned an invalid public image URL"
+        ) from exc
+    return value
 
 
 def _detect_suffix(data: bytes) -> str:
@@ -153,9 +184,8 @@ def create_bridge_app(
 
     @app.post("/api/images/generate", response_model=GenerateImageResponse)
     async def generate_image(request: GenerateImageRequest) -> GenerateImageResponse:
-        store = resolve_store()
-
         if request.provider == "capcut":
+            store = resolve_store()
             model = (request.model or cfg.capcut_seedream_model).strip()
             if not cfg.capcut_runner_ready or not model:
                 raise HTTPException(
@@ -194,11 +224,14 @@ def create_bridge_app(
                 size=request.size,
                 ratio=request.ratio,
             )
-            public_url = await persist_remote_image(
-                media_store=store,
-                source_url=temporary_url,
-                object_key_without_suffix=f"aniflow/bridge/agnes/{uuid4().hex}",
-            )
+            public_url = _safe_temporary_image_url(temporary_url)
+            is_temporary = not (media_store is not None or cfg.s3_ready)
+            if not is_temporary:
+                public_url = await persist_remote_image(
+                    media_store=resolve_store(),
+                    source_url=public_url,
+                    object_key_without_suffix=f"aniflow/bridge/agnes/{uuid4().hex}",
+                )
         except Exception as exc:
             raise HTTPException(status_code=502, detail=f"Agnes image generation failed: {exc}") from exc
         finally:
@@ -208,6 +241,12 @@ def create_bridge_app(
             provider="agnes",
             model=cfg.agnes_image_model,
             url=public_url,
+            temporary=is_temporary,
+            warning=(
+                "Agnes 图片返回的是临时公网链接，可能过期；请尽快在本机保存。"
+                "作为视频参考帧时须确认生成期间链接仍有效。"
+                if is_temporary else None
+            ),
         )
 
     return app

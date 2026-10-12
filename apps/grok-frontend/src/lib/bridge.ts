@@ -30,6 +30,8 @@ export interface BridgeGenerateImageResult {
   provider: 'agnes' | 'capcut';
   model: string;
   url: string;
+  temporary?: boolean;
+  warning?: string | null;
 }
 
 function normalizeBridgeUrl(value: string): string {
