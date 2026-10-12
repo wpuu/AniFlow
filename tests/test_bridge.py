@@ -181,3 +181,39 @@ def test_agnes_image_refuses_private_upstream_image_link(monkeypatch) -> None:
         })
     assert result.status_code == 502
     assert "S3" not in result.json()["detail"]
+
+
+def test_version_api_reports_noncached_source_frontend(tmp_path: Path) -> None:
+    frontend = tmp_path / "apps" / "grok-frontend" / "dist" / "index.html"
+    frontend.parent.mkdir(parents=True)
+    frontend.write_text("<html>AniFlow</html>", encoding="utf-8")
+    app = create_bridge_app(settings=Settings(aniflow_frontend_index=str(frontend)))
+    with TestClient(app) as client:
+        response = client.get("/api/version")
+        page = client.get("/")
+    assert response.status_code == 200
+    assert response.json()["source_commit"] is None
+    assert response.json()["build_type"] == "source"
+    assert response.json()["frontend_verified"] is True
+    assert page.headers["cache-control"].startswith("no-store")
+
+
+def test_version_api_hash_matches_bundled_html_and_detects_tampering(tmp_path: Path) -> None:
+    import hashlib
+    import json
+
+    frontend = tmp_path / "apps" / "grok-frontend" / "dist" / "index.html"
+    frontend.parent.mkdir(parents=True)
+    frontend.write_text("<html>AniFlow</html>", encoding="utf-8")
+    digest = hashlib.sha256(frontend.read_bytes()).hexdigest()
+    manifest = tmp_path / "prebuilt_frontend.json"
+    manifest.write_text(json.dumps({"source_commit": "a" * 40, "frontend_sha256": digest}))
+    app = create_bridge_app(settings=Settings(aniflow_frontend_index=str(frontend)))
+    with TestClient(app) as client:
+        verified = client.get("/api/version").json()
+        assert verified["source_commit"] == "a" * 40
+        assert verified["frontend_verified"] is True
+        assert verified["build_type"] == "prebuilt"
+        frontend.write_text("<html>tampered</html>", encoding="utf-8")
+        tampered = client.get("/api/version").json()
+        assert tampered["frontend_verified"] is False
