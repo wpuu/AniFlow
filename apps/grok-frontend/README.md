@@ -2,6 +2,8 @@
 
 This directory contains the owner's Grok 4.6 generated Agnes workbench, now adapted as AniFlow's private interactive animation frontend.
 
+**P0-031 behavior correction (2026-10-12):** No historical/unknown-create localStorage lock blocks a new explicit click. Unknown HTTP submission outcomes remain in history with precise error text and immediate manual retry (no hidden automatic retries); prior valid video IDs remain in history for explicit status queries. All-nine Flash mode requires no billing dialog. The prompt textarea is user-resizable, preserves height, and has local saved prompt history. Local single-image mode first attempts direct Base64 data URI in the Agnes request without R2; **public official video docs specify URLs, so acceptance of Base64 by the real provider is unverified**, and a public HTTPS URL is the documented fallback. CI mocks must not be mistaken for Agnes production proof.
+
 **P0-028 operational fix (2026-10-12):** Use the latest successful CI ZIP, not previous P0-027 packages. Agnes Video 2.5 Flash remains the default promotionally free option; paid Agnes Video 2.5 requires explicit price confirmation; V2.0 creation is not offered. Legacy no-video-id submission guards are archived and locally unlocked with one confirmation and a durable browser-only backup; known video IDs remain available to resume status-only. Numeric 1–9 tabs display per-Key 0–100% provider progress. **Text-to-video never needs R2**; Agnes Image now returns a clearly flagged temporary public HTTPS URL when R2 is not configured (the owner should promptly save it). Local file uploads still need public media storage. [中文恢复指南](../../docs/runbooks/2026-10-11-nine-key-frontend-test.md).
 
 

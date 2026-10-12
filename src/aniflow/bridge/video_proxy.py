@@ -104,12 +104,18 @@ def video_proxy_router(
         except httpx.TimeoutException as exc:
             raise HTTPException(
                 status_code=504,
-                detail="Agnes request timed out; a video POST may have been accepted. Do not retry.",
+                detail=(
+                    "Agnes 创建请求超时，没有返回 video_id；可以手动再次点击。"
+                    "如果上次请求已被接收，可能出现重复任务。"
+                ),
             ) from exc
         except httpx.RequestError as exc:
             raise HTTPException(
                 status_code=502,
-                detail="Agnes network error; a video POST may have been accepted. Check original task.",
+                detail=(
+                    "Agnes 网络通信失败，未收到任务编号。可以再次点击生成；"
+                    "如果原请求已接收，可能产生重复任务。"
+                ),
             ) from exc
         return _safe_payload(response, api_key)
 

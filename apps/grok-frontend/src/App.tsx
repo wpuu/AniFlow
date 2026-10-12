@@ -559,7 +559,7 @@ export default function App() {
           poll(keyIndex, apiKey, videoId, historyId, modelKey);
         } catch (err) {
           const reason = err instanceof Error ? err.message : '创建响应不确定';
-          const knownFailure = /^HTTP (400|401|403|404|409|422|429|500|503)\b/.test(reason);
+          const knownFailure = /^HTTP (400|401|403|404|409|422|429|503)\b/.test(reason);
           const status: TaskStatus = knownFailure ? 'failed' : 'submission_unknown';
           const explanation = knownFailure
             ? `提交失败：${reason}。可以再次点击生成。`
