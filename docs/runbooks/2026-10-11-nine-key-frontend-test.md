@@ -1,5 +1,17 @@
 # AniFlow｜现有 9-Key Agnes 视频前端实际试用（P0-020）
 
+## P0-029｜每次显示旧版本：新包一键重启（2026-10-12）
+
+1. **根因一：GitHub 仓库默认 `main` 还是旧版。** 不要在 [AniFlow 仓库首页](https://github.com/wpuu/AniFlow) 直接点 `Code → Download ZIP`；那是 `main` 旧代码。正确来源是 [PR #2](https://github.com/wpuu/AniFlow/pull/2) 中最新 **SUCCESS** 的 GitHub Actions CI，在 `Artifacts` 下载名称为 `AniFlow-9Key-Windows-<完整SHA>` 的 ZIP（不是 `internal-compiled-nine-key-ui` 中间产物）。
+2. **根因二：旧版服务仍监听 `127.0.0.1:8765`。** 新 ZIP 解压到独立、好辨认的本地目录，如 `C:\AniFlow-current`（**不要混合覆盖旧文件**）。首次运行 `首次安装AniFlow.cmd`；以后每次**只双击 `一键重启当前AniFlow.cmd`**。
+3. 新脚本会检查包内 `prebuilt_frontend.json` 与编译HTML哈希、识别8765端口实际所属进程，**只停止能确认是 AniFlow Bridge 的旧进程**；其他程序绝不误杀。随后只启动本目录的新Bridge，调用 `/api/version` 对比活动SHA，匹配后才打开浏览器并带版本查询串避免缓存旧HTML。
+4. 新版网页底部应显示“**正在运行版本：xxxxxxxxxxxx**”。与脚本窗口打印的版本一致即可；无需重复“部署”，更不用清空浏览器 Key、localStorage、历史或任务。注意 `localhost:8765` 与 `127.0.0.1:8765` 的浏览器存储**互相独立**，不要随意切换域名。
+5. 脚本**不会自动下载 GitHub 新版**，所以每次换版本仍要手动下载最新成功的 Artifact 并解压完整文件夹；也不会取消 Agnes 供应商的已创建视频任务、GitHub CI、Vercel 部署或其他后台程序。遇到外来进程占用8765，会停下显示PID，请人工确认后关闭；不要执行粗暴的 `taskkill /F /IM python.exe`。
+6. 如报错“Missing prebuilt_frontend.json”，表明你现在运行的不是有效CI Windows包。旧 ZIP 的 `启动AniFlow.cmd` 不会自动变成新版。按本步骤下载新版后，用新版的 `一键重启当前AniFlow.cmd`。
+
+**无真实密钥测试范围**：GitHub Windows CI 负责跑两次启动/重启 + 活动SHA+网页不缓存的验证，不代表 Agnes 真视频已成功。
+
+
 - 核验日期：2026-10-11，UTC+8（北京时间）
 - 隔离分支：`audit/2026-10-11-v710-revalidation`；PR #2 继续 Draft，不合并 main
 - **这是已有 `apps/grok-frontend/` 的实际操作卡，不是开发新平台。**
