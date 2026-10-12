@@ -296,7 +296,7 @@ def test_browser(screenshot: Path) -> None:
             old.locator('video[src*="/__e2e_fake_video.mp4"]').wait_for(timeout=25_000)
             assert mock_state()["create_calls"] == before + 1
             old.get_by_test_id("key-tab-9").click()
-            assert "第 9 个 Key · 视频预览" in old.content()
+            assert old.locator("#aniflow-key-details").get_by_text("key9", exact=True).is_visible()
             old.reload(wait_until="domcontentloaded")
             assert old.get_by_role("button", name="key9", exact=True).is_enabled()
             assert mock_state()["create_calls"] == before + 1
