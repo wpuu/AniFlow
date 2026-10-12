@@ -146,7 +146,8 @@ def test_timeout_is_ambiguous_and_does_not_retry() -> None:
         result = client.post("/api/video/create",
                              json={"api_key": FAKE_KEY, "payload": GOOD_PAYLOAD})
     assert result.status_code == 504
-    assert "may have been accepted" in result.json()["detail"]
+    assert "没有返回 video_id" in result.json()["detail"]
+    assert "可以手动再次点击" in result.json()["detail"]
     assert FAKE_KEY not in result.text
     assert calls == 1
 
