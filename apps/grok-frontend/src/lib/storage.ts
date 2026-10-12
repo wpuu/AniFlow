@@ -12,6 +12,8 @@ export const STORAGE_KEYS = {
   IMAGE_PROVIDER: 'aniflow_image_provider_v1',
   CAPCUT_IMAGE_MODEL: 'aniflow_capcut_image_model_v1',
   IMAGE_PROMPT: 'aniflow_image_prompt_v1',
+  PROMPT_HISTORY: 'aniflow_prompt_history_v1',
+  PROMPT_HEIGHT: 'aniflow_prompt_height_v1',
 };
 
 export function loadJSON<T>(key: string, fallback: T): T {

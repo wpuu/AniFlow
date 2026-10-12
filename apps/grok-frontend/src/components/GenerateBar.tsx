@@ -5,7 +5,6 @@ interface Props {
   keyCount: number;
   apiKeys: string[];
   tasksByKey: Record<number, TaskState>;
-  guardedKeyIndexes: Set<number>;
   onGenerate: (keyIndex: number) => void;
   onStop: (keyIndex: number) => void;
   onGenerateAll: () => void;
@@ -13,10 +12,10 @@ interface Props {
 
 const BUSY_STATUSES = new Set(['creating', 'queued', 'in_progress']);
 
-export default function GenerateBar({ keyCount, apiKeys, tasksByKey, guardedKeyIndexes, onGenerate, onStop, onGenerateAll }: Props) {
+export default function GenerateBar({ keyCount, apiKeys, tasksByKey, onGenerate, onStop, onGenerateAll }: Props) {
   const hasRunnableKey = Array.from({ length: keyCount }).some((_, i) => {
     const busy = BUSY_STATUSES.has(tasksByKey[i]?.status ?? 'idle');
-    return !busy && !guardedKeyIndexes.has(i) && !!apiKeys[i]?.trim();
+    return !busy && !!apiKeys[i]?.trim();
   });
 
   return (
@@ -25,14 +24,13 @@ export default function GenerateBar({ keyCount, apiKeys, tasksByKey, guardedKeyI
         const state = tasksByKey[i];
         const busy = BUSY_STATUSES.has(state?.status ?? 'idle');
         const hasKey = !!apiKeys[i]?.trim();
-        const guardOnly = !busy && guardedKeyIndexes.has(i);
         return (
           <button
             key={i}
             type="button"
-            disabled={guardOnly || (!hasKey && !busy)}
+            disabled={state?.status === 'creating' || (!hasKey && !busy)}
             onClick={() => (busy ? onStop(i) : onGenerate(i))}
-            title={busy ? '仅停止状态轮询，不取消服务端已创建的生成任务' : guardOnly ? '原任务尚未核实，请先恢复查询或确认无运行任务后手动解锁' : !hasKey ? `请先填写 Key ${i + 1}` : undefined}
+            title={busy ? '停止状态查询不等于取消远端已创建的视频' : !hasKey ? `请先填写 Key ${i + 1}` : undefined}
             className={cn(
               'flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-40',
               busy
@@ -51,7 +49,7 @@ export default function GenerateBar({ keyCount, apiKeys, tasksByKey, guardedKeyI
               </svg>
             )}
             <span>
-              {busy ? '停止跟踪' : guardOnly ? '待核实·禁止重发' : '生成视频'}
+              {state?.status === 'creating' ? '正在提交' : busy ? '停止跟踪' : '生成视频'}
               {keyCount > 1 ? ` · Key${i + 1}` : ''}
             </span>
           </button>

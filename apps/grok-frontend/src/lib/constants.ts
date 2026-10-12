@@ -167,7 +167,7 @@ export const STATUS_LABELS: Record<string, string> = {
   completed: '已完成',
   failed: '失败',
   stopped: '已停止跟踪',
-  submission_unknown: '提交结果待核实',
+  submission_unknown: '未收到编号·可重试',
 };
 
 export const STATUS_COLORS: Record<string, string> = {

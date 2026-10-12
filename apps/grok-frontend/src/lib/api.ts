@@ -123,7 +123,7 @@ export async function createVideoTask(
   });
   const data = await parseJsonSafe(res);
   if (!res.ok) {
-    throw apiError(data, `创建任务失败（状态码 ${res.status}）`);
+    throw new Error(`HTTP ${res.status}：${apiError(data, '创建任务失败').message}`);
   }
   return (data || {}) as CreateVideoTaskResponse;
 }

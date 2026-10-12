@@ -11,14 +11,14 @@ import { createVideoTask, getVideoResult } from './lib/api';
 import { DEFAULT_BRIDGE_URL, getBridgeVersion, uploadDataUrlToBridge } from './lib/bridge';
 import type { BridgeVersion } from './lib/bridge';
 import { genId } from './lib/imageUtils';
+import { rememberPrompt } from './lib/promptHistory';
+import type { SavedPrompt } from './lib/promptHistory';
 import { buildSafeTrialReport } from './lib/safeTrialReport';
 import {
   attachVideoId,
-  collectNoIdArchives,
   duplicateKeySlots,
   isValidSubmissionGuards,
   releaseAttempt,
-  reserveAttempt,
   shouldReleaseVideoGuard,
 } from './lib/taskSafety';
 import type { SubmissionGuards } from './lib/taskSafety';
@@ -121,6 +121,9 @@ export default function App() {
     () => readSubmissionGuards() ?? {},
   );
   const [history, setHistory] = useState<HistoryItem[]>(() => loadJSON(STORAGE_KEYS.HISTORY, []));
+  const [promptHistory, setPromptHistory] = useState<SavedPrompt[]>(
+    () => loadJSON<SavedPrompt[]>(STORAGE_KEYS.PROMPT_HISTORY, []),
+  );
   const [selectedKeyTab, setSelectedKeyTab] = useState(0);
   const [selectedHistoryIdByKey, setSelectedHistoryIdByKey] = useState<Record<number, string | undefined>>({});
   const [message, setMessage] = useState<{ text: string; type: 'info' | 'error' } | null>(null);
@@ -157,6 +160,10 @@ export default function App() {
   }, [history]);
 
   useEffect(() => {
+    saveJSON(STORAGE_KEYS.PROMPT_HISTORY, promptHistory.slice(0, 40));
+  }, [promptHistory]);
+
+  useEffect(() => {
     const t = window.setTimeout(() => {
       const persisted = {
         v2: stripEphemeralImages(paramsByModel.v2),
@@ -185,37 +192,36 @@ export default function App() {
     setMessage({ text, type });
   }
 
-  // Persist the guard synchronously before the first POST. A missing/invalid
-  // localStorage record must never be treated as permission to retry.
-  function persistSubmissionGuards(next: SubmissionGuards): boolean {
-    if (!saveJSON(STORAGE_KEYS.SUBMISSION_GUARDS, next)) {
-      notify('无法持久保存视频提交安全记录，已阻止新的创建请求', 'error');
-      return false;
-    }
+  // A previous timeout is history, never a permanent ban on the owner's next click.
+  function persistSubmissionGuards(next: SubmissionGuards): void {
     submissionGuardsRef.current = next;
     setSubmissionGuards(next);
-    return true;
+    saveJSON(STORAGE_KEYS.SUBMISSION_GUARDS, next);
   }
 
-  function reserveVideoAttempt(
-    keyIndex: number,
-    attemptId: string,
-    attemptModel: VideoModelKey,
-  ): boolean {
-    const stored = readSubmissionGuards();
-    if (!stored) {
-      notify('提交保护记录无法读取，请先修复本浏览器本地存储；没有创建视频', 'error');
-      return false;
+  function reserveVideoAttempt(keyIndex: number, attemptId: string, attemptModel: VideoModelKey): void {
+    const old = readSubmissionGuards() ?? {};
+    const previous = old[String(keyIndex)];
+    if (previous?.videoId) {
+      setHistory((prev) => {
+        if (prev.some((item) => item.id === previous.attemptId)) return prev;
+        return [{
+          id: previous.attemptId, keyIndex, createdAt: previous.createdAt,
+          promptPreview: '已知视频编号的历史任务（原提示词未知）',
+          modelKey: previous.modelKey, modelName: VIDEO_MODELS[previous.modelKey].apiModel,
+          mode: 'unknown', ratio: 'unknown', resolution: 'unknown',
+          status: 'stopped', progress: 0, videoUrl: null,
+          videoId: previous.videoId, taskId: null,
+          error: '这条历史任务可通过历史记录中的刷新状态查询',
+        }, ...prev];
+      });
     }
-    const next = reserveAttempt(stored, {
-      keyIndex, attemptId, modelKey: attemptModel, createdAt: Date.now(), videoId: null,
+    persistSubmissionGuards({
+      ...old,
+      [String(keyIndex)]: {
+        keyIndex, attemptId, modelKey: attemptModel, createdAt: Date.now(), videoId: null,
+      },
     });
-    if (!next) {
-      setSubmissionGuards(stored);
-      notify(`Key ${keyIndex + 1} 有未回收的提交记录，禁止重复创建`, 'error');
-      return false;
-    }
-    return persistSubmissionGuards(next);
   }
 
   function attachVideoToGuard(keyIndex: number, attemptId: string, videoId: string) {
@@ -226,7 +232,8 @@ export default function App() {
     }
     const next = attachVideoId(stored, keyIndex, attemptId, videoId);
     if (next === stored) return false;
-    return persistSubmissionGuards(next);
+    persistSubmissionGuards(next);
+    return true;
   }
 
   function finishVideoGuard(keyIndex: number, attemptId: string) {
@@ -294,7 +301,7 @@ export default function App() {
   function handleKeyCountChange(count: number) {
     const hiddenBusyKey = Object.entries(tasksByKey).some(
       ([index, task]) => Number(index) >= count && BUSY_STATUSES.has(task.status),
-    ) || Object.keys(submissionGuards).some((index) => Number(index) >= count);
+    );
     if (hiddenBusyKey) {
       notify('不能隐藏正在运行或有未回收任务的 Key；请先核实对应任务', 'error');
       return;
@@ -462,16 +469,6 @@ export default function App() {
       // A double click must not create two requests before React re-renders.
       if (submittingKeysRef.current.has(keyIndex)) return;
 
-      const storedGuards = readSubmissionGuards();
-      if (!storedGuards) {
-        notify('本地提交保护记录读取失败，禁止发送视频请求', 'error');
-        return;
-      }
-      if (storedGuards[String(keyIndex)]) {
-        setSubmissionGuards(storedGuards);
-        notify(`Key ${keyIndex + 1} 的原请求尚未核实。请先恢复查询或人工确认后解锁`, 'error');
-        return;
-      }
       if (BUSY_STATUSES.has(tasksByKey[keyIndex]?.status ?? 'idle')) {
         notify(`Key ${keyIndex + 1} 正在生成，请勿重复创建`, 'error');
         return;
@@ -484,9 +481,7 @@ export default function App() {
       }
       // The same secret configured in two slots must not create concurrent tasks.
       const duplicateActive = apiKeys.some((other, index) => (
-        index !== keyIndex
-        && other?.trim() === apiKey
-        && (submittingKeysRef.current.has(index) || Boolean(storedGuards[String(index)]))
+        index !== keyIndex && other?.trim() === apiKey && submittingKeysRef.current.has(index)
       ));
       if (duplicateActive) {
         notify('同一 Agnes Key 在其他槽位已有未结束任务：已阻止重复提交', 'error');
@@ -520,8 +515,9 @@ export default function App() {
         }
 
         const historyId = genId('task');
-        // Fail closed if localStorage is denied/full. Reservation happens BEFORE the video POST.
-        if (!reserveVideoAttempt(keyIndex, historyId, modelKey)) return;
+        // One explicit click = one POST; old localStorage records never stop a new attempt.
+        reserveVideoAttempt(keyIndex, historyId, modelKey);
+        setPromptHistory((prev) => rememberPrompt(prev, requestParams.prompt, modelKey, Date.now()));
 
         stopFlags.current[keyIndex] = false;
         activeHistoryIdByKey.current[keyIndex] = historyId;
@@ -573,11 +569,16 @@ export default function App() {
           poll(keyIndex, apiKey, videoId, historyId, modelKey);
         } catch (err) {
           const reason = err instanceof Error ? err.message : '创建响应不确定';
-          const warning = `${reason}。该请求可能已被服务端接受；请核实原任务，不要重新点击生成。`;
-          updateTaskState(keyIndex, { status: 'submission_unknown', error: warning, modelKey });
-          updateHistoryItem(historyId, { status: 'submission_unknown', error: warning });
+          const knownFailure = /^HTTP (400|401|403|404|409|422|429|500|503)\b/.test(reason);
+          const status: TaskStatus = knownFailure ? 'failed' : 'submission_unknown';
+          const explanation = knownFailure
+            ? `提交失败：${reason}。可以再次点击生成。`
+            : `没有收到 Agnes 的任务编号：${reason}。可以直接再点击生成；如果上次实际已接收，可能出现重复任务。`;
+          finishVideoGuard(keyIndex, historyId);
+          updateTaskState(keyIndex, { status, error: explanation, modelKey });
+          updateHistoryItem(historyId, { status, error: explanation, finishedAt: Date.now() });
           delete activeHistoryIdByKey.current[keyIndex];
-          notify(`Key ${keyIndex + 1} 提交结果待核实；已保留本地安全锁`, 'error');
+          notify(`Key ${keyIndex + 1}：${explanation}`, 'error');
         }
       } finally {
         submittingKeysRef.current.delete(keyIndex);
@@ -621,7 +622,6 @@ export default function App() {
       .filter((index) => (
         !!apiKeys[index]?.trim()
         && !BUSY_STATUSES.has(tasksByKey[index]?.status ?? 'idle')
-        && !submissionGuards[String(index)]
         && !submittingKeysRef.current.has(index)
       ));
     if (!eligible.length) {
@@ -638,137 +638,6 @@ export default function App() {
       )) return;
     }
     eligible.forEach((index) => { void startGeneration(index, true); });
-  }
-
-  function resumeExistingGuard(keyIndex: number) {
-    const guard = readSubmissionGuards()?.[String(keyIndex)];
-    if (!guard?.videoId) {
-      notify('没有可查询的 video_id；先在 Agnes 账号历史确认是否创建任务', 'error');
-      return;
-    }
-    const apiKey = apiKeys[keyIndex]?.trim();
-    if (!apiKey) {
-      notify(`请先在 Key ${keyIndex + 1} 输入原账号的合法密钥`, 'error');
-      return;
-    }
-    if (BUSY_STATUSES.has(tasksByKey[keyIndex]?.status ?? 'idle')) {
-      notify('已经在轮询原任务，无需重复恢复');
-      return;
-    }
-    stopFlags.current[keyIndex] = false;
-    activeHistoryIdByKey.current[keyIndex] = guard.attemptId;
-    updateTaskState(keyIndex, { status: 'queued', videoId: guard.videoId, modelKey: guard.modelKey, error: null });
-    setHistory((prev) => {
-      if (prev.some((entry) => entry.id === guard.attemptId)) {
-        return prev.map((entry) => (
-          entry.id === guard.attemptId ? { ...entry, status: 'queued', error: null } : entry
-        ));
-      }
-      // Restore the original task identity, not invented prompt/mode details.
-      const recovered: HistoryItem = {
-        id: guard.attemptId,
-        keyIndex,
-        createdAt: guard.createdAt,
-        promptPreview: '从安全账本恢复；原始提示词与模式已无法核实',
-        modelKey: guard.modelKey,
-        modelName: VIDEO_MODELS[guard.modelKey].apiModel,
-        mode: 'unknown',
-        ratio: 'unknown',
-        resolution: 'unknown',
-        status: 'queued',
-        progress: 0,
-        videoUrl: null,
-        videoId: guard.videoId,
-        taskId: null,
-        error: null,
-      };
-      return [recovered, ...prev];
-    });
-    poll(keyIndex, apiKey, guard.videoId, guard.attemptId, guard.modelKey);
-  }
-
-  function archiveUnknownGuards() {
-    const stored = readSubmissionGuards();
-    if (!stored) {
-      notify('旧提交安全记录损坏，已保留原数据；无法安全整理', 'error');
-      return;
-    }
-    const busy = new Set<number>([
-      ...submittingKeysRef.current,
-      ...Object.entries(tasksByKey)
-        .filter(([, state]) => BUSY_STATUSES.has(state.status))
-        .map(([index]) => Number(index)),
-    ]);
-    const { remaining, archived } = collectNoIdArchives(stored, busy);
-    if (!archived.length) {
-      notify('没有可整理的无编号旧记录。已有视频编号的任务可直接继续查询');
-      return;
-    }
-    if (!window.confirm(
-      `将整理 ${archived.length} 条没有 video_id 的旧提交记录，仅解除浏览器本地锁。\n`
-      + '会保留旧记录备份；不会取消 Agnes 服务器上的任务，也不自动重新生成。'
-      + '\n以前的提交可能已被接受；再次生成可能产生重复任务。确认整理？',
-    )) return;
-    const existing: unknown = loadJSON(STORAGE_KEYS.ARCHIVED_GUARDS, []);
-    if (!Array.isArray(existing) || existing.length + archived.length > 1000) {
-      notify('旧记录备份区格式异常或已满，不会清除任何锁', 'error');
-      return;
-    }
-    const now = Date.now();
-    const known = new Set(existing.map((entry: { attemptId?: string }) => entry.attemptId));
-    const backup = [
-      ...existing,
-      ...archived.filter((g) => !known.has(g.attemptId)).map((g) => ({
-        attemptId: g.attemptId,
-        keyIndex: g.keyIndex,
-        modelKey: g.modelKey,
-        createdAt: g.createdAt,
-        archivedAt: now,
-        videoId: null,
-        note: '浏览器原请求未确认，仍可能有 Agnes 服务端任务',
-      })),
-    ];
-    if (!saveJSON(STORAGE_KEYS.ARCHIVED_GUARDS, backup)) {
-      notify('旧提交备份失败：未解除本地锁', 'error');
-      return;
-    }
-    if (!persistSubmissionGuards(remaining)) return;
-    const archivedIds = new Set(archived.map((g) => g.attemptId));
-    const archivedKeyIndexes = new Set(archived.map((g) => g.keyIndex));
-    setHistory((prev) => prev.map((item) => (
-      archivedIds.has(item.id)
-        ? { ...item, status: 'stopped',
-            error: '旧提交无视频编号，已归档并解锁本地按钮；无法证明 Agnes 任务已取消。' }
-        : item
-    )));
-    setTasksByKey((prev) => {
-      const next = { ...prev };
-      archivedKeyIndexes.forEach((idx) => {
-        next[idx] = {
-          ...emptyTask(),
-          status: 'stopped',
-          error: '旧请求未知结果已归档。再次生成前请检查 Agnes 原任务。',
-        };
-      });
-      return next;
-    });
-    notify(`已保存并整理 ${archived.length} 条无编号旧记录，按钮恢复可用；不代表上游任务已取消`);
-  }
-
-  function confirmUnlockGuard(keyIndex: number) {
-    const guard = readSubmissionGuards()?.[String(keyIndex)];
-    if (!guard?.videoId) {
-      notify('无编号旧记录请使用上方的“一次整理”，无需逐个核实', 'error');
-      return;
-    }
-    const confirmed = window.confirm(
-      `Key ${keyIndex + 1} 的视频提交记录仍未结案。只有在 Agnes 平台已核实没有正在运行/未回收的原任务`
-      + '（或确认原任务已完成并已保存结果）之后，才允许解除安全锁。解除后再次生成可能产生第二条任务和费用。确认已经核实？',
-    );
-    if (!confirmed) return;
-    finishVideoGuard(keyIndex, guard.attemptId);
-    updateTaskState(keyIndex, { status: 'stopped', error: '已由操作员确认并手动解除安全锁' });
-    updateHistoryItem(guard.attemptId, { status: 'stopped', error: '操作员手动核实并解除提交安全锁' });
   }
 
   function refreshHistoryItem(item: HistoryItem) {
@@ -860,7 +729,8 @@ export default function App() {
     const report = buildSafeTrialReport(
       apiKeys.slice(0, apiKeyCount).map((k) => Boolean(k?.trim())),
       history,
-      Object.keys(submissionGuards).map(Number),
+      Object.entries(submissionGuards).filter(([, guard]) => Boolean(guard.videoId))
+        .map(([index]) => Number(index)),
       Date.now(),
     );
     if (!navigator.clipboard?.writeText) {
@@ -873,10 +743,9 @@ export default function App() {
   }
 
   function handleClearHistory() {
-    const anyBusy = Object.values(tasksByKey).some((task) => BUSY_STATUSES.has(task.status))
-      || Object.keys(submissionGuards).length > 0;
+    const anyBusy = Object.values(tasksByKey).some((task) => BUSY_STATUSES.has(task.status));
     if (anyBusy) {
-      notify('仍有运行中或未核实的原任务；暂不能清空历史', 'error');
+      notify('正在生成的任务尚未停止跟踪', 'error');
       return;
     }
     setHistory([]);
@@ -950,45 +819,11 @@ export default function App() {
               keyCount={apiKeyCount}
               apiKeys={apiKeys}
               tasksByKey={tasksByKey}
-              guardedKeyIndexes={new Set(Object.keys(submissionGuards).map(Number))}
               onGenerate={startGeneration}
               onStop={stopGeneration}
               onGenerateAll={generateAll}
             />
           </div>
-
-          {Object.keys(submissionGuards).length > 0 ? (
-            <div className="mt-3 space-y-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
-              <p className="font-semibold">检测到以前未结束的视频提交记录</p>
-              <p>浏览器不能证明 Agnes 是否创建了任务。已取得编号的任务可继续查询；没有编号的旧记录可一次整理，不必逐个解锁9次。</p>
-              {Object.values(submissionGuards).some((g) => !g.videoId) ? (
-                <button type="button" onClick={archiveUnknownGuards}
-                  className="rounded-md border border-amber-500 bg-white px-3 py-2 font-semibold text-amber-800 hover:bg-amber-100">
-                  一次整理无编号旧记录（保留备份）
-                </button>
-              ) : null}
-              <div className="flex flex-wrap gap-2">
-                {Object.values(submissionGuards)
-                  .filter((guard) => Boolean(guard.videoId))
-                  .sort((a, b) => a.keyIndex - b.keyIndex)
-                  .map((guard) => (
-                    <div key={guard.attemptId} className="flex items-center gap-2 rounded bg-white px-2 py-1">
-                      <strong>{guard.keyIndex + 1}</strong>
-                      <span>有任务编号</span>
-                      <button type="button" onClick={() => resumeExistingGuard(guard.keyIndex)}
-                        className="rounded border border-amber-500 px-2 py-1 hover:bg-amber-100">
-                        继续查询
-                      </button>
-                      <button type="button" onClick={() => confirmUnlockGuard(guard.keyIndex)}
-                        className="rounded border border-amber-500 px-2 py-1 hover:bg-amber-100">
-                        确认结束后解除
-                      </button>
-                    </div>
-                  ))}
-              </div>
-              <p className="text-amber-700">整理仅解除本地锁，不会取消服务端任务。再次生成前请检查原任务，避免重复。</p>
-            </div>
-          ) : null}
 
           {message ? (
             <div
@@ -1012,7 +847,6 @@ export default function App() {
                 ...Object.entries(tasksByKey)
                   .filter(([, task]) => BUSY_STATUSES.has(task.status))
                   .map(([index]) => Number(index)),
-                ...Object.keys(submissionGuards).map(Number),
               ])}
               onKeyCountChange={handleKeyCountChange}
               onKeyChange={handleKeyChange}
@@ -1034,6 +868,12 @@ export default function App() {
             onModelChange={handleModelChange}
             params={params}
             onChange={updateParams}
+            promptHistory={promptHistory}
+            onSavePrompt={() => {
+              setPromptHistory((prev) => rememberPrompt(prev, params.prompt, modelKey, Date.now()));
+              notify('当前提示词已保存，可从历史列表切换');
+            }}
+            onLoadPrompt={(value) => updateParams((prev) => ({ ...prev, prompt: value }))}
           />
         </div>
 
