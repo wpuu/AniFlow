@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 import ipaddress
+import json
 import tempfile
 from pathlib import Path
 from typing import Literal
@@ -31,6 +33,14 @@ DEV_FRONTEND_ORIGINS = [
     "http://localhost:4173",
     "http://127.0.0.1:4173",
 ]
+
+
+class BuildVersionResponse(BaseModel):
+    source_commit: str | None
+    frontend_sha256: str | None
+    frontend_verified: bool
+    build_type: Literal["prebuilt", "source"]
+    bridge: str = "aniflow-local"
 
 
 class HealthResponse(BaseModel):
@@ -138,10 +148,52 @@ def create_bridge_app(
             )
         return PublicMediaStore(cfg)
 
+
+    @app.get("/api/version", response_model=BuildVersionResponse)
+    async def active_version() -> BuildVersionResponse:
+        # The allowlisted ZIP is unpacked with the manifest at its root.
+        # Manifest provenance and exact HTML SHA are verifiable locally.
+        frontend = cfg.frontend_index_path
+        root = frontend.parent.parent.parent.parent
+        manifest_path = root / "prebuilt_frontend.json"
+        if not manifest_path.is_file():
+            return BuildVersionResponse(
+                source_commit=None, frontend_sha256=None,
+                frontend_verified=frontend.is_file(), build_type="source",
+            )
+        try:
+            data = json.loads(manifest_path.read_text(encoding="utf-8"))
+            expected = data.get("frontend_sha256")
+            commit = data.get("source_commit")
+            actual = hashlib.sha256(frontend.read_bytes()).hexdigest()
+            valid = (
+                isinstance(expected, str) and len(expected) == 64
+                and isinstance(commit, str) and len(commit) == 40
+                and expected.lower() == actual
+            )
+            return BuildVersionResponse(
+                source_commit=commit if isinstance(commit, str) else None,
+                frontend_sha256=actual, frontend_verified=bool(valid),
+                build_type="prebuilt",
+            )
+        except (OSError, ValueError, TypeError):
+            return BuildVersionResponse(
+                source_commit=None, frontend_sha256=None,
+                frontend_verified=False, build_type="prebuilt",
+            )
+
     @app.get("/", include_in_schema=False)
     async def frontend_root():
         if cfg.frontend_ready:
-            return FileResponse(cfg.frontend_index_path, media_type="text/html")
+            return FileResponse(
+                cfg.frontend_index_path,
+                media_type="text/html",
+                headers={
+                    "Cache-Control": "no-store, max-age=0",
+                    "Pragma": "no-cache",
+                    "Expires": "0",
+                },
+            )
         return JSONResponse(
             status_code=503,
             content={
