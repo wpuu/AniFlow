@@ -1,6 +1,6 @@
 # AniFlow / 动画工厂
 
-> **P0-034（2026-10-12）**：计划改为 `v0.34.0` 共享本机Python依赖：不再每个发布包重复运行pip，只有首次初始化或实际依赖变化才安装。Agnes Video 2.5 Flash 如持续返回 `HTTP503/video_queue_full`，属于上游免费共享队列拒绝创建请求，不能通过本地重装/增加Key解决。详见 [P0-034 审计记录](docs/reviews/2026-10-12-p0034-shared-runtime-agnes-503.md)。当前代码提交与完整CI在完成前不代表已安装或可以下载新版。
+> **P0-034（2026-10-12）**：计划改为 `v0.34.1` 共享本机Python依赖：不再每个发布包重复运行pip，只有首次初始化或实际依赖变化才安装。Agnes Video 2.5 Flash 如持续返回 `HTTP503/video_queue_full`，属于上游免费共享队列拒绝创建请求，不能通过本地重装/增加Key解决。详见 [P0-034 审计记录](docs/reviews/2026-10-12-p0034-shared-runtime-agnes-503.md)。当前代码提交与完整CI在完成前不代表已安装或可以下载新版。
 
 
 > **P0-021 9-Key 原前端可测性修复（2026-10-11）：** 原有 `apps/grok-frontend` 保留，并非新建应用。已验证公开 Agnes 视频接口的浏览器跨域 `Authorization` 请求会被阻止（[Chrome 无真实 Key 测试](https://github.com/wpuu/AniFlow/actions/runs/38152367310)）。因此隔离分支加入本机 Bridge 单次视频转发和每 Key 创建前持久安全锁，网络超时不自动重试，保留按 `video_id` 查询的能力。**要更新前端和本地 Python Bridge 两部分，不能只替换 HTML。** 文生视频不需要 R2。Windows 按[9-Key 中文试用卡](docs/runbooks/2026-10-11-nine-key-frontend-test.md)操作。**目前尚无真实 Agnes 视频、账户费用或人工画质证据**，PR #2 仍为 Draft，`main` 不变。

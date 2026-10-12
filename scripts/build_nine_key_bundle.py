@@ -35,7 +35,7 @@ REQUIRED = (
 INSTRUCTIONS = """AniFlow 雪所长｜Windows 9-Key 测试包（不含已生成视频）
 
 1. 只下载 PR #2 最新绿色 CI 的完整 Windows Artifact，解压到独立新文件夹，不与旧版本混合。
-2. 从旧版首次过渡到 v0.34.0 时，会在本机 LOCALAPPDATA\\AniFlow\\python-env 建立一个共享 Python 依赖环境（可能需要最后一次下载依赖）。
+2. 从旧版首次过渡到 v0.34.1 时，会在本机 LOCALAPPDATA\\AniFlow\\python-env 建立一个共享 Python 依赖环境（可能需要最后一次下载依赖）。
 3. 之后所有 AniFlow 版本共用这份环境。Python 依赖清单没变时，安装和启动都会跳过 pip；只有依赖变化或环境损坏才重新安装。
 4. 请从新目录启动或重启。新版从当前目录 src 加载业务代码，核验版本号、Git SHA 和前端哈希；不会从旧版本读取旧业务代码。
 5. 不删除旧 .venv、不清空浏览器内的9条Key与历史。提交视频请求期间不要重启；关闭本机服务不会取消Agnes上游已受理的任务。

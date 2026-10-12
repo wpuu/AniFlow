@@ -67,17 +67,14 @@ def fill_single_key_and_first_shot(page, key: str) -> None:
 
 
 def generate_fake_mp4(path: Path) -> None:
-    if not shutil.which("ffmpeg"):
-        raise RuntimeError("FFmpeg is required to generate a clearly synthetic local test clip")
-    cmd = [
-        "ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin", "-y",
-        "-f", "lavfi", "-i", "color=c=blue:s=360x640:r=12",
-        "-t", "1", "-c:v", "libx264", "-pix_fmt", "yuv420p",
-        "-movflags", "+faststart", str(path),
-    ]
-    subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-    if not path.is_file() or path.stat().st_size < 1024:
-        raise RuntimeError("Mock video asset could not be generated")
+    """Copy a known synthetic, valid 1s local MP4 (no ffmpeg/apt needed)."""
+    fixture = ROOT / "tests" / "fixtures" / "MOCK_BLUE_LOCAL_NO_AGNES.mp4"
+    if not fixture.is_file():
+        raise RuntimeError("Bundled clearly synthetic local test video is missing")
+    data = fixture.read_bytes()
+    if len(data) < 1024 or data[4:8] != b"ftyp":
+        raise RuntimeError("Bundled local mock MP4 fixture is invalid")
+    path.write_bytes(data)
 
 
 def test_browser(screenshot: Path) -> None:
