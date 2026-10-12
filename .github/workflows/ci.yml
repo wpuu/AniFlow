@@ -153,7 +153,7 @@ jobs:
         with:
           name: internal-compiled-nine-key-ui
           path: apps/grok-frontend/dist
-      - name: Click through actual browser: first shot, recovery, reference, duplicate keys
+      - name: "Click through actual browser: first shot, recovery, reference, duplicate keys"
         shell: bash
         env:
           AGNES_API_KEYS: ''
