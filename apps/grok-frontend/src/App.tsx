@@ -628,13 +628,15 @@ export default function App() {
       notify('没有可用 Key：请先核实原任务或检查密钥配置', 'error');
       return;
     }
-    const amount = modelKey === 'paid25'
-      ? `当前为付费 Agnes 2.5，官方预估总价约 ${((params.resolution === '1080p' ? 0.040 : 0.025) * params.seconds * eligible.length).toFixed(3)}。 `
-      : 'Flash 当前标示限时免费，但结算可能变化。';
-    if (!window.confirm(
-      `将用 ${eligible.length} 条 Key 分别创建视频，共 ${eligible.length} 次真实请求。 `
-      + amount + '请确认账户实际费用。是否继续？',
-    )) return;
+    // One click on the free Flash model is the user's explicit batch action.
+    // Do not make a free 9-Key test navigate an irrelevant billing dialogue.
+    if (modelKey === 'paid25') {
+      const estimated = ((params.resolution === '1080p' ? 0.040 : 0.025)
+        * params.seconds * eligible.length).toFixed(3);
+      if (!window.confirm(
+        `当前是付费 Agnes Video 2.5，${eligible.length} 条视频官方预估约 ${estimated}。确认提交？`,
+      )) return;
+    }
     eligible.forEach((index) => { void startGeneration(index, true); });
   }
 
@@ -705,7 +707,7 @@ export default function App() {
     if (!window.confirm(
       `将整理 ${archived.length} 条没有 video_id 的旧提交记录，仅解除浏览器本地锁。\n`
       + '会保留旧记录备份；不会取消 Agnes 服务器上的任务，也不自动重新生成。'
-      + '\n以前的提交可能已被接受；再次生成可能重复计费。确认整理？',
+      + '\n以前的提交可能已被接受；再次生成可能产生重复任务。确认整理？',
     )) return;
     const existing: unknown = loadJSON(STORAGE_KEYS.ARCHIVED_GUARDS, []);
     if (!Array.isArray(existing) || existing.length + archived.length > 1000) {
@@ -745,7 +747,7 @@ export default function App() {
         next[idx] = {
           ...emptyTask(),
           status: 'stopped',
-          error: '旧请求未知结果已归档。再次生成前请检查 Agnes 历史与费用。',
+          error: '旧请求未知结果已归档。再次生成前请检查 Agnes 原任务。',
         };
       });
       return next;
@@ -984,7 +986,7 @@ export default function App() {
                     </div>
                   ))}
               </div>
-              <p className="text-amber-700">整理仅解除本地锁，不会取消服务端任务。再次生成前请确认原任务状态和实际费用。</p>
+              <p className="text-amber-700">整理仅解除本地锁，不会取消服务端任务。再次生成前请检查原任务，避免重复。</p>
             </div>
           ) : null}
 

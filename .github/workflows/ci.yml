@@ -224,6 +224,13 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Windows bundle installer failed" }
           & ".\.venv\Scripts\python.exe" -c "from aniflow.bridge.app import create_bridge_app; from fastapi.testclient import TestClient; app=create_bridge_app(); c=TestClient(app); assert c.get('/').status_code == 200; assert c.get('/api/health').json()['frontend_ready']; paths=c.get('/openapi.json').json()['paths']; assert '/api/video/create' in paths; assert '/api/video/status' in paths; print('PASS_WINDOWS_BUNDLE_NO_NODE_NO_KEY')"
           if ($LASTEXITCODE -ne 0) { throw "Windows built-bundle Bridge smoke test failed" }
+          foreach ($cmd in @("启动AniFlow.cmd", "首次安装AniFlow.cmd", "一键重启当前AniFlow.cmd")) {
+            $bytes = [System.IO.File]::ReadAllBytes((Resolve-Path $cmd).Path)
+            if (@($bytes | Where-Object { $_ -gt 127 }).Count -ne 0) {
+              throw "Windows launcher $cmd is not pure ASCII; cmd.exe may misparse Chinese characters"
+            }
+          }
+          Write-Host "PASS_WINDOWS_LAUNCHER_SCRIPTS_ASCII_NO_MOJIBAKE"
           & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\restart_aniflow_windows.ps1" -ValidateOnly
           if ($LASTEXITCODE -ne 0) { throw "Safe restart version validation failed" }
           if (-not (Test-Path "一键重启当前AniFlow.cmd")) { throw "User one-click launcher is missing" }
@@ -308,3 +315,12 @@ jobs:
             throw "Repeated restart showed a stale service"
           }
           Write-Host "PASS_WINDOWS_ONECLICK_RESTART_TWICE_ACTIVE_SHA_MATCH"
+          # This used to call the old port-fail launcher and corrupt Chinese echo.
+          $env:ANIFLOW_NO_BROWSER = "1"
+          & cmd.exe /d /c "启动AniFlow.cmd"
+          if ($LASTEXITCODE -ne 0) { throw "Ordinary CMD startup failed to hand off to safe restart" }
+          $normal = Invoke-RestMethod "http://127.0.0.1:8765/api/version"
+          if ($normal.source_commit -ne $manifest.source_commit -or -not $normal.frontend_verified) {
+            throw "Ordinary CMD startup served an old build"
+          }
+          Write-Host "PASS_WINDOWS_ORDINARY_CMD_AUTO_RESTART_CORRECT_VERSION"

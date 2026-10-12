@@ -189,12 +189,16 @@ def test_browser(screenshot: Path) -> None:
                 )
             batch.get_by_role("button", name="载入雪所长首镜头 · 5秒").click()
             prior = mock_state()["create_calls"]
-            batch.once("dialog", lambda dialog: dialog.accept())
+            flash_dialogs: list[str] = []
+            batch.on("dialog", lambda dialog: (
+                flash_dialogs.append(dialog.message), dialog.dismiss()
+            ))
             batch.get_by_role("button", name="一键生成全部可用 Key").click()
             deadline = time.monotonic() + 20
             while time.monotonic() < deadline and mock_state()["batch_create_calls"] < 9:
                 time.sleep(0.3)
             state = mock_state()
+            assert flash_dialogs == [], "Free Flash batch incorrectly asked about billing"
             assert state["batch_create_calls"] == 9, "Nine distinct Keys did not submit nine tasks"
             assert state["create_calls"] == prior + 9, "Nine-key batch submitted extra requests"
             assert len(set(state["batch_video_ids"])) == 9
@@ -271,6 +275,7 @@ def test_browser(screenshot: Path) -> None:
             print("PASS_REAL_BROWSER_AMBIGUOUS_POST_FAIL_CLOSED_NO_RESUBMIT")
             print("PASS_REAL_BROWSER_REFERENCE_VS_FIRST_FRAME_AND_DUPLICATE_KEY_BLOCK")
             print("PASS_REAL_BROWSER_REDACTED_CLIPBOARD_SUMMARY")
+            print("PASS_REAL_BROWSER_FREE_FLASH_BATCH_NO_BILLING_DIALOG")
             print("PASS_REAL_BROWSER_NINE_UNIQUE_KEYS_BATCH_NINE_IDS_NO_DUPLICATES")
             print("PASS_REAL_BROWSER_NINE_OLD_GUARDS_SINGLE_ARCHIVE_NUMERIC_TABS_PROGRESS")
             print("PASS_REAL_BROWSER_FLASH_DEFAULT_PAID_CONFIRM_CANCELS_WITH_NO_POST")

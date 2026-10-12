@@ -1,5 +1,8 @@
 # AniFlow｜现有 9-Key Agnes 视频前端实际试用（P0-020）
 
+> **2026-10-12 启动和免费API纠偏：** 从最新成功的 PR #2 CI 下载完整 AniFlow-9Key-Windows ZIP。普通“启动AniFlow.cmd”和“一键重启当前AniFlow.cmd”现在执行同一个**确认进程身份后重启**逻辑；不再仅提示端口8765占用，且 Windows CMD 消息全改为ASCII，防止中文引号乱码被当成命令执行。官方当前限时免费的 Flash 模型**不再弹出余额／费用确认**，包括9个不同Key的批量按钮；付费2.5仍保留一次费用确认。S3/R2只影响本地图片文件上传或需要持久保存的媒资，纯Flash文生无需配置。脚本不会删除浏览器密钥或当前本地记录。
+
+
 ## P0-029｜每次显示旧版本：新包一键重启（2026-10-12）
 
 1. **根因一：GitHub 仓库默认 `main` 还是旧版。** 不要在 [AniFlow 仓库首页](https://github.com/wpuu/AniFlow) 直接点 `Code → Download ZIP`；那是 `main` 旧代码。正确来源是 [PR #2](https://github.com/wpuu/AniFlow/pull/2) 中最新 **SUCCESS** 的 GitHub Actions CI，在 `Artifacts` 下载名称为 `AniFlow-9Key-Windows-<完整SHA>` 的 ZIP（不是 `internal-compiled-nine-key-ui` 中间产物）。

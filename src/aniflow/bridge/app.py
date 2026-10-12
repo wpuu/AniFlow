@@ -143,8 +143,12 @@ def create_bridge_app(
             return media_store
         if not cfg.s3_ready:
             raise HTTPException(
-                status_code=503,
-                detail="Public media storage is not configured; set the S3/R2 environment variables first",
+                status_code=422,
+                detail=(
+                    "Only local image uploads or persistent CapCut media require S3/R2. "
+                    "Agnes Video 2.5 Flash text-to-video does not need S3/R2. "
+                    "Choose text-to-video or provide an already public HTTPS image URL."
+                ),
             )
         return PublicMediaStore(cfg)
 

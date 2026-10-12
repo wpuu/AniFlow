@@ -1,16 +1,23 @@
 @echo off
-chcp 65001 >nul
+setlocal EnableExtensions
 cd /d "%~dp0"
-echo [AniFlow] 首次安装/更新本机运行环境...
+title AniFlow - Install Local Runtime
+echo [AniFlow] Installing or updating the local Python runtime...
+echo [AniFlow] No browser keys or video history will be deleted.
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -File ".\scripts\setup_aniflow_windows.ps1"
-set EXITCODE=%ERRORLEVEL%
-echo.
-if not "%EXITCODE%"=="0" (
-  echo [AniFlow] 安装失败，错误码 %EXITCODE%。
-) else (
-  echo [AniFlow] 安装完成。以后双击“启动AniFlow.cmd”即可。
-)
-echo.
+if not exist "scripts\setup_aniflow_windows.ps1" goto :missing
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\scripts\setup_aniflow_windows.ps1"
+set "RC=%ERRORLEVEL%"
+if not "%RC%"=="0" goto :failed
+echo [AniFlow] Install complete.
+echo [AniFlow] Next, double click the AniFlow start/restart CMD.
 pause
-exit /b %EXITCODE%
+exit /b 0
+:missing
+echo [AniFlow] Missing runtime setup script. Re-extract a full Windows ZIP.
+pause
+exit /b 2
+:failed
+echo [AniFlow] Installation failed with exit code %RC%.
+pause
+exit /b %RC%

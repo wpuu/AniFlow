@@ -217,3 +217,19 @@ def test_version_api_hash_matches_bundled_html_and_detects_tampering(tmp_path: P
         frontend.write_text("<html>tampered</html>", encoding="utf-8")
         tampered = client.get("/api/version").json()
         assert tampered["frontend_verified"] is False
+
+
+def test_missing_media_store_explains_local_images_not_video_require_r2() -> None:
+    settings = Settings(
+        _env_file=None, s3_endpoint_url="", s3_access_key_id="",
+        s3_secret_access_key="", s3_bucket="", s3_public_base_url="",
+    )
+    with TestClient(create_bridge_app(settings=settings)) as client:
+        result = client.post(
+            "/api/media/upload",
+            files={"file": ("test.png", _png_bytes(), "image/png")},
+        )
+    assert result.status_code == 422
+    message = result.json()["detail"]
+    assert "local image uploads" in message
+    assert "text-to-video does not need S3/R2" in message
