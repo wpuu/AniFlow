@@ -55,7 +55,7 @@ jobs:
         run: npm ci
       - name: Unit-test persistent nine-Key video guard (no API/Key)
         working-directory: apps/grok-frontend
-        run: node --experimental-strip-types --test tests/taskSafety.test.mjs tests/safeTrialReport.test.mjs tests/statusProgress.test.mjs tests/promptHistory.test.mjs
+        run: node --experimental-strip-types --test tests/taskSafety.test.mjs tests/safeTrialReport.test.mjs tests/statusProgress.test.mjs tests/promptHistory.test.mjs tests/eligibleKeys.test.mjs tests/negativePrompt.test.mjs
       - name: Type-check and build standalone frontend (no API/Key)
         working-directory: apps/grok-frontend
         run: npm run build
@@ -179,10 +179,32 @@ jobs:
   bundle:
     name: Package existing nine-Key UI for Windows (no secrets)
     needs: [lint, frontend, tests, browser_e2e]
+    outputs:
+      artifact_name: ${{ steps.release_meta.outputs.artifact_name }}
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+      - name: Validate release identity and build version
+        id: release_meta
+        shell: bash
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import re
+          import tomllib
+          from pathlib import Path
+          meta = json.loads(Path("version.json").read_text(encoding="utf-8"))
+          version, stage = meta["app_version"], meta["release_stage"]
+          assert re.fullmatch(r"0\.[0-9]+\.[0-9]+", version)
+          assert re.fullmatch(r"P0-[0-9]{3}", stage)
+          pyproject = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+          package = json.loads(Path("apps/grok-frontend/package.json").read_text(encoding="utf-8"))
+          lock = json.loads(Path("apps/grok-frontend/package-lock.json").read_text(encoding="utf-8"))
+          assert pyproject["project"]["version"] == version
+          assert package["version"] == version == lock["version"] == lock["packages"][""]["version"]
+          print(f"artifact_name=AniFlow-v{version}-{stage}-Windows-${{ github.event.pull_request.head.sha || github.sha }}")
+          PY
       - name: Fetch compiled frontend from this CI run
         uses: actions/download-artifact@v4
         with:
@@ -197,7 +219,7 @@ jobs:
       - name: Upload temporary CI test artifact (not a deployment or release)
         uses: actions/upload-artifact@v4
         with:
-          name: AniFlow-9Key-Windows-${{ github.event.pull_request.head.sha || github.sha }}
+          name: ${{ steps.release_meta.outputs.artifact_name }}
           path: bundle-out/AniFlow-9Key/
           if-no-files-found: error
           retention-days: 14
@@ -213,7 +235,7 @@ jobs:
           python-version: '3.11'
       - uses: actions/download-artifact@v4
         with:
-          name: AniFlow-9Key-Windows-${{ github.event.pull_request.head.sha || github.sha }}
+          name: ${{ needs.bundle.outputs.artifact_name }}
           path: bundle
       - name: Run actual Windows installer, validate local HTML and video routes
         shell: pwsh
@@ -270,7 +292,10 @@ jobs:
             }
             $active = Invoke-RestMethod -Uri "$base/api/version" -TimeoutSec 5
             $manifest = Get-Content -LiteralPath "prebuilt_frontend.json" -Raw -Encoding UTF8 | ConvertFrom-Json
-            if ($active.source_commit -ne $manifest.source_commit -or -not $active.frontend_verified) {
+            if ($active.source_commit -ne $manifest.source_commit -or
+                $active.app_version -ne $manifest.app_version -or
+                $active.release_stage -ne $manifest.release_stage -or
+                -not $active.frontend_verified) {
               throw "Running Bridge does not match packaged HTML"
             }
             if ($page.Headers["Cache-Control"] -notmatch "no-store") {

@@ -37,6 +37,8 @@ DEV_FRONTEND_ORIGINS = [
 
 class BuildVersionResponse(BaseModel):
     source_commit: str | None
+    app_version: str | None = None
+    release_stage: str | None = None
     frontend_sha256: str | None
     frontend_verified: bool
     build_type: Literal["prebuilt", "source"]
@@ -169,14 +171,32 @@ def create_bridge_app(
             data = json.loads(manifest_path.read_text(encoding="utf-8"))
             expected = data.get("frontend_sha256")
             commit = data.get("source_commit")
+            app_version = data.get("app_version")
+            release_stage = data.get("release_stage")
             actual = hashlib.sha256(frontend.read_bytes()).hexdigest()
+            version_file = root / "version.json"
+            if version_file.is_file():
+                version_data = json.loads(version_file.read_text(encoding="utf-8"))
+                version_valid = (
+                    app_version == version_data.get("app_version")
+                    and release_stage == version_data.get("release_stage")
+                    and isinstance(app_version, str)
+                    and isinstance(release_stage, str)
+                )
+            else:
+                # Old P0-031 bundles have no semantic version; stay readable
+                # while refusing any new manifest whose version file is missing.
+                version_valid = app_version is None and release_stage is None
             valid = (
                 isinstance(expected, str) and len(expected) == 64
                 and isinstance(commit, str) and len(commit) == 40
                 and expected.lower() == actual
+                and version_valid
             )
             return BuildVersionResponse(
                 source_commit=commit if isinstance(commit, str) else None,
+                app_version=app_version if isinstance(app_version, str) else None,
+                release_stage=release_stage if isinstance(release_stage, str) else None,
                 frontend_sha256=actual, frontend_verified=bool(valid),
                 build_type="prebuilt",
             )

@@ -822,6 +822,13 @@ export default function App() {
                 <h1 className="text-base font-bold leading-tight text-zinc-900 sm:text-lg">
                   AniFlow 动画工厂
                 </h1>
+                <p className="text-[11px] text-zinc-500" data-testid="running-version">
+                  {runningBuild?.app_version && runningBuild.frontend_verified
+                    ? `v${runningBuild.app_version} · ${runningBuild.release_stage ?? '未标阶段'} · ${runningBuild.source_commit?.slice(0, 9) ?? '未验证构建'}`
+                    : runningBuild?.source_commit
+                      ? `旧版构建 · ${runningBuild.source_commit.slice(0, 9)}`
+                      : '版本未验证'}
+                </p>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -947,7 +954,8 @@ export default function App() {
 
       <footer className="mx-auto max-w-7xl px-4 pb-8 pt-2 text-center text-[11px] text-zinc-400 sm:px-6">
         <span className="font-semibold">
-          正在运行版本：{runningBuild?.source_commit?.slice(0, 12)
+          正在运行版本：{runningBuild?.app_version ? `v${runningBuild.app_version} · ` : ''}
+          {runningBuild?.source_commit?.slice(0, 12)
             ?? (runningBuild?.build_type === 'source' ? '本地源码版' : '未验证')}
           {runningBuild?.build_type === 'prebuilt' && !runningBuild.frontend_verified
             ? ' · 校验失败，请重装完整版' : ''}

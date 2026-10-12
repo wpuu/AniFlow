@@ -1,5 +1,17 @@
 # AniFlow Agent Guide
 
+## 发布版本强制规则（2026-10-12｜AniFlow P0-032）
+
+此节优先于文中旧版 9-Key 安装包名称与过期版本假设。每次向用户提供可下载的新版本，必须先：
+- 增加根目录 `version.json` 的 `app_version`（例如 0.32.0 → 0.32.1；新增阶段可提高 minor），并记录最新 `release_stage`；
+- 将 `pyproject.toml`、`apps/grok-frontend/package.json` 及 `package-lock.json` 的根包版本同步；CI 检查四处一致，否则拒绝打包；
+- 由CI根据单一 `version.json` 自动命名 `AniFlow-v<版本>-<阶段>-Windows-<提交SHA>`，不复用旧包名字；`prebuilt_frontend.json` 必须有版本、阶段、提交SHA及HTML SHA256；
+- Windows安全重启必须读取版本并核对实际 `/api/version` 的版本、阶段、提交和前端哈希后才打开网页；**网页刷新不是升级**；
+- 顶部及底部展示实际运行版本而非计划版本。不允许把未推送提交、未完成CI、或模拟视频说成已安装新版。
+
+用户升级使用最新**成功 CI 的完整 Windows Artifact**，解压到单独目录，首次安装后从新目录双击 `启动AniFlow.cmd`；不可覆盖混杂旧文件、删除浏览器密钥/历史或误杀其他进程。P0-032未获隔离分支推送授权之前不得声称已经发布。
+
+
 > ## ⚠️ 接手前必读（2026-09-28 更新）
 >
 > 本文件部分规则**已过期**。接手本项目请**先读**：

@@ -2,6 +2,8 @@ export const DEFAULT_BRIDGE_URL = 'http://127.0.0.1:8765';
 
 export interface BridgeVersion {
   source_commit: string | null;
+  app_version?: string | null;
+  release_stage?: string | null;
   frontend_sha256: string | null;
   frontend_verified: boolean;
   build_type: 'prebuilt' | 'source';

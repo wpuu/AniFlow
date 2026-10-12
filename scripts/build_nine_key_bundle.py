@@ -9,12 +9,15 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import shutil
+import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED = (
     "pyproject.toml",
+    "version.json",
     "首次安装AniFlow.cmd",
     "启动AniFlow.cmd",
     "一键重启当前AniFlow.cmd",
@@ -29,12 +32,12 @@ INSTRUCTIONS = """AniFlow 雪所长｜9-Key 视频测试包（非已生成的视
 
 1. 解压整个文件夹。需要 Windows、Python 3.11+ 和首次安装时可访问的 Python 包下载源。
 2. 双击“首次安装AniFlow.cmd”。前端已由 GitHub CI 预构建，不需 Node/npm。
-3. 安装成功后以后统一双击“一键重启当前AniFlow.cmd”，它只会关闭已确认的旧 AniFlow 服务，校验当前包版本再打开浏览器，不清空 Key/历史。
+3. 安装成功后以后统一双击“一键重启当前AniFlow.cmd”，它只会关闭已确认的旧 AniFlow 服务，校验当前包版本号、Git提交及前端哈希再打开浏览器，不清空 Key/历史。
    “启动AniFlow.cmd”仍保留兼容。
 4. 选择 Agnes Video 2.5 Flash，点击“载入雪所长首镜头 · 5秒”。
 5. 在自己可信的浏览器填写Key。Flash当前限时免费，单Key与一键生成全部无需余额确认；付费2.5才提示费用。9条不同Key一键生成将发送9条真实创建请求。
 6. 收到完成结果后尽快打开视频链接并保存 MP4；任务可能存在服务器上，网页刷新不等于取消任务。
-7. 遇到提交不确定：先点“继续查原任务”，不要改用其他浏览器重发。
+7. 上游响应超时、无 video_id 的任务仍可能在服务商侧存在，手动重试有重复创建风险。\n8. 下一版不会自动覆盖旧 ZIP；每次到 GitHub PR 最新绿色 CI 下载新的完整Windows包。
 
 请勿在聊天、GitHub Issue、PR、CI 中提供密钥。不要运行旧 v7.0.4 安装器。
 本包仅通过无 Key 的自动化验证，不代表已得到 Agnes 真视频。
@@ -46,6 +49,17 @@ def build_bundle(root: Path, dest: Path, source_commit: str) -> dict[str, object
         raise FileExistsError(f"Bundle output already exists: {dest}")
     if len(source_commit) != 40 or any(c not in "0123456789abcdef" for c in source_commit.lower()):
         raise ValueError("Expected exactly one 40-character Git commit SHA")
+    version_path = root / "version.json"
+    meta = json.loads(version_path.read_text(encoding="utf-8"))
+    app_version = meta.get("app_version")
+    release_stage = meta.get("release_stage")
+    if not isinstance(app_version, str) or not re.fullmatch(r"0\.[0-9]+\.[0-9]+", app_version):
+        raise ValueError("AniFlow version.json needs a pre-release app_version, e.g. 0.32.0")
+    if not isinstance(release_stage, str) or not re.fullmatch(r"P0-[0-9]{3}", release_stage):
+        raise ValueError("AniFlow release_stage must be P0-NNN")
+    pyproject = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+    if pyproject.get("project", {}).get("version") != app_version:
+        raise ValueError("AniFlow version mismatch between version.json and pyproject.toml")
     src_files = sorted((root / "src" / "aniflow").rglob("*.py"))
     if not src_files:
         raise FileNotFoundError("AniFlow Python package source is absent")
@@ -69,6 +83,8 @@ def build_bundle(root: Path, dest: Path, source_commit: str) -> dict[str, object
     manifest: dict[str, object] = {
         "bundle": "AniFlow-existing-nine-key-windows",
         "source_commit": source_commit,
+        "app_version": app_version,
+        "release_stage": release_stage,
         "frontend_sha256": digest,
         "contains_credentials": False,
         "requires_node_npm": False,
@@ -88,6 +104,8 @@ def main() -> None:
     options = parser.parse_args()
     manifest = build_bundle(ROOT, options.output_dir.resolve(), options.source_commit)
     print("NO_SECRETS_BUNDLE_CREATED")
+    print(f"ANIFlow_VERSION={manifest['app_version']}")
+    print(f"RELEASE_STAGE={manifest['release_stage']}")
     print(f"SOURCE_COMMIT={manifest['source_commit']}")
     print(f"FRONTEND_SHA256={manifest['frontend_sha256']}")
 

@@ -233,3 +233,33 @@ def test_missing_media_store_explains_local_images_not_video_require_r2() -> Non
     message = result.json()["detail"]
     assert "local image uploads" in message
     assert "text-to-video does not need S3/R2" in message
+
+
+def test_semantic_version_is_read_from_the_actual_windows_bundle(tmp_path: Path) -> None:
+    import hashlib
+    import json
+
+    frontend = tmp_path / "apps" / "grok-frontend" / "dist" / "index.html"
+    frontend.parent.mkdir(parents=True)
+    frontend.write_text("<html>new version</html>", encoding="utf-8")
+    version = {"app_version": "0.32.0", "release_stage": "P0-032"}
+    (tmp_path / "version.json").write_text(json.dumps(version), encoding="utf-8")
+    manifest = {
+        "source_commit": "a" * 40,
+        "frontend_sha256": hashlib.sha256(frontend.read_bytes()).hexdigest(),
+        **version,
+    }
+    (tmp_path / "prebuilt_frontend.json").write_text(json.dumps(manifest), encoding="utf-8")
+    app = create_bridge_app(settings=Settings(aniflow_frontend_index=str(frontend)))
+    with TestClient(app) as client:
+        good = client.get("/api/version").json()
+        assert good["app_version"] == "0.32.0"
+        assert good["release_stage"] == "P0-032"
+        assert good["frontend_verified"] is True
+        (tmp_path / "version.json").write_text(
+            json.dumps({"app_version": "0.31.0", "release_stage": "P0-031"}),
+            encoding="utf-8",
+        )
+        wrong = client.get("/api/version").json()
+        assert wrong["frontend_verified"] is False
+        assert wrong["app_version"] == "0.32.0"

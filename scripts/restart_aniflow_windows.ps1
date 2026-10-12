@@ -10,6 +10,7 @@ $Port = 8765
 $Base = "http://127.0.0.1:$Port"
 $Python = Join-Path $Root ".venv\Scripts\python.exe"
 $ManifestFile = Join-Path $Root "prebuilt_frontend.json"
+$VersionFile = Join-Path $Root "version.json"
 $IndexFile = Join-Path $Root "apps\grok-frontend\dist\index.html"
 
 Write-Host "AniFlow | Current folder: $Root"
@@ -22,6 +23,17 @@ if (-not (Test-Path -LiteralPath $IndexFile -PathType Leaf)) {
 $Manifest = Get-Content -LiteralPath $ManifestFile -Raw -Encoding UTF8 | ConvertFrom-Json
 $Commit = [string]$Manifest.source_commit
 $Expected = [string]$Manifest.frontend_sha256
+if (-not (Test-Path -LiteralPath $VersionFile -PathType Leaf)) {
+    throw "AniFlow version.json missing. The extracted Windows bundle is incomplete."
+}
+$Release = Get-Content -LiteralPath $VersionFile -Raw -Encoding UTF8 | ConvertFrom-Json
+$AppVersion = [string]$Release.app_version
+$ReleaseStage = [string]$Release.release_stage
+if ($AppVersion -notmatch '^0\.[0-9]+\.[0-9]+$' -or $ReleaseStage -notmatch '^P0-[0-9]{3}$' -or
+    [string]$Manifest.app_version -ne $AppVersion -or
+    [string]$Manifest.release_stage -ne $ReleaseStage) {
+    throw "AniFlow app version disagrees with package manifest. Re-download the complete ZIP."
+}
 if ($Commit -notmatch '^[0-9a-fA-F]{40}$' -or $Expected -notmatch '^[0-9a-fA-F]{64}$') {
     throw "Invalid AniFlow build manifest. Do not start an unknown version."
 }
@@ -36,7 +48,7 @@ finally {
 if ($Actual -ine $Expected) {
     throw "Frontend SHA256 mismatch. Do not launch a mixed old/new app. Re-extract a complete ZIP."
 }
-Write-Host ("AniFlow | Package version: " + $Commit.Substring(0, 12))
+Write-Host ("AniFlow | Package version: v" + $AppVersion + " | " + $ReleaseStage + " | build " + $Commit.Substring(0, 12))
 Write-Host "AniFlow | Compiled frontend checksum: OK"
 if ($ValidateOnly) {
     Write-Host "PASS_ANIFLOW_RESTART_VERSION_VALIDATION_ONLY"
@@ -98,7 +110,10 @@ try {
         if ($Process.HasExited) { throw "New AniFlow service exited before readiness. See: $Stderr" }
         try {
             $Version = Invoke-RestMethod -Uri "$Base/api/version?check=$Stamp" -TimeoutSec 2 -Headers @{"Cache-Control"="no-cache"}
-            if ($Version.build_type -eq "prebuilt" -and $Version.source_commit -eq $Commit -and $Version.frontend_verified -eq $true) {
+            if ($Version.build_type -eq "prebuilt" -and $Version.source_commit -eq $Commit -and
+                $Version.app_version -eq $AppVersion -and
+                $Version.release_stage -eq $ReleaseStage -and
+                $Version.frontend_verified -eq $true) {
                 $Ready = $true
                 break
             }
@@ -108,6 +123,7 @@ try {
         }
     }
     if (-not $Ready) { throw "Current AniFlow server did not become ready on port 8765." }
+    Write-Host ("AniFlow | ACTIVE version: v" + $AppVersion + " | " + $ReleaseStage + " | build " + $Commit.Substring(0, 12))
     Write-Host ("AniFlow | ACTIVE build: " + $Commit.Substring(0, 12))
     Write-Host ("AniFlow | URL: " + $Base + "/")
     Write-Host "AniFlow | Browser API Keys, tasks and history were NOT cleared."
