@@ -25,24 +25,24 @@ REQUIRED = (
     "scripts/check_aniflow_update_windows.ps1",
     "scripts/restart_aniflow_windows.ps1",
     "scripts/setup_aniflow_windows.ps1",
+    "scripts/aniflow_shared_runtime.ps1",
     "scripts/start_aniflow_windows.ps1",
     "apps/grok-frontend/dist/index.html",
     "content/shotlists/MYCL-001-cat-lapping.json",
     "content/factpacks/MYCL-001-cat-lapping.json",
 )
-INSTRUCTIONS = """AniFlow 雪所长｜9-Key 视频测试包（非已生成的视频）
+INSTRUCTIONS = """AniFlow 雪所长｜Windows 9-Key 测试包（不含已生成视频）
 
-1. 解压整个文件夹。需要 Windows、Python 3.11+ 和首次安装时可访问的 Python 包下载源。
-2. 双击“首次安装AniFlow.cmd”。前端已由 GitHub CI 预构建，不需 Node/npm。安装及重启都会检查是否有更新，但不会悄悄覆盖旧文件。
-3. 更新：双击“检查更新AniFlow.cmd”。若已经在下载文件夹找到官方成功CI的ZIP，则会核验后安装到旁边的新文件夹；若浏览器须登录GitHub，会打开下载页面。\n4. 安装成功后双击新版文件夹的“一键重启当前AniFlow.cmd”，它只结束已确认的旧 AniFlow 服务，核对运行版本再打开浏览器，不清空Key/历史。
-   “启动AniFlow.cmd”仍保留兼容。
-4. 选择 Agnes Video 2.5 Flash，点击“载入雪所长首镜头 · 5秒”。
-5. 在自己可信的浏览器填写Key。Flash当前限时免费，单Key与一键生成全部无需余额确认；付费2.5才提示费用。9条不同Key一键生成将发送9条真实创建请求。
-6. 收到完成结果后尽快打开视频链接并保存 MP4；任务可能存在服务器上，网页刷新不等于取消任务。
-7. 上游响应超时、无 video_id 的任务仍可能在服务商侧存在，手动重试有重复创建风险。\n8. 下一版不会自动覆盖旧 ZIP；每次到 GitHub PR 最新绿色 CI 下载新的完整Windows包。
+1. 只下载 PR #2 最新绿色 CI 的完整 Windows Artifact，解压到独立新文件夹，不与旧版本混合。
+2. 从旧版首次过渡到 v0.34.0 时，会在本机 LOCALAPPDATA\\AniFlow\\python-env 建立一个共享 Python 依赖环境（可能需要最后一次下载依赖）。
+3. 之后所有 AniFlow 版本共用这份环境。Python 依赖清单没变时，安装和启动都会跳过 pip；只有依赖变化或环境损坏才重新安装。
+4. 请从新目录启动或重启。新版从当前目录 src 加载业务代码，核验版本号、Git SHA 和前端哈希；不会从旧版本读取旧业务代码。
+5. 不删除旧 .venv、不清空浏览器内的9条Key与历史。提交视频请求期间不要重启；关闭本机服务不会取消Agnes上游已受理的任务。
+6. 如果返回 HTTP503 / video_queue_full，这是 Agnes 免费视频上游共享 GPU 队列容量不足；多次安装或并发发送9条Key不能增加上游算力。
+7. “检查更新AniFlow.cmd”只负责查找并校验官方成功CI安装包，不上传Key、不擅自提交视频生成任务。
+8. 当前工具链通过无个人凭据的模拟测试，不代表免费 Agnes 真实生成已成功。
 
-请勿在聊天、GitHub Issue、PR、CI 中提供密钥。不要运行旧 v7.0.4 安装器。
-本包仅通过无 Key 的自动化验证，不代表已得到 Agnes 真视频。
+请勿向聊天、PR、Issue、公开CI粘贴密钥或带有密钥的截图。
 """
 
 

@@ -341,6 +341,7 @@ def test_browser(screenshot: Path) -> None:
             queued.locator("#aniflow-key-details").get_by_text(
                 "HTTP 503", exact=False
             ).wait_for(timeout=15_000)
+            assert "Agnes 免费视频队列已满" in queued.get_by_test_id("selected-task-error").inner_text()
             assert queued.get_by_role("button", name="key1", exact=True).is_enabled()
             assert mock_state()["create_calls"] == queue_before + 1
             queued.get_by_role("button", name="key1", exact=True).click()

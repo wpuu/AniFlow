@@ -8,7 +8,6 @@ $Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 Set-Location -LiteralPath $Root
 $Port = 8765
 $Base = "http://127.0.0.1:$Port"
-$Python = Join-Path $Root ".venv\Scripts\python.exe"
 $ManifestFile = Join-Path $Root "prebuilt_frontend.json"
 $VersionFile = Join-Path $Root "version.json"
 $IndexFile = Join-Path $Root "apps\grok-frontend\dist\index.html"
@@ -55,18 +54,19 @@ if ($ValidateOnly) {
     exit 0
 }
 
-if (-not (Test-Path -LiteralPath $Python -PathType Leaf)) {
-    Write-Host "AniFlow | Python not installed; setting up the current folder."
-    & (Join-Path $PSScriptRoot "setup_aniflow_windows.ps1")
-    if ($LASTEXITCODE -ne 0) { throw "AniFlow installation failed" }
+$RuntimeLoader = Join-Path $PSScriptRoot "aniflow_shared_runtime.ps1"
+if (-not (Test-Path -LiteralPath $RuntimeLoader -PathType Leaf)) {
+    throw "AniFlow shared runtime helper missing. Download the complete release ZIP."
 }
-# An existing editable Python install may still point at a different extracted ZIP.
+. $RuntimeLoader
+$Python = Get-AniFlowRuntimePython -RepoRoot $Root -AllowInstall
+$env:PYTHONPATH = Join-Path $Root "src"
 & $Python -c "import aniflow,pathlib,sys;sys.exit(0 if pathlib.Path(aniflow.__file__).resolve()==(pathlib.Path.cwd()/'src/aniflow/__init__.py').resolve() else 7)"
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "AniFlow | Python still points to a previous extraction; rebinding."
-    & $Python -m pip install -e .
-    if ($LASTEXITCODE -ne 0) { throw "Could not bind Python environment to this AniFlow folder" }
+    throw "AniFlow current-release Python source binding failed. No foreign service was stopped."
 }
+Write-Host "PASS_ANIFLOW_SHARED_RUNTIME_CURRENT_SOURCE"
+
 if (-not (Get-Command Get-NetTCPConnection -ErrorAction SilentlyContinue)) {
     throw "Cannot safely identify port owner: Windows Get-NetTCPConnection is unavailable."
 }

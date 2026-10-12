@@ -16,6 +16,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 
+from aniflow import __version__
 from aniflow.agnes.http import AgnesHttpClient
 from aniflow.agnes.image import AgnesImageClient
 from aniflow.agnes.key_pool import KeyPool
@@ -123,7 +124,7 @@ def create_bridge_app(
     video_transport: httpx.AsyncBaseTransport | None = None,
 ) -> FastAPI:
     cfg = settings or get_settings()
-    app = FastAPI(title="AniFlow Local Bridge", version="0.1.0")
+    app = FastAPI(title="AniFlow Local Bridge", version=__version__)
     app.include_router(video_proxy_router(cfg, transport=video_transport))
     app.add_middleware(
         CORSMiddleware,

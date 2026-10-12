@@ -1,5 +1,12 @@
 # AniFlow Agent Guide
 
+## P0-034｜复用依赖与 Agnes 503（2026-10-12）
+
+**最新完整技术基线**：`docs/reviews/2026-10-12-p0034-shared-runtime-agnes-503.md`。过去每个新版 ZIP 都创建自己的 `.venv`，反复运行 `pip install -e .`，已确认是更新机制设计缺陷。P0-034 改为 `%LOCALAPPDATA%\\AniFlow\\python-env` 共享 Python 运行环境。仅依赖清单改变/环境损坏时安装，其他版本启动复用；业务源码必须从当前 ZIP 的 `src` 加载且经过检查。**首次从v0.33迁移至v0.34仍可能需要一次共享环境初始化，以后同依赖不重装**。
+
+Agnes Flash 的 `HTTP503/video_queue_full` 为供应商共享免费 GPU 容量拒绝创建请求，不是本地重复装依赖能修复。禁止把重复安装、增加9-Key并发、扩大 GET 轮询写成“修好了全部503”。保留已有合法 video_id，停止无数据驱动的批量试探。PR保持Draft、不合并main、不使用用户Key、不自动视频生成。
+
+
 ## P0-033 首镜头可靠性与免费 I2V（2026-10-12）
 
 最新证据入口：docs/reviews/2026-10-12-p0033-agnes-free-i2v-recovery.md。本节优先于旧版将本地 Base64 图生视为官方支持、旧版轮询短时间结束、或将共享站队列与个人 Key 混为一谈的表述。

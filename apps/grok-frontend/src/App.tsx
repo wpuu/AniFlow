@@ -665,9 +665,12 @@ export default function App() {
           const knownFailure = /^HTTP (400|401|403|404|409|422|429|503)\b/.test(reason)
             || reason.startsWith('Agnes明确拒绝');
           const status: TaskStatus = knownFailure ? 'failed' : 'submission_unknown';
-          const explanation = knownFailure
-            ? `提交失败：${reason}。可以再次点击生成。`
-            : `没有收到 Agnes 的任务编号：${reason}。可以直接再点击生成；如果上次实际已接收，可能出现重复任务。`;
+          const queueFull = /^HTTP 503\b/.test(reason) && /video_queue_full|queue.?full/i.test(reason);
+          const explanation = queueFull
+            ? `Agnes 免费视频队列已满：${reason}。上游拒绝创建，本次没有 video_id。换Key或重新安装不能解决共享容量；请停止九Key并发，稍后错峰单条尝试。`
+            : knownFailure
+              ? `提交失败：${reason}。可以再次点击生成。`
+              : `没有收到 Agnes 的任务编号：${reason}。可以直接再点击生成；如果上次实际已接收，可能出现重复任务。`;
           finishVideoGuard(keyIndex, historyId);
           updateTaskState(keyIndex, { status, error: explanation, modelKey });
           updateHistoryItem(historyId, { status, error: explanation, finishedAt: Date.now() });

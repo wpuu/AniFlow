@@ -246,7 +246,16 @@ jobs:
           Set-Location bundle
           & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\setup_aniflow_windows.ps1"
           if ($LASTEXITCODE -ne 0) { throw "Windows bundle installer failed" }
-          & ".\.venv\Scripts\python.exe" -c "from aniflow.bridge.app import create_bridge_app; from fastapi.testclient import TestClient; app=create_bridge_app(); c=TestClient(app); assert c.get('/').status_code == 200; assert c.get('/api/health').json()['frontend_ready']; paths=c.get('/openapi.json').json()['paths']; assert '/api/video/create' in paths; assert '/api/video/status' in paths; print('PASS_WINDOWS_BUNDLE_NO_NODE_NO_KEY')"
+          $secondRun = & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\setup_aniflow_windows.ps1" 2>&1
+          if ($LASTEXITCODE -ne 0) { throw "Second setup should reuse existing dependencies" }
+          if (($secondRun -join [Environment]::NewLine) -notmatch "PASS_ANIFLOW_SHARED_RUNTIME_REUSED_NO_PIP") {
+            throw "Installer re-downloaded Python dependencies instead of reusing shared runtime"
+          }
+          Write-Host "PASS_WINDOWS_SECOND_INSTALL_REUSES_SHARED_RUNTIME_NO_PIP"
+          $python = Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "AniFlow\python-env\Scripts\python.exe"
+          if (-not (Test-Path -LiteralPath $python -PathType Leaf)) { throw "Shared Python was not installed" }
+          $env:PYTHONPATH = Join-Path (Get-Location).Path "src"
+          & $python -c "from aniflow.bridge.app import create_bridge_app; from fastapi.testclient import TestClient; app=create_bridge_app(); c=TestClient(app); assert c.get('/').status_code == 200; assert c.get('/api/health').json()['frontend_ready']; paths=c.get('/openapi.json').json()['paths']; assert '/api/video/create' in paths; assert '/api/video/status' in paths; print('PASS_WINDOWS_BUNDLE_NO_NODE_NO_KEY')"
           if ($LASTEXITCODE -ne 0) { throw "Windows built-bundle Bridge smoke test failed" }
           foreach ($cmd in @("启动AniFlow.cmd", "首次安装AniFlow.cmd", "一键重启当前AniFlow.cmd", "检查更新AniFlow.cmd")) {
             $bytes = [System.IO.File]::ReadAllBytes((Resolve-Path $cmd).Path)
@@ -257,12 +266,16 @@ jobs:
           Write-Host "PASS_WINDOWS_LAUNCHER_SCRIPTS_ASCII_NO_MOJIBAKE"
           $tokens = $null
           $parseErrors = $null
-          [System.Management.Automation.Language.Parser]::ParseFile(
-            (Resolve-Path "scripts\check_aniflow_update_windows.ps1").Path,
-            [ref]$tokens, [ref]$parseErrors
-          ) | Out-Null
-          if (@($parseErrors).Count -ne 0) {
-            throw "Windows update helper has invalid PowerShell syntax: $parseErrors"
+          foreach ($candidate in @("check_aniflow_update_windows.ps1", "aniflow_shared_runtime.ps1", "setup_aniflow_windows.ps1", "restart_aniflow_windows.ps1")) {
+            $tokens = $null
+            $parseErrors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path ("scripts\" + $candidate)).Path,
+              [ref]$tokens, [ref]$parseErrors
+            ) | Out-Null
+            if (@($parseErrors).Count -ne 0) {
+              throw ("Invalid PowerShell syntax in " + $candidate + ": " + $parseErrors)
+            }
           }
           Write-Host "PASS_WINDOWS_UPDATE_HELPER_POWERSHELL_PARSE"
           & powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\restart_aniflow_windows.ps1" -ValidateOnly
@@ -274,7 +287,8 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           Set-Location bundle
-          $python = (Resolve-Path ".\.venv\Scripts\python.exe").Path
+          $python = (Resolve-Path (Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "AniFlow\python-env\Scripts\python.exe")).Path
+          $env:PYTHONPATH = Join-Path (Get-Location).Path "src"
           $bridge = Start-Process -FilePath $python -ArgumentList @("-m", "aniflow.cli", "bridge") -WorkingDirectory (Get-Location).Path -PassThru -RedirectStandardOutput "bridge-smoke-out.txt" -RedirectStandardError "bridge-smoke-err.txt"
           try {
             $base = "http://127.0.0.1:8765"

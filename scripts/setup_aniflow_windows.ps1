@@ -4,27 +4,6 @@ $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 Set-Location $RepoRoot
 Write-Host "[AniFlow] Directory: $RepoRoot"
 
-$Python = Join-Path $RepoRoot ".venv\Scripts\python.exe"
-if (-not (Test-Path $Python)) {
-    Write-Host "[AniFlow] Creating local Python environment..."
-    if (Get-Command python -ErrorAction SilentlyContinue) {
-        & python -m venv .venv
-    }
-    elseif (Get-Command py -ErrorAction SilentlyContinue) {
-        & py -3 -m venv .venv
-    }
-    else {
-        throw "Install Python 3.11 or later and retry."
-    }
-}
-if (-not (Test-Path $Python)) { throw "Python virtual environment creation failed." }
-& $Python -c "import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)"
-if ($LASTEXITCODE -ne 0) { throw "AniFlow requires Python 3.11 or later." }
-
-Write-Host "[AniFlow] Installing local Python components..."
-& $Python -m pip install -e .
-if ($LASTEXITCODE -ne 0) { throw "Python dependency installation failed." }
-
 $FrontendDir = Join-Path $RepoRoot "apps\grok-frontend"
 $FrontendIndex = Join-Path $FrontendDir "dist\index.html"
 $PrebuiltManifest = Join-Path $RepoRoot "prebuilt_frontend.json"
@@ -64,6 +43,18 @@ else {
     }
 }
 
+$RuntimeLoader = Join-Path $PSScriptRoot "aniflow_shared_runtime.ps1"
+if (-not (Test-Path -LiteralPath $RuntimeLoader -PathType Leaf)) {
+    throw "AniFlow shared runtime helper is missing. Download the complete release."
+}
+. $RuntimeLoader
+$Python = Get-AniFlowRuntimePython -RepoRoot $RepoRoot -AllowInstall
+$env:PYTHONPATH = Join-Path $RepoRoot "src"
+& $Python -c "import aniflow,pathlib,sys;sys.exit(0 if pathlib.Path(aniflow.__file__).resolve()==(pathlib.Path.cwd()/'src/aniflow/__init__.py').resolve() else 1)"
+if ($LASTEXITCODE -ne 0) {
+    throw "AniFlow Python import is not bound to the current release source."
+}
+Write-Host "PASS_ANIFLOW_CURRENT_SOURCE_BOUND_SHARED_RUNTIME"
 Write-Host "[AniFlow] Local setup complete."
 Write-Host "[AniFlow] Update checker: double-click the new package's update launcher."
 if ($env:ANIFLOW_SKIP_UPDATE_CHECK -ne "1") {
