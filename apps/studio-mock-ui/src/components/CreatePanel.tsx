@@ -6,8 +6,8 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
-import { ASPECTS, DURATIONS, MODELS, PROMPT_PRESETS, SAMPLE_FRAMES, getModel } from "../data";
-import type { AspectRatio, CreatePayload } from "../types";
+import { ASPECTS, DURATIONS, MODELS, REAL_MODEL, PROMPT_PRESETS, SAMPLE_FRAMES, getModel } from "../data";
+import type { AspectRatio, CreatePayload, StudioMode } from "../types";
 import { cn } from "../utils/cn";
 import { formatCost } from "../utils/format";
 import { ModelDot } from "./StatusBadge";
@@ -16,12 +16,15 @@ interface CreatePanelProps {
   onSubmit: (payload: CreatePayload) => void;
   busyCount: number;
   disabled?: boolean;
+  mode: StudioMode;
 }
 
-export function CreatePanel({ onSubmit, busyCount, disabled = false }: CreatePanelProps) {
+export function CreatePanel({ onSubmit, busyCount, disabled = false, mode }: CreatePanelProps) {
+  const real = mode === "real";
+  const models = real ? [REAL_MODEL] : MODELS;
   const [prompt, setPrompt] = useState(PROMPT_PRESETS[0]);
   const [negativePrompt, setNegativePrompt] = useState("抖动, 过曝, 文字水印, 畸变, 低清晰度");
-  const [modelId, setModelId] = useState(MODELS[0].id);
+  const [modelId, setModelId] = useState(models[0].id);
   const [aspect, setAspect] = useState<AspectRatio>("9:16");
   const [duration, setDuration] = useState(5);
   const [firstFrame, setFirstFrame] = useState<string | undefined>(undefined);
@@ -81,7 +84,7 @@ export function CreatePanel({ onSubmit, busyCount, disabled = false }: CreatePan
           <h2 className="text-sm font-medium text-zinc-100">新建视频</h2>
         </div>
         <span className="font-mono text-[10px] text-zinc-500">
-          {busyCount > 0 ? `${busyCount} 个任务占用后端` : "本机模拟服务"}
+          {busyCount > 0 ? `${busyCount} 个任务占用后端` : real ? "真实 H3 · 受控实验" : "本机模拟服务"}
         </span>
       </div>
 
@@ -193,7 +196,7 @@ export function CreatePanel({ onSubmit, busyCount, disabled = false }: CreatePan
         <section>
           <label className="mb-2 block text-[11px] font-medium tracking-wide text-zinc-400">模型</label>
           <div className="space-y-1.5">
-            {MODELS.map((m) => (
+            {models.map((m) => (
               <button
                 key={m.id}
                 onClick={() => {
@@ -220,7 +223,7 @@ export function CreatePanel({ onSubmit, busyCount, disabled = false }: CreatePan
                   <div className="shrink-0 text-right">
                     <ModelDot status={m.status} />
                     <div className="mt-1 font-mono text-[10px] text-zinc-500">
-                      {formatCost(m.costPerSecond)}/s
+                      {real ? "费用按实例运行计费" : formatCost(m.costPerSecond) + "/s"}
                     </div>
                   </div>
                 </div>
@@ -232,7 +235,7 @@ export function CreatePanel({ onSubmit, busyCount, disabled = false }: CreatePan
         <section>
           <label className="mb-2 block text-[11px] font-medium tracking-wide text-zinc-400">画面比例</label>
           <div className="grid grid-cols-5 gap-1.5">
-            {ASPECTS.map((a) => (
+            {ASPECTS.filter(a=>!real || a.id === "9:16").map((a) => (
               <button
                 key={a.id}
                 onClick={() => setAspect(a.id)}
@@ -262,7 +265,7 @@ export function CreatePanel({ onSubmit, busyCount, disabled = false }: CreatePan
             时长 · 最长 {model.maxDuration}s
           </label>
           <div className="flex gap-1.5">
-            {DURATIONS.filter((d) => d <= model.maxDuration).map((d) => (
+            {DURATIONS.filter((d) => real ? d === 5 : d <= model.maxDuration).map((d) => (
               <button
                 key={d}
                 onClick={() => setDuration(d)}
@@ -279,7 +282,7 @@ export function CreatePanel({ onSubmit, busyCount, disabled = false }: CreatePan
           </div>
         </section>
 
-        <section>
+        {!real && <section>
           <button
             onClick={() => setAdvanced((v) => !v)}
             className="flex w-full items-center justify-between text-[11px] text-zinc-500 hover:text-zinc-300"
@@ -332,16 +335,17 @@ export function CreatePanel({ onSubmit, busyCount, disabled = false }: CreatePan
               </Field>
             </div>
           )}
-        </section>
+        </section>}
       </div>
 
       <div className="border-t border-white/6 p-4">
         <p className="mb-2 text-[11px] text-amber-300">
-          仅本机 MOCK：须上传电脑里的PNG/JPG首帧；不会真正生成AI视频，也不会启动AWS。
+          {real ? "真实实验仅限 5秒 / 9:16。资格未通过时禁止提交；生成后由 Bridge 自动下载到 Windows 并验证完整性。"
+            : "仅本机 MOCK：须上传电脑里的PNG/JPG首帧；不会真正生成AI视频，也不会启动AWS。"}
         </p>
         <div className="mb-2 flex items-center justify-between text-[11px] text-zinc-500">
           <span>
-            预计成本 <span className="font-mono text-zinc-200">{formatCost(estimate)}</span>
+            预计成本 <span className="font-mono text-zinc-200">{real ? "未测（按实例时长计费）" : formatCost(estimate)}</span>
           </span>
           <span className="font-mono">⌘↵</span>
         </div>

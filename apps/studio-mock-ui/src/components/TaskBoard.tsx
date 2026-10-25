@@ -19,6 +19,8 @@ const FILTERS: { id: StatusFilter; label: string }[] = [
   { id: "all", label: "全部" },
   { id: "queued", label: "等待" },
   { id: "running", label: "生成中" },
+  { id: "downloading", label: "下载校验" },
+  { id: "submission_unknown", label: "待确认" },
   { id: "done", label: "完成" },
   { id: "failed", label: "失败" },
 ];
@@ -38,6 +40,8 @@ export function TaskBoard({
     all: tasks.length,
     queued: tasks.filter((t) => t.status === "queued").length,
     running: tasks.filter((t) => t.status === "running").length,
+    downloading: tasks.filter((t) => t.status === "downloading").length,
+    submission_unknown: tasks.filter((t) => t.status === "submission_unknown").length,
     done: tasks.filter((t) => t.status === "done").length,
     failed: tasks.filter((t) => t.status === "failed").length,
   };
@@ -46,13 +50,13 @@ export function TaskBoard({
 
   return (
     <section className="flex min-h-[560px] min-w-0 flex-1 flex-col bg-[#0a0a0e] lg:min-h-0">
-      <div className="flex items-center justify-between border-b border-white/6 px-5 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/6 px-5 py-3">
         <div className="flex items-center gap-2">
           <Film className="h-4 w-4 text-zinc-400" />
           <h2 className="text-sm font-medium text-zinc-100">任务队列</h2>
           <span className="font-mono text-[11px] text-zinc-500">{visible.length}</span>
         </div>
-        <div className="flex items-center gap-1 rounded-lg bg-white/[0.03] p-0.5">
+        <div className="flex flex-wrap items-center gap-1 rounded-lg bg-white/[0.03] p-0.5">
           {FILTERS.map((f) => (
             <button
               key={f.id}

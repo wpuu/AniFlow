@@ -31,3 +31,15 @@ python scripts/run_studio_mock.py
 Studio 顶部新增「AWS 东京 H3：部署前资格核验（未连接）」入口。通过本机只读 `GET /api/studio/cloud/preflight` 获取未核验状态。赠金适用EC2、截止时间和余额、G/VT配额、实例库存/报价、SSM私有连接、H3地域许可、强制停机措施均在无真实AWS连接时明确显示“未核验”。不写入或传输 AWS 密钥，UI 不能创建、启动或停止EC2，不能把历史赠金数字当作实时余额。
 
 下一步需要 ChatGPT Work + 用户授权的已登录 Ego 浏览器读取真实AWS账户核验页面。浏览器权限不可用时停止云操作；详见 `docs/runbooks/2026-10-25-aws-tokyo-h3-work-handoff.md`。原有两份ZIP、8765应用与真实AWS均未修改。
+
+## 受控真实 H3 服务接入
+
+同一份前端现在也可由独立的本机真实 Bridge（8768）托管。默认仍选中 Mock，用户必须显式选择「真实 H3」；模式与当前本机服务不符时提示打开对应的 8767 / 8768 服务并禁止提交。页面不会跨域调用另一个端口，也不会创建、启动或升级 AWS 账户。
+
+真实 Bridge 默认关闭生成。前端读取 `/api/studio/real/health`，只有服务身份匹配且 `ready=true` 才启用按钮；服务还须在创建请求时重新校验人工审计、配额、官方工作流和双重停机保护。当前东京配额不足，不能把这个工程接入当作已连接真实 GPU。
+
+真实历史走独立 `/api/studio/real/*`，请求保护与隐藏列表使用 `aniflow.real.*` 存储键；Mock 继续使用原来的 `aniflow.mock.*` 键。浏览器刷新或提交响应丢失后仅查询原任务，不自动重发生成。下载与完整性检查由 Windows 本机 Bridge 执行，不依赖浏览器持续在线。
+
+真实结果只有 `completed`、`verified=true`、本机路径、SHA256、正数文件大小和有效 MP4 元数据同时具备时才显示完成。下载校验中和提交待确认有独立状态。详情展示 ComfyUI prompt_id、本机路径、SHA256、尺寸/时长、耗时和显存；没有实测数据的费用、进度、ETA、显存保持「未测」。单次实验表单固定 5 秒 / 9:16。
+
+本地验证：`npx tsc --noEmit`、`npm run build`、`node --test tests/real-contract.test.cjs`。后者只检验前端响应契约与真/假隔离，**不生成 H3 视频**。原有 Mock 浏览器 E2E 仍在仓库根目录 `scripts/e2e_studio_mock_ui.py`。

@@ -164,13 +164,27 @@ export function PlayerModal({ task, onClose, onDownload }: PlayerModalProps) {
               <KV k="后端" v={model?.backendLabel ?? "—"} />
               <KV k="比例" v={task.aspectRatio} />
               <KV k="时长" v={`${task.duration}s`} />
-              <KV k="FPS" v={String(task.fps)} />
-              <KV k="Seed" v={String(task.seed)} />
-              <KV k="CFG" v={task.cfg.toFixed(1)} />
-              <KV k="运动" v={task.motion.toFixed(2)} />
+              <KV k="FPS" v={task.videoMetadata ? String(task.videoMetadata.fps) : task.modelId === "minimax-h3" ? "未测" : String(task.fps)} />
+              {task.modelId !== "minimax-h3" && <>
+                <KV k="Seed" v={String(task.seed)} />
+                <KV k="CFG" v={task.cfg.toFixed(1)} />
+                <KV k="运动" v={task.motion.toFixed(2)} />
+              </>}
               <KV k="成本" v={formatCost(task.cost)} />
               <KV k="创建" v={formatDate(task.createdAt)} />
             </div>
+            {task.modelId === "minimax-h3" && <Param label="真实生成与本机文件证据">
+              <dl className="space-y-2 break-all text-zinc-300">
+                <div>ComfyUI prompt_id：{task.promptId ?? "尚未确认"}</div>
+                <div>本机路径：{task.localPath ?? "尚未保存"}</div>
+                <div>SHA256：{task.sha256 ?? "尚未校验"}</div>
+                <div>文件字节：{task.outputBytes ?? "未测"}</div>
+                <div>实测耗时：{task.elapsedSeconds == null ? "未测" : task.elapsedSeconds.toFixed(1) + "秒"}</div>
+                <div>显存峰值：{task.peakVramMb == null ? "未测" : task.peakVramMb + " MB"}</div>
+                {task.videoMetadata && <div>MP4：{task.videoMetadata.width}×{task.videoMetadata.height} / {task.videoMetadata.duration_seconds}秒</div>}
+                <div>完整性：{task.verified ? "本机文件、SHA256与MP4检查通过" : "尚未通过"}</div>
+              </dl>
+            </Param>}
             {task.error && (
               <Param label="错误">
                 <p className="text-rose-300">{task.error}</p>

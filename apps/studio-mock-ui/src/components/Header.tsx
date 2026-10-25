@@ -1,14 +1,17 @@
 import { Activity, Cpu } from "lucide-react";
-import { MODELS } from "../data";
-import type { Model } from "../types";
+import { MODELS, REAL_MODEL } from "../data";
+import type { Model, StudioMode } from "../types";
 import { formatClock, formatCost } from "../utils/format";
 import { ModelDot } from "./StatusBadge";
 
 interface HeaderProps {
   queued: number;
   running: number;
-  todayCost: number;
+  todayCost: number | null;
   clock: number;
+  mode: StudioMode;
+  ready: boolean;
+  connected: boolean;
 }
 
 function BackendPill({ model }: { model: Model }) {
@@ -24,16 +27,17 @@ function BackendPill({ model }: { model: Model }) {
         }`}
       />
       <span className="text-[11px] font-medium tracking-wide text-zinc-200">{model.backendLabel}</span>
-      <span className="font-mono text-[10px] text-zinc-500">仅 Mock</span>
+      <span className="font-mono text-[10px] text-zinc-500">{model.id === "mock-h3" ? "仅 Mock" : "真实模式"}</span>
     </div>
   );
 }
 
-export function Header({ queued, running, todayCost, clock }: HeaderProps) {
-  const uniqueBackends = MODELS.filter(
+export function Header({ queued, running, todayCost, clock, mode, ready, connected }: HeaderProps) {
+  const models: Model[] = mode === "real" ? [{...REAL_MODEL, status:ready ? "ready" : "offline"}] : MODELS;
+  const uniqueBackends = models.filter(
     (m, i, arr) => arr.findIndex((x) => x.backend === m.backend) === i,
   ).map((base) => {
-    const group = MODELS.filter((m) => m.backend === base.backend);
+    const group = models.filter((m) => m.backend === base.backend);
     const worst =
       group.find((m) => m.status === "offline") ??
       group.find((m) => m.status === "degraded") ??
@@ -58,7 +62,7 @@ export function Header({ queued, running, todayCost, clock }: HeaderProps) {
         </div>
         <div className="ml-4 hidden items-center gap-2 rounded-full border border-white/6 bg-white/[0.03] px-3 py-1 lg:flex">
           <Activity className="h-3.5 w-3.5 text-cyan-300" />
-          <span className="text-[11px] text-zinc-300">本机模拟 · 无真实GPU</span>
+          <span className="text-[11px] text-zinc-300">{mode === "mock" ? "本机模拟 · 无真实GPU" : connected ? "ComfyUI 隧道连通 · GPU实测待查" : "真实 H3 · 隧道未连通"}</span>
           <span className="text-zinc-700">·</span>
           <span className="font-mono text-[11px] text-zinc-500">{formatClock(clock)}</span>
         </div>
@@ -86,18 +90,17 @@ export function Header({ queued, running, todayCost, clock }: HeaderProps) {
           <span className="font-mono text-[11px] text-zinc-200">{formatCost(todayCost)}</span>
         </div>
         <div className="hidden xl:block">
-          <ActiveModel />
+          <ActiveModel model={models[0]} />
         </div>
       </div>
     </header>
   );
 }
 
-function ActiveModel() {
-  const current = MODELS[0];
+function ActiveModel({model:current}: {model:Model}) {
   return (
     <div className="flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-400/5 px-2.5 py-1">
-      <span className="text-[11px] text-zinc-400">模拟模型</span>
+      <span className="text-[11px] text-zinc-400">{current.id === "mock-h3" ? "模拟模型" : "真实模型"}</span>
       <span className="text-[11px] font-medium text-cyan-200">{current.name}</span>
       <ModelDot status={current.status} />
     </div>

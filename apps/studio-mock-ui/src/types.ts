@@ -1,4 +1,5 @@
-export type TaskStatus = "queued" | "running" | "done" | "failed";
+export type TaskStatus = "queued" | "running" | "submission_unknown" | "downloading" | "done" | "failed";
+export type StudioMode = "mock" | "real";
 export type AspectRatio = "16:9" | "9:16" | "1:1" | "4:3" | "21:9";
 export type BackendId = "minimax" | "agnes" | "huggingface";
 export type ModelStatus = "ready" | "busy" | "degraded" | "offline";
@@ -30,9 +31,9 @@ export interface Task {
   cfg: number;
   motion: number;
   status: TaskStatus;
-  progress: number;
-  etaSeconds: number;
-  cost: number;
+  progress: number | null;
+  etaSeconds: number | null;
+  cost: number | null;
   createdAt: number;
   startedAt?: number;
   finishedAt?: number;
@@ -40,6 +41,14 @@ export interface Task {
   videoUrl?: string;
   thumbnailUrl?: string;
   error?: string;
+  promptId?: string;
+  localPath?: string;
+  sha256?: string;
+  outputBytes?: number;
+  verified?: boolean;
+  elapsedSeconds?: number | null;
+  peakVramMb?: number | null;
+  videoMetadata?: { duration_seconds: number; width: number; height: number; fps: number };
 }
 
 export interface CreatePayload {

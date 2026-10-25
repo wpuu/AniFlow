@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Cloud, RefreshCw, ShieldAlert, X } from "lucide-react";
+import type { StudioMode } from "../types";
 
 type Verification = boolean | null;
 type CheckKey =
@@ -41,7 +42,7 @@ function Status({ value }: { value: Verification }) {
   return <span className="text-amber-300">未核验</span>;
 }
 
-export function AwsPreflightPanel({ onClose }: { onClose: () => void }) {
+export function AwsPreflightPanel({ onClose, mode }: { onClose: () => void; mode:StudioMode }) {
   const [data, setData] = useState<CloudPreflight | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -119,7 +120,7 @@ export function AwsPreflightPanel({ onClose }: { onClose: () => void }) {
           {error && <p role="alert" className="text-xs text-rose-300">无法读取本机预检接口：{error}</p>}
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] text-zinc-500">
-              EC2 控制保持关闭；本机 Studio 只执行不收费的模拟任务。
+              {mode === "real" ? "EC2 控制保持关闭；真实生成需独立核验资格和停机保护。" : "EC2 控制保持关闭；本机 Studio 只执行不收费的模拟任务。"}
             </p>
             <button type="button" onClick={() => void refresh()} disabled={loading}
               className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-white/15 px-3 py-2 text-xs hover:bg-white/5 disabled:opacity-50">
@@ -127,7 +128,7 @@ export function AwsPreflightPanel({ onClose }: { onClose: () => void }) {
             </button>
           </div>
           <div className="rounded-lg bg-zinc-900 px-3 py-2 text-xs text-zinc-400" data-testid="aws-launch-disabled">
-            AWS 创建、开机和真实生成：未授权 / 未接入。此页面无法执行计费操作。
+            {mode === "real" ? "AWS 创建与开机不在此页面执行。真实生成是否可用以本机服务的预检结果为准。" : "AWS 创建、开机和真实生成：未授权 / 未接入。此页面无法执行计费操作。"}
           </div>
         </div>
       </section>

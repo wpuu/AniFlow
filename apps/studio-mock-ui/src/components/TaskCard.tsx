@@ -96,7 +96,7 @@ export function TaskCard({
           {task.status === "running" && (
             <div className="mt-3">
               <div className="mb-1 flex items-center justify-between font-mono text-[10px] text-zinc-500">
-                <span>{Math.round(task.progress)}%</span>
+                <span>{task.progress == null ? "进度未测" : Math.round(task.progress) + "%"}</span>
                 <span className="inline-flex items-center gap-1">
                   <Clock3 className="h-3 w-3" />
                   预计 {formatEta(task.etaSeconds)}
@@ -105,7 +105,7 @@ export function TaskCard({
               <div className="h-1.5 overflow-hidden rounded-full bg-white/8">
                 <div
                   className="barber-progress h-full rounded-full bg-cyan-400/80"
-                  style={{ width: `${task.progress}%` }}
+                  style={{ width: `${task.progress ?? 0}%` }}
                 />
               </div>
             </div>
@@ -114,6 +114,9 @@ export function TaskCard({
           {task.status === "queued" && (
             <p className="mt-3 text-[11px] text-zinc-500">排队中 · 预计等待 {formatEta(task.etaSeconds)}</p>
           )}
+          {task.status === "submission_unknown" && <p className="mt-2 text-[11px] text-amber-300">仅查询原请求，不会自动重发生成。</p>}
+          {task.status === "downloading" && <p className="mt-2 text-[11px] text-cyan-300">正在自动保存到 Windows，并检查 SHA256 / MP4。</p>}
+          {task.verified && <p className="mt-2 break-all text-[11px] text-emerald-300" data-testid="real-output-verified">本机已校验：{task.localPath}</p>}
 
           {task.status === "failed" && (
             <p className="mt-2 line-clamp-2 text-[11px] text-rose-300/90">{task.error}</p>

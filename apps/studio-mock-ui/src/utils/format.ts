@@ -1,8 +1,10 @@
-export function formatCost(value: number) {
+export function formatCost(value: number | null) {
+  if (value == null) return "未测";
   return `$${value.toFixed(3)}`;
 }
 
-export function formatEta(seconds: number) {
+export function formatEta(seconds: number | null) {
+  if (seconds == null) return "未测";
   if (seconds <= 0) return "—";
   if (seconds < 60) return `${Math.ceil(seconds)}s`;
   const m = Math.floor(seconds / 60);

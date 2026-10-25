@@ -18,6 +18,14 @@ const taskMap: Record<TaskStatus, { label: string; className: string }> = {
     label: "失败",
     className: "bg-rose-500/10 text-rose-300 ring-rose-500/30",
   },
+  submission_unknown: {
+    label: "提交待确认",
+    className: "bg-amber-500/10 text-amber-300 ring-amber-500/30",
+  },
+  downloading: {
+    label: "下载校验中",
+    className: "bg-cyan-500/10 text-cyan-300 ring-cyan-500/30",
+  },
 };
 
 const modelMap: Record<ModelStatus, { label: string; dot: string }> = {
