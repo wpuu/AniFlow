@@ -14,16 +14,19 @@ import shutil
 import sqlite3
 import time
 from pathlib import Path
+from zipfile import ZipFile
 from typing import Callable, Iterator
 from uuid import uuid4
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel, Field
 
 ROOT = Path(__file__).resolve().parents[3]
 MOCK_VIDEO = ROOT / "tests/fixtures/MOCK_BLUE_LOCAL_NO_AGNES.mp4"
+MOCK_FRONTEND = ROOT / "apps/studio-mock-ui/dist/index.html"
+GROK_SOURCE_ZIP = ROOT / "aniflow-ai-video-dashboard-grok.zip"
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
 LABEL_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 
@@ -119,6 +122,27 @@ def create_mock_app(
         if row is None:
             raise HTTPException(404, "Unknown mock job")
         return row
+
+    @app.get("/", include_in_schema=False)
+    def mock_frontend():
+        if not MOCK_FRONTEND.is_file():
+            return JSONResponse(status_code=503, content={
+                "mode": "MOCK_ONLY",
+                "message": "Build apps/studio-mock-ui frontend before opening this page",
+            })
+        return FileResponse(
+            MOCK_FRONTEND, media_type="text/html",
+            headers={"Cache-Control": "no-store, max-age=0"},
+        )
+
+    @app.get("/images/logo.png", include_in_schema=False)
+    def mock_logo():
+        with ZipFile(GROK_SOURCE_ZIP) as z:
+            logo = z.read("public/images/logo.png")
+        if not (1000 <= len(logo) < 2_000_000) or not logo.startswith(b"\x89PNG\r\n\x1a\n"):
+            raise HTTPException(500, "Original Grok logo is invalid")
+        return Response(content=logo, media_type="image/png",
+                        headers={"Cache-Control": "private, max-age=3600"})
 
     @app.get("/api/studio/mock/health")
     def health() -> dict:

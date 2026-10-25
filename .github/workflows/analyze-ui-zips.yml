@@ -7,6 +7,7 @@ on:
       - scripts/audit_uploaded_frontends_details.py
       - scripts/audit_uploaded_frontends_transfer.py
       - src/aniflow/studio/**
+      - apps/studio-mock-ui/**
       - tests/test_studio_mock_api.py
       - tests/fixtures/MOCK_BLUE_LOCAL_NO_AGNES.mp4
       - .github/workflows/analyze-ui-zips.yml
@@ -94,3 +95,39 @@ jobs:
         run: python -m pip install -e '.[dev]'
       - name: Test local Mock H3 complete flow and idempotency
         run: python -m pytest -q tests/test_studio_mock_api.py
+
+  build-mock-ui:
+    name: Build Grok-derived real Mock Bridge UI (no AWS)
+    needs: [mock-studio-api]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile integrated Grok UI against mock-only API types
+        working-directory: apps/studio-mock-ui
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          ./node_modules/.bin/tsc --noEmit -p tsconfig.json
+          npm run build
+      - name: Validate same-origin UI and original ZIP logo are served
+        run: |
+          python -m pip install -e '.[dev]'
+          python - <<'PY'
+          from pathlib import Path
+          from fastapi.testclient import TestClient
+          from aniflow.studio.mock_api import create_mock_app
+          with TestClient(create_mock_app(data_dir=Path('/tmp/aniflow-mock-studio-smoke'))) as c:
+              page=c.get('/')
+              assert page.status_code==200 and 'AniFlow' in page.text
+              assert page.headers['Cache-Control'].startswith('no-store')
+              logo=c.get('/images/logo.png')
+              assert logo.status_code==200 and logo.content.startswith(b'\x89PNG\r\n\x1a\n')
+              assert c.get('/api/studio/mock/health').json()['aws_state']=='NOT_CONNECTED'
+          print('PASS_GROK_UI_SERVED_FROM_LOCAL_MOCK_BRIDGE_ZERO_GPU')
+          PY
