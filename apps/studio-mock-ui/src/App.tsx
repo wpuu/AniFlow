@@ -97,7 +97,7 @@ export default function App() {
             removeTask(id);
             if (active?.id === id) setActive(null);
             flash("已从本机列表隐藏；SQLite原任务和文件均未删除");
-          }
+          }}
         />
       </main>
 
