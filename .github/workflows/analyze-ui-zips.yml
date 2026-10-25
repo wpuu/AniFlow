@@ -5,6 +5,7 @@ on:
     paths:
       - scripts/audit_uploaded_frontends.py
       - scripts/audit_uploaded_frontends_details.py
+      - scripts/audit_uploaded_frontends_transfer.py
       - .github/workflows/analyze-ui-zips.yml
       - aniflow-ai-video-dashboard-claude.zip
       - aniflow-ai-video-dashboard-grok.zip
@@ -27,3 +28,52 @@ jobs:
         run: python scripts/audit_uploaded_frontends.py
       - name: Inspect selected source for provider and task integration gaps
         run: python scripts/audit_uploaded_frontends_details.py
+
+  transfer-grok-source:
+    name: Read Grok candidate text sources as evidence (no execution)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python scripts/audit_uploaded_frontends_transfer.py --export-text
+
+  build-candidates:
+    name: Typecheck and build candidates in isolated CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run strict TypeScript checks and Vite build on both isolated candidates
+        shell: bash
+        run: |
+          set +e
+          for variant in Grok Claude; do
+            workdir="/tmp/aniflow-ui-${variant}"
+            python scripts/audit_uploaded_frontends_transfer.py --extract "$variant" --output "$workdir"
+            cd "$workdir" || exit 1
+            npm ci --ignore-scripts --no-audit --no-fund >"/tmp/${variant}-npm.log" 2>&1
+            install_status=$?
+            if [ "$install_status" -eq 0 ]; then
+              ./node_modules/.bin/tsc --noEmit -p tsconfig.json >"/tmp/${variant}-typecheck.log" 2>&1
+              typecheck_status=$?
+              npm run build >"/tmp/${variant}-build.log" 2>&1
+              build_status=$?
+            else
+              typecheck_status=99
+              build_status=99
+            fi
+            echo "ANIFLOW_UI_BUILD_RESULT variant=${variant} npm_ci=$install_status strict_tsc=$typecheck_status vite_build=$build_status"
+            if [ "$typecheck_status" -ne 0 ]; then tail -20 "/tmp/${variant}-typecheck.log" 2>/dev/null; fi
+            if [ "$build_status" -ne 0 ]; then tail -20 "/tmp/${variant}-build.log" 2>/dev/null; fi
+            cd "$GITHUB_WORKSPACE" || exit 1
+          done
+          echo "PASS_BOTH_CANDIDATES_AUDITED_NO_AWS_OR_REAL_VIDEO"
