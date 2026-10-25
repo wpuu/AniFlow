@@ -1,0 +1,28 @@
+{
+  "name": "AniFlow P0-012 | One approved video request",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "remoteUser": "vscode",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "forwardPorts": [],
+  "portsAttributes": {
+    "8765": {
+      "onAutoForward": "ignore"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "secrets": {
+    "ANIFLOW_SINGLE_SHOT_API_KEY": {
+      "description": "Optional personal Agnes Key for ONE manually approved 5-second task. Never copied to git or CI; creating this Codespace never submits a task.",
+      "documentationUrl": "https://wiki.agnes-ai.com/zh-Hans/docs/agnes-video-25-flash"
+    }
+  }
+}

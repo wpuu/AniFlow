@@ -9,9 +9,10 @@ interface Props {
   onChange: (url: string, fileName?: string) => void;
   onRemove?: () => void;
   compact?: boolean;
+  fileInputTestId?: string;
 }
 
-export default function ImageUploadSlot({ label, imageUrl, fileName, onChange, onRemove, compact }: Props) {
+export default function ImageUploadSlot({ label, imageUrl, fileName, onChange, onRemove, compact, fileInputTestId }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -59,6 +60,7 @@ export default function ImageUploadSlot({ label, imageUrl, fileName, onChange, o
           <div className="flex flex-wrap gap-2">
             <input
               ref={inputRef}
+              data-testid={fileInputTestId}
               type="file"
               accept="image/*"
               className="hidden"

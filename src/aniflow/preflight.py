@@ -65,7 +65,7 @@ async def _check_agnes_key(
         if not text:
             raise RuntimeError("empty assistant response")
         return AgnesAccountCheck(account_label=label, ok=True, detail="reachable")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - report any provider failure as a failed probe
         return AgnesAccountCheck(
             account_label=label,
             ok=False,
@@ -111,14 +111,14 @@ async def run_preflight(
                 response = await public_client.get(public_url)
                 response.raise_for_status()
                 report.media_public_read_ok = response.content == expected
-    except Exception:
+    except Exception:  # noqa: BLE001 - preflight must report unknown transport failures
         report.media_public_read_ok = False
     finally:
         if uploaded:
             try:
                 await media_store.delete(object_key)
                 report.media_delete_ok = True
-            except Exception:
+            except Exception:  # noqa: BLE001 - retain precise negative cleanup result
                 report.media_delete_ok = False
 
     return report

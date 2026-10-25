@@ -1,0 +1,195 @@
+"""Single-request Agnes video relay for the existing loopback AniFlow UI.
+
+Browsers cannot rely on the public Agnes CORS wildcard to allow Authorization.
+This relay is *not* a new multi-provider backend: it forwards one explicitly
+requested Agnes POST, or one read-only Agnes task-status GET. It never retries.
+The Bridge must remain bound to the loopback interface.
+"""
+
+from __future__ import annotations
+
+import re
+from typing import Any, Literal
+
+import httpx
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
+
+from aniflow.config import Settings
+
+VideoModel = Literal["agnes-video-2.5-flash", "agnes-video-2.5", "agnes-video-v2.0"]
+VideoDomain = Literal["global", "china", "fallback"]
+
+# Exact allowlist; never accept an arbitrary client-supplied API host or URL.
+VIDEO_API_ROOTS: dict[str, str] = {
+    "china": "https://api.agnes-ai.cn",
+    "fallback": "https://apihub.agnes-ai.cn",
+}
+
+
+def _valid_image_source(source: object) -> bool:
+    if not isinstance(source, str):
+        return False
+    if source.startswith("https://") and len(source) <= 2048:
+        return True
+    if len(source) > 5_500_000 or not source.startswith("data:image/"):
+        return False
+    return bool(re.fullmatch(
+        r"data:image/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+",
+        source, flags=re.IGNORECASE,
+    ))
+
+
+class CreateVideoRequest(BaseModel):
+    api_key: str = Field(min_length=1, max_length=4096)
+    api_domain: VideoDomain = "global"
+    payload: dict[str, Any] = Field(min_length=1, max_length=24)
+
+
+class VideoStatusRequest(BaseModel):
+    api_key: str = Field(min_length=1, max_length=4096)
+    api_domain: VideoDomain = "global"
+    video_id: str = Field(min_length=1, max_length=256)
+    model_name: VideoModel
+
+
+def _upstream_root(settings: Settings, api_domain: VideoDomain = "global") -> str:
+    root = VIDEO_API_ROOTS.get(api_domain, settings.agnes_api_root.rstrip("/"))
+    root = root.removesuffix("/v1")
+    if not root.startswith("https://"):
+        raise HTTPException(status_code=500, detail="Agnes API must use HTTPS")
+    return root
+
+
+def _safe_payload(response: httpx.Response, api_key: str) -> JSONResponse:
+    if 300 <= response.status_code < 400:
+        raise HTTPException(status_code=502, detail="Unexpected Agnes redirect; not followed")
+    if len(response.content) > 1024 * 1024:
+        raise HTTPException(status_code=502, detail="Unexpectedly large Agnes task response")
+    if api_key in response.text:
+        raise HTTPException(status_code=502, detail="Upstream response echoed a credential")
+    try:
+        parsed = response.json()
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Agnes returned non-JSON HTTP {response.status_code}",
+        ) from exc
+    if not isinstance(parsed, dict):
+        raise HTTPException(status_code=502, detail="Unexpected Agnes response format")
+    return JSONResponse(status_code=response.status_code, content=parsed)
+
+
+def video_proxy_router(
+    settings: Settings,
+    *,
+    transport: httpx.AsyncBaseTransport | None = None,
+) -> APIRouter:
+    router = APIRouter()
+
+    async def forward(
+        method: Literal["GET", "POST"],
+        path: str,
+        api_key: str,
+        *,
+        api_domain: VideoDomain = "global",
+        payload: dict[str, Any] | None = None,
+        params: dict[str, str] | None = None,
+    ) -> JSONResponse:
+        url = _upstream_root(settings, api_domain) + path
+        try:
+            async with httpx.AsyncClient(
+                timeout=httpx.Timeout(45.0, connect=10.0),
+                follow_redirects=False,
+                transport=transport,
+            ) as client:
+                response = await client.request(
+                    method,
+                    url,
+                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                    json=payload,
+                    params=params,
+                )
+        except httpx.TimeoutException as exc:
+            raise HTTPException(
+                status_code=504,
+                detail=(
+                    "Agnes 创建请求超时，没有返回 video_id；可以手动再次点击。"
+                    "如果上次请求已被接收，可能出现重复任务。"
+                ),
+            ) from exc
+        except httpx.RequestError as exc:
+            raise HTTPException(
+                status_code=502,
+                detail=(
+                    "Agnes 网络通信失败，未收到任务编号。可以再次点击生成；"
+                    "如果原请求已接收，可能产生重复任务。"
+                ),
+            ) from exc
+        return _safe_payload(response, api_key)
+
+    @router.post("/api/video/create")
+    async def create_video(request: CreateVideoRequest) -> JSONResponse:
+        model = request.payload.get("model")
+        if model not in ("agnes-video-2.5-flash", "agnes-video-2.5"):
+            # Legacy v2.0 history can be displayed, but new paid requests must
+            # never accidentally fall through a legacy permissive path.
+            raise HTTPException(status_code=422, detail="Unsupported Agnes video model")
+        if not isinstance(request.payload.get("prompt"), str) or not request.payload["prompt"].strip():
+            raise HTTPException(status_code=422, detail="Video prompt must be nonempty")
+        if model in ("agnes-video-2.5-flash", "agnes-video-2.5"):
+            mode = request.payload.get("mode")
+            if mode not in ("text", "keyframe", "reference"):
+                raise HTTPException(status_code=422, detail="Unsupported Flash video mode")
+            if mode == "reference":
+                images = request.payload.get("images")
+                if (
+                    not isinstance(images, list)
+                    or not 1 <= len(images) <= 5
+                    or any(
+                        not _valid_image_source(image)
+                        for image in images
+                    )
+                    or any(
+                        request.payload.get(field)
+                        for field in ("first_frame", "last_frame", "videos")
+                    )
+                ):
+                    raise HTTPException(status_code=422, detail="Invalid reference images")
+            elif mode == "text":
+                if any(
+                    request.payload.get(field)
+                    for field in ("first_frame", "last_frame", "images", "audios", "videos")
+                ):
+                    raise HTTPException(status_code=422, detail="Text mode excludes media")
+            elif not (request.payload.get("first_frame") or request.payload.get("last_frame")):
+                raise HTTPException(status_code=422, detail="Keyframe mode needs a frame")
+            elif mode == "keyframe":
+                if any(
+                    not _valid_image_source(request.payload[field])
+                    for field in ("first_frame", "last_frame")
+                    if request.payload.get(field)
+                ):
+                    raise HTTPException(status_code=422, detail="Invalid keyframe image source")
+            permitted_sizes = ("720P",) if model.endswith("-flash") else ("720P", "1080P")
+            if request.payload.get("n") != 1 or request.payload.get("size") not in permitted_sizes:
+                raise HTTPException(status_code=422, detail="Unsupported model size or output count")
+            if str(request.payload.get("seconds")) not in {str(s) for s in range(4, 13)}:
+                raise HTTPException(status_code=422, detail="Flash length must be 4–12 seconds")
+        return await forward(
+            "POST", "/v1/videos", request.api_key,
+            api_domain=request.api_domain, payload=request.payload,
+        )
+
+    @router.post("/api/video/status")
+    async def video_status(request: VideoStatusRequest) -> JSONResponse:
+        return await forward(
+            "GET",
+            "/agnesapi",
+            request.api_key,
+            api_domain=request.api_domain,
+            params={"video_id": request.video_id, "model_name": request.model_name},
+        )
+
+    return router

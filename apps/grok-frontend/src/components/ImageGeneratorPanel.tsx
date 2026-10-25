@@ -33,7 +33,7 @@ function isPublicUrl(value: string): boolean {
 
 export default function ImageGeneratorPanel({ apiKeys, onUseResult }: Props) {
   const [provider, setProvider] = useState<ImageProviderKey>(() =>
-    loadJSON<ImageProviderKey>(STORAGE_KEYS.IMAGE_PROVIDER, 'capcut'),
+    loadJSON<ImageProviderKey>(STORAGE_KEYS.IMAGE_PROVIDER, 'agnes'),
   );
   const [capcutModel, setCapcutModel] = useState(() =>
     loadJSON<string>(STORAGE_KEYS.CAPCUT_IMAGE_MODEL, ''),
@@ -46,6 +46,7 @@ export default function ImageGeneratorPanel({ apiKeys, onUseResult }: Props) {
   const [healthError, setHealthError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
+  const [resultWarning, setResultWarning] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -133,6 +134,9 @@ export default function ImageGeneratorPanel({ apiKeys, onUseResult }: Props) {
         DEFAULT_BRIDGE_URL,
       );
       setResultUrl(result.url);
+      setResultWarning(result.temporary
+        ? result.warning || '图片链接可能过期，请立即打开链接保存到本机。'
+        : null);
       await refreshHealth();
     } catch (err) {
       setError(err instanceof Error ? err.message : '生图失败');
@@ -146,6 +150,10 @@ export default function ImageGeneratorPanel({ apiKeys, onUseResult }: Props) {
 
   return (
     <div className="space-y-4">
+      <p className="text-xs text-zinc-500">
+        这里是独立的图片生成工具。选择视频 Flash 不会改变本面板的生图提供方；
+        仅普通 Flash 文生视频完全不需要 R2/S3。Agnes 生图无R2时使用临时URL。
+      </p>
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-zinc-50 px-3 py-2">
         <div className="flex items-center gap-2 text-xs">
           <span
@@ -158,7 +166,7 @@ export default function ImageGeneratorPanel({ apiKeys, onUseResult }: Props) {
             {health
               ? health.media_ready
                 ? 'AniFlow Bridge 已连接 · 公网媒体可用'
-                : 'AniFlow Bridge 已连接 · 尚未配置 R2/S3'
+                : 'AniFlow Bridge 已连接 · Flash文生无需R2，Agnes生图可用临时链接，本地图片上传仍需R2'
               : healthError || '正在检查 AniFlow Bridge…'}
           </span>
         </div>
@@ -201,7 +209,7 @@ export default function ImageGeneratorPanel({ apiKeys, onUseResult }: Props) {
           )}
         >
           <span className="text-sm font-semibold text-zinc-800">Agnes Image</span>
-          <p className="mt-1 text-[11px] text-zinc-400">直接调用 Agnes Image，生成后自动持久化到媒体存储</p>
+          <p className="mt-1 text-[11px] text-zinc-400">无需R2也能生图；无存储时返回临时URL，请自行保存</p>
         </button>
       </div>
 
@@ -294,7 +302,13 @@ export default function ImageGeneratorPanel({ apiKeys, onUseResult }: Props) {
       </button>
 
       {resultUrl ? (
-        <div className="grid grid-cols-1 gap-4 rounded-lg border border-emerald-200 bg-emerald-50/40 p-3 sm:grid-cols-[180px_1fr]">
+        <div className="space-y-2">
+          {resultWarning ? (
+            <p role="status" className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              {resultWarning} 请尽快打开结果链接保存原图。
+            </p>
+          ) : null}
+          <div className="grid grid-cols-1 gap-4 rounded-lg border border-emerald-200 bg-emerald-50/40 p-3 sm:grid-cols-[180px_1fr]">
           <div className="overflow-hidden rounded-lg bg-zinc-100">
             <img src={resultUrl} alt="AI generated result" className="h-full max-h-72 w-full object-contain" />
           </div>
@@ -334,6 +348,7 @@ export default function ImageGeneratorPanel({ apiKeys, onUseResult }: Props) {
               </button>
             </div>
           </div>
+        </div>
         </div>
       ) : null}
     </div>

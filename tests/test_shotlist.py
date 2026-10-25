@@ -25,15 +25,15 @@ def frame(state: str = "sitting") -> FrameSpec:
 
 
 def shot(shot_id="1", seconds=6, **over) -> Shot:
-    base = dict(shot_id=shot_id, seconds=seconds, motion="slow blink",
-                first_frame=frame(), last_frame=frame("head tilted"))
+    base = {"shot_id": shot_id, "seconds": seconds, "motion": "slow blink",
+            "first_frame": frame(), "last_frame": frame("head tilted")}
     base.update(over)
     return Shot(**base)
 
 
 def make_list(shots=None, **over) -> ShotList:
-    base = dict(episode_id="T-001", title="测试", character="felt cat",
-                shots=shots or [shot()])
+    base = {"episode_id": "T-001", "title": "测试", "character": "felt cat",
+            "shots": shots or [shot()]}
     base.update(over)
     return ShotList(**base)
 

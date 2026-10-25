@@ -42,7 +42,7 @@ class Source(BaseModel):
     @property
     def domain(self) -> str:
         host = (urlparse(self.url).hostname or "").lower()
-        return host[4:] if host.startswith("www.") else host
+        return host.removeprefix("www.")
 
 
 class Issue(BaseModel):
@@ -260,12 +260,13 @@ def audit_script(pack: FactPack, script: str) -> AuditReport:
             evidence=f"{value}{unit}",
         ))
 
-    if pack.risk_level is RiskLevel.HIGH:
-        if not any(q.strip() and q.strip() in script for q in pack.qualifiers):
-            issues.append(Issue(
-                severity=Severity.BLOCK, code="S003",
-                message="高风险选题的脚本里必须带上适用范围说明",
-            ))
+    if pack.risk_level is RiskLevel.HIGH and not any(
+        q.strip() and q.strip() in script for q in pack.qualifiers
+    ):
+        issues.append(Issue(
+            severity=Severity.BLOCK, code="S003",
+            message="高风险选题的脚本里必须带上适用范围说明",
+        ))
 
     return AuditReport(episode_id=pack.episode_id, issues=issues)
 

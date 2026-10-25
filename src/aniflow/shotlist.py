@@ -145,13 +145,12 @@ def validate_shotlist(sl: ShotList) -> list[Issue]:
                 evidence=shot.shot_id,
             ))
 
-        if shot.first_frame_from_previous and i > 0:
-            if sl.shots[i - 1].last_frame is None:
-                issues.append(Issue(
-                    severity=Severity.BLOCK, code="L005",
-                    message="承接的上一镜没有尾帧，角色一致性链会在这里断开",
-                    evidence=shot.shot_id,
-                ))
+        if shot.first_frame_from_previous and i > 0 and sl.shots[i - 1].last_frame is None:
+            issues.append(Issue(
+                severity=Severity.BLOCK, code="L005",
+                message="承接的上一镜没有尾帧，角色一致性链会在这里断开",
+                evidence=shot.shot_id,
+            ))
 
         if shot.last_frame is None and i < len(sl.shots) - 1:
             if sl.shots[i + 1].first_frame_from_previous:
@@ -176,7 +175,7 @@ def check_episode(sl: ShotList, pack: FactPack) -> AuditReport:
 #
 # 剧本在浏览器里写（GLM 5.3 多账号），复制出来就是一段纯文本。这里接住它。
 
-_HEAD = re.compile(r"^#+\s*(?:镜头|shot)\s*([\w.-]+)\s*[|｜]\s*(\d+)\s*秒", re.I)
+_HEAD = re.compile(r"^#+\s*(?:镜头|shot)\s*([\w.-]+)\s*[|｜]\s*(\d+)\s*秒", re.IGNORECASE)
 _FIELDS = {
     "旁白": "narration", "narration": "narration",
     "运动": "motion", "motion": "motion",
@@ -250,7 +249,7 @@ def parse_text(text: str, *, episode_id: str, title: str, character: str,
     if not shots:
         raise ValueError("没解析出任何镜头。每个镜头要有一行像「## 镜头 1 | 6秒」的标题。")
 
-    kwargs = dict(episode_id=episode_id, title=title, character=character, shots=shots)
+    kwargs = {"episode_id": episode_id, "title": title, "character": character, "shots": shots}
     if style:
         kwargs["style"] = style
     return ShotList(**kwargs)

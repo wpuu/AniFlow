@@ -8,9 +8,24 @@ import ImageGeneratorPanel from './components/ImageGeneratorPanel';
 import { STORAGE_KEYS, loadJSON, saveJSON } from './lib/storage';
 import { DEFAULT_PARAMS_BY_MODEL, VIDEO_MODELS } from './lib/constants';
 import { createVideoTask, getVideoResult } from './lib/api';
-import { DEFAULT_BRIDGE_URL, uploadDataUrlToBridge } from './lib/bridge';
+import { getBridgeVersion } from './lib/bridge';
+import type { BridgeVersion } from './lib/bridge';
 import { genId } from './lib/imageUtils';
+import { rememberPrompt } from './lib/promptHistory';
+import { SNOW_DIRECTOR_AVOID } from './lib/negativePrompt';
+import { selectGeneratableKeys } from './lib/eligibleKeys';
+import { isWithinStatusWindow, retryableStatusDelayMs, STATUS_POLL_SUCCESS_INTERVAL_MS } from './lib/pollPolicy';
+import type { SavedPrompt } from './lib/promptHistory';
+import { buildSafeTrialReport } from './lib/safeTrialReport';
+import {
+  attachVideoId,
+  isValidSubmissionGuards,
+  releaseAttempt,
+  shouldReleaseVideoGuard,
+} from './lib/taskSafety';
+import type { SubmissionGuards } from './lib/taskSafety';
 import type {
+  AgnesApiDomain,
   GenerationParams,
   HistoryItem,
   TaskState,
@@ -19,6 +34,21 @@ import type {
 } from './lib/types';
 
 const BUSY_STATUSES = new Set<TaskStatus>(['creating', 'queued', 'in_progress']);
+
+function readSubmissionGuards(): SubmissionGuards | null {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEYS.SUBMISSION_GUARDS);
+    if (!raw) return {};
+    const value: unknown = JSON.parse(raw);
+    return isValidSubmissionGuards(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function taskErrorMessage(error: string | { message?: string } | null | undefined): string {
+  return typeof error === 'string' ? error : error?.message || '视频生成失败';
+}
 
 function emptyTask(): TaskState {
   return { status: 'idle', progress: 0, videoUrl: null, videoId: null, taskId: null, error: null };
@@ -36,7 +66,8 @@ function isPublicImageUrl(value: string): boolean {
 }
 
 function normalizeModelKey(value: unknown): VideoModelKey {
-  return value === 'flash25' ? 'flash25' : 'v2';
+  // Migrate old v2 selection to the official free Flash variant.
+  return value === 'paid25' ? 'paid25' : 'flash25';
 }
 
 function mergeParams(
@@ -71,9 +102,15 @@ export default function App() {
     const count = loadJSON(STORAGE_KEYS.KEY_COUNT, 1);
     return Array.from({ length: count }, (_, i) => saved[i] ?? '');
   });
+  const [apiDomains, setApiDomains] = useState<AgnesApiDomain[]>(() => {
+    const saved = loadJSON<AgnesApiDomain[]>(STORAGE_KEYS.KEY_DOMAINS, []);
+    const count = loadJSON<number>(STORAGE_KEYS.KEY_COUNT, 1);
+    return Array.from({ length: count }, (_, i) =>
+      saved[i] === 'china' || saved[i] === 'fallback' ? saved[i] : 'global');
+  });
 
   const [modelKey, setModelKey] = useState<VideoModelKey>(() =>
-    normalizeModelKey(loadJSON<unknown>(STORAGE_KEYS.ACTIVE_MODEL, 'v2')),
+    normalizeModelKey(loadJSON<unknown>(STORAGE_KEYS.ACTIVE_MODEL, 'flash25')),
   );
 
   const [paramsByModel, setParamsByModel] = useState<Record<VideoModelKey, GenerationParams>>(() => {
@@ -82,25 +119,83 @@ export default function App() {
     return {
       v2: mergeParams(DEFAULT_PARAMS_BY_MODEL.v2, saved.v2 ?? legacy),
       flash25: mergeParams(DEFAULT_PARAMS_BY_MODEL.flash25, saved.flash25),
+      paid25: mergeParams(DEFAULT_PARAMS_BY_MODEL.paid25, saved.paid25),
     };
   });
 
   const params = paramsByModel[modelKey];
 
-  const [tasksByKey, setTasksByKey] = useState<Record<number, TaskState>>({});
+  const [tasksByKey, setTasksByKey] = useState<Record<number, TaskState>>(() => {
+    // A browser refresh does not cancel already accepted Agnes tasks.
+    // Only restore genuinely accepted video IDs; old no-ID attempts never lock the UI.
+    const saved = loadJSON<HistoryItem[]>(STORAGE_KEYS.HISTORY, []);
+    const latestKeys = new Set<number>();
+    const active: Record<number, TaskState> = {};
+    for (const item of [...saved].sort((a, b) => b.createdAt - a.createdAt)) {
+      if (!Number.isInteger(item.keyIndex) || item.keyIndex < 0 || item.keyIndex > 8
+        || latestKeys.has(item.keyIndex)) continue;
+      latestKeys.add(item.keyIndex);
+      if (!item.videoId || !BUSY_STATUSES.has(item.status)) continue;
+      active[item.keyIndex] = {
+        status: item.status, progress: item.progress, videoId: item.videoId,
+        taskId: item.taskId, videoUrl: item.videoUrl, error: null, modelKey: item.modelKey,
+      };
+    }
+    return active;
+  });
+  const [submissionGuards, setSubmissionGuards] = useState<SubmissionGuards>(
+    () => readSubmissionGuards() ?? {},
+  );
   const [history, setHistory] = useState<HistoryItem[]>(() => loadJSON(STORAGE_KEYS.HISTORY, []));
+  const [promptHistory, setPromptHistory] = useState<SavedPrompt[]>(
+    () => loadJSON<SavedPrompt[]>(STORAGE_KEYS.PROMPT_HISTORY, []),
+  );
   const [selectedKeyTab, setSelectedKeyTab] = useState(0);
   const [selectedHistoryIdByKey, setSelectedHistoryIdByKey] = useState<Record<number, string | undefined>>({});
   const [message, setMessage] = useState<{ text: string; type: 'info' | 'error' } | null>(null);
+  const [runningBuild, setRunningBuild] = useState<BridgeVersion | null>(null);
 
   const pollTimers = useRef<Record<number, number>>({});
   const stopFlags = useRef<Record<number, boolean>>({});
   const activeHistoryIdByKey = useRef<Record<number, string>>({});
-  const mediaUploadCache = useRef<Map<string, Promise<string>>>(new Map());
+  const submittingKeysRef = useRef<Set<number>>(new Set());
+  const submissionGuardsRef = useRef(submissionGuards);
+  const restoredPollersRef = useRef(false);
 
   useEffect(() => {
     saveJSON(STORAGE_KEYS.API_KEYS, apiKeys);
   }, [apiKeys]);
+
+  useEffect(() => {
+    saveJSON(STORAGE_KEYS.KEY_DOMAINS, apiDomains);
+  }, [apiDomains]);
+
+  useEffect(() => {
+    if (loadJSON(STORAGE_KEYS.NEGATIVE_PROMPT_MIGRATED, false)) return;
+    // Existing P0-031 settings contain an empty legacy negativePrompt field.
+    // Populate it exactly once, then respect later edits or an intentional clear.
+    setParamsByModel((current) => ({
+      ...current,
+      flash25: {
+        ...current.flash25,
+        negativePrompt: current.flash25.negativePrompt?.trim()
+          ? current.flash25.negativePrompt : SNOW_DIRECTOR_AVOID,
+      },
+      paid25: {
+        ...current.paid25,
+        negativePrompt: current.paid25.negativePrompt?.trim()
+          ? current.paid25.negativePrompt : SNOW_DIRECTOR_AVOID,
+      },
+    }));
+    saveJSON(STORAGE_KEYS.NEGATIVE_PROMPT_MIGRATED, true);
+  }, []);
+
+  useEffect(() => {
+    // Display the actual localhost build. Never infer "latest" from a PR title.
+    void getBridgeVersion()
+      .then(setRunningBuild)
+      .catch(() => setRunningBuild(null));
+  }, []);
 
   useEffect(() => {
     saveJSON(STORAGE_KEYS.KEY_COUNT, apiKeyCount);
@@ -115,15 +210,19 @@ export default function App() {
   }, [history]);
 
   useEffect(() => {
-    const t = window.setTimeout(() => {
-      const persisted = {
-        v2: stripEphemeralImages(paramsByModel.v2),
-        flash25: stripEphemeralImages(paramsByModel.flash25),
-      };
-      saveJSON(STORAGE_KEYS.PARAMS_BY_MODEL, persisted);
-      saveJSON(STORAGE_KEYS.LAST_PARAMS, persisted.v2);
-    }, 500);
-    return () => window.clearTimeout(t);
+    saveJSON(STORAGE_KEYS.PROMPT_HISTORY, promptHistory.slice(0, 40));
+  }, [promptHistory]);
+
+  useEffect(() => {
+    // Save every committed edit without waiting: a fast submit -> timeout ->
+    // page reload must not lose its prompt and turn retry into a no-op.
+    const persisted = {
+      v2: stripEphemeralImages(paramsByModel.v2),
+      flash25: stripEphemeralImages(paramsByModel.flash25),
+      paid25: stripEphemeralImages(paramsByModel.paid25),
+    };
+    saveJSON(STORAGE_KEYS.PARAMS_BY_MODEL, persisted);
+    saveJSON(STORAGE_KEYS.LAST_PARAMS, persisted.v2);
   }, [paramsByModel]);
 
   useEffect(() => {
@@ -140,6 +239,57 @@ export default function App() {
 
   function notify(text: string, type: 'info' | 'error' = 'info') {
     setMessage({ text, type });
+  }
+
+  // A previous timeout is history, never a permanent ban on the owner's next click.
+  function persistSubmissionGuards(next: SubmissionGuards): void {
+    submissionGuardsRef.current = next;
+    setSubmissionGuards(next);
+    saveJSON(STORAGE_KEYS.SUBMISSION_GUARDS, next);
+  }
+
+  function reserveVideoAttempt(keyIndex: number, attemptId: string, attemptModel: VideoModelKey): void {
+    const old = readSubmissionGuards() ?? {};
+    const previous = old[String(keyIndex)];
+    if (previous?.videoId) {
+      setHistory((prev) => {
+        if (prev.some((item) => item.id === previous.attemptId)) return prev;
+        return [{
+          id: previous.attemptId, keyIndex, createdAt: previous.createdAt,
+          promptPreview: '已知视频编号的历史任务（原提示词未知）',
+          modelKey: previous.modelKey, modelName: VIDEO_MODELS[previous.modelKey].apiModel,
+          mode: 'unknown', ratio: 'unknown', resolution: 'unknown',
+          status: 'stopped', progress: 0, videoUrl: null,
+          videoId: previous.videoId, taskId: null,
+          error: '这条历史任务可通过历史记录中的刷新状态查询',
+        }, ...prev];
+      });
+    }
+    persistSubmissionGuards({
+      ...old,
+      [String(keyIndex)]: {
+        keyIndex, attemptId, modelKey: attemptModel, createdAt: Date.now(), videoId: null,
+      },
+    });
+  }
+
+  function attachVideoToGuard(keyIndex: number, attemptId: string, videoId: string) {
+    const stored = readSubmissionGuards();
+    if (!stored) {
+      notify('已得到任务 ID，但无法读取本地安全记录；请勿重复提交', 'error');
+      return false;
+    }
+    const next = attachVideoId(stored, keyIndex, attemptId, videoId);
+    if (next === stored) return false;
+    persistSubmissionGuards(next);
+    return true;
+  }
+
+  function finishVideoGuard(keyIndex: number, attemptId: string) {
+    const stored = readSubmissionGuards();
+    if (!stored) return;
+    const next = releaseAttempt(stored, keyIndex, attemptId);
+    if (next !== stored) persistSubmissionGuards(next);
   }
 
   function updateTaskState(keyIndex: number, patch: Partial<TaskState>) {
@@ -202,11 +352,12 @@ export default function App() {
       ([index, task]) => Number(index) >= count && BUSY_STATUSES.has(task.status),
     );
     if (hiddenBusyKey) {
-      notify('不能隐藏正在运行的 Key；请先停止跟踪对应任务，再减少 Key 数量', 'error');
+      notify('请先停止所隐藏 Key 的当前任务跟踪', 'error');
       return;
     }
     setApiKeyCount(count);
     setApiKeys((prev) => Array.from({ length: count }, (_, i) => prev[i] ?? ''));
+    setApiDomains((prev) => Array.from({ length: count }, (_, i) => prev[i] ?? 'global'));
     setSelectedKeyTab((prev) => Math.min(prev, count - 1));
   }
 
@@ -218,18 +369,12 @@ export default function App() {
     });
   }
 
-  function uploadLocalImage(dataUrl: string): Promise<string> {
-    const cached = mediaUploadCache.current.get(dataUrl);
-    if (cached) return cached;
-
-    const upload = uploadDataUrlToBridge(dataUrl, DEFAULT_BRIDGE_URL)
-      .then((result) => result.url)
-      .catch((error) => {
-        mediaUploadCache.current.delete(dataUrl);
-        throw error;
-      });
-    mediaUploadCache.current.set(dataUrl, upload);
-    return upload;
+  function handleDomainChange(index: number, domain: AgnesApiDomain) {
+    setApiDomains((prev) => {
+      const next = [...prev];
+      next[index] = domain;
+      return next;
+    });
   }
 
   async function prepareFlashParams(source: GenerationParams): Promise<GenerationParams> {
@@ -241,15 +386,22 @@ export default function App() {
     async function resolveImage(value: string): Promise<string> {
       const trimmed = value.trim();
       if (isPublicImageUrl(trimmed)) return trimmed;
-      if (trimmed.startsWith('data:image/')) {
-        notify('正在通过 AniFlow 本机 Bridge 上传本地图片…');
-        return uploadLocalImage(trimmed);
+      if (/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/i.test(trimmed)) {
+        // Agnes' public specification prefers URLs; other integration examples
+        // accept Base64. Forward once as an experimental direct input, without
+        // uploading the owner's image to a third-party S3/R2 bucket.
+        if (trimmed.length > 5_500_000) {
+          throw new Error('图片过大（超过约4MB）。请压缩图片后重试，或填写公共HTTPS链接。');
+        }
+        return trimmed;
       }
-      throw new Error('2.5 Flash 的参考帧必须是本地上传图片或可公开访问的 http(s) 图片 URL');
+      throw new Error('图片需为PNG/JPEG/WebP本地文件，或可公开访问的HTTPS图片链接。');
     }
 
-    if (next.mode === 'i2v') {
-      if (!next.singleImage) throw new Error('图生视频模式需要首帧图片');
+    if (next.mode === 'i2v' || next.mode === 'reference') {
+      if (!next.singleImage) throw new Error(
+        next.mode === 'reference' ? '参考图模式需要一张公开可访问图片' : '图生视频模式需要首帧图片',
+      );
       next.singleImage = await resolveImage(next.singleImage);
       next.singleImageFileName = undefined;
       return next;
@@ -289,146 +441,247 @@ export default function App() {
       videoId: string,
       historyId: string,
       taskModelKey: VideoModelKey,
-      retriesLeft = 5,
+      apiDomain: AgnesApiDomain,
+      acceptedAt: number,
+      lastStatus: TaskStatus = 'queued',
+      lastProgress = 0,
     ) => {
+      const scheduleNext = (delay: number, status: TaskStatus, progress: number) => {
+        pollTimers.current[keyIndex] = window.setTimeout(
+          () => poll(keyIndex, apiKey, videoId, historyId, taskModelKey,
+            apiDomain, acceptedAt, status, progress),
+          delay,
+        );
+      };
+
+      const pauseTracking = (reason: string, progress = lastProgress) => {
+        const patch: Partial<TaskState> = {
+          status: 'stopped', progress, modelKey: taskModelKey,
+          videoId, error: reason,
+        };
+        updateTaskState(keyIndex, patch);
+        updateHistoryItem(historyId, patch);
+        delete pollTimers.current[keyIndex];
+        delete activeHistoryIdByKey.current[keyIndex];
+        // Real Agnes video_id stays in history. Never auto-POST a new task.
+      };
+
       const run = async () => {
         if (stopFlags.current[keyIndex]) return;
         try {
-          const result = await getVideoResult(apiKey, videoId, taskModelKey);
+          const result = await getVideoResult(apiKey, videoId, taskModelKey, apiDomain);
           if (stopFlags.current[keyIndex]) return;
           const status = mapStatus(result.status);
+          const progress = result.progress ?? lastProgress;
           const patch: Partial<TaskState> = {
-            status,
-            progress: result.progress ?? 0,
-            size: result.size,
-            seconds: result.seconds,
-            modelKey: taskModelKey,
+            status, progress, size: result.size, seconds: result.seconds,
+            modelKey: taskModelKey, videoId, error: null,
           };
           if (status === 'completed') {
-            patch.videoUrl = result.metadata?.url ?? null;
+            patch.videoUrl = result.url || result.metadata?.url || null;
             patch.progress = 100;
+            if (!shouldReleaseVideoGuard(status, patch.videoUrl)) {
+              patch.status = 'stopped';
+              patch.error = 'Agnes 返回完成，但暂时没有可播放视频链接。保留 video_id；从历史记录点击刷新，不要直接重新生成。';
+            }
           }
-          if (status === 'failed') {
-            patch.error = result.error?.message || '生成失败，请检查参数或稍后重试';
-          }
+          if (status === 'failed') patch.error = taskErrorMessage(result.error);
           updateTaskState(keyIndex, patch);
-          updateHistoryItem(historyId, patch as Partial<HistoryItem>);
+          const terminal = shouldReleaseVideoGuard(status, patch.videoUrl);
+          updateHistoryItem(historyId, {
+            ...patch, ...(terminal ? { finishedAt: Date.now() } : {}),
+          });
 
           if (status === 'completed' || status === 'failed') {
+            if (terminal) finishVideoGuard(keyIndex, historyId);
             delete pollTimers.current[keyIndex];
             delete activeHistoryIdByKey.current[keyIndex];
             return;
           }
-          pollTimers.current[keyIndex] = window.setTimeout(
-            () => poll(keyIndex, apiKey, videoId, historyId, taskModelKey, 5),
-            3000,
-          );
+          if (!isWithinStatusWindow(acceptedAt, Date.now())) {
+            pauseTracking('只读跟踪已达到20分钟上限，Agnes 仍可能继续处理。已保存 video_id；请从历史记录刷新状态，不要重复创建。', progress);
+            return;
+          }
+          scheduleNext(STATUS_POLL_SUCCESS_INTERVAL_MS, status, progress);
         } catch (err) {
           if (stopFlags.current[keyIndex]) return;
-          if (retriesLeft > 0) {
-            pollTimers.current[keyIndex] = window.setTimeout(
-              () => poll(keyIndex, apiKey, videoId, historyId, taskModelKey, retriesLeft - 1),
-              4000,
-            );
+          const reason = err instanceof Error ? err.message : '未知状态查询错误';
+          const delay = retryableStatusDelayMs(reason);
+          if (delay !== null && isWithinStatusWindow(acceptedAt, Date.now())) {
+            const message = `已取得 video_id，状态暂时不可用（${reason}）；仅重试状态查询，不重新生成。`;
+            updateTaskState(keyIndex, { status: lastStatus, progress: lastProgress, error: message, modelKey: taskModelKey, videoId });
+            updateHistoryItem(historyId, { status: lastStatus, progress: lastProgress, error: message });
+            scheduleNext(delay, lastStatus, lastProgress);
           } else {
-            const msg = err instanceof Error ? err.message : '网络异常，查询进度失败';
-            updateTaskState(keyIndex, { status: 'failed', error: msg, modelKey: taskModelKey });
-            updateHistoryItem(historyId, { status: 'failed', error: msg });
-            delete activeHistoryIdByKey.current[keyIndex];
+            pauseTracking(`Agnes 状态查询已暂停：${reason}。video_id 已保留，可以在历史记录查询；本次不会重新生成。`);
           }
         }
       };
-      run();
+      void run();
     },
     [],
   );
 
+  useEffect(() => {
+    // Refresh only resumes GET for already-accepted IDs.
+    // No POST, no retry of unnumbered or manually stopped tasks.
+    if (restoredPollersRef.current) return;
+    restoredPollersRef.current = true;
+    Object.entries(tasksByKey).forEach(([slot, item]) => {
+      const index = Number(slot);
+      const historyItem = history.find((h) => h.keyIndex === index && h.videoId === item.videoId);
+      const key = apiKeys[index]?.trim();
+      if (!item.videoId || !historyItem || !key || !BUSY_STATUSES.has(item.status)) return;
+      stopFlags.current[index] = false;
+      activeHistoryIdByKey.current[index] = historyItem.id;
+      poll(index, key, item.videoId, historyItem.id,
+        historyItem.modelKey ?? 'flash25', historyItem.apiDomain ?? 'global',
+        historyItem.createdAt, item.status, item.progress);
+    });
+  }, []); // mount-only: browser-state snapshot; poll identity is stable
+
   const startGeneration = useCallback(
-    async (keyIndex: number) => {
+    async (keyIndex: number, paidConfirmed = false) => {
+      if (modelKey === 'paid25' && !paidConfirmed) {
+        const perSecond = params.resolution === '1080p' ? 0.040 : 0.025;
+        const estimated = (perSecond * params.seconds).toFixed(3);
+        if (!window.confirm(
+          `你选择了付费 Agnes Video 2.5（${params.resolution}），单条${params.seconds}秒官方标价约 ${estimated}。`
+          + '实际按账户结算，确认创建这一条视频任务吗？',
+        )) return;
+      }
+      // A double click must not create two requests before React re-renders.
+      if (submittingKeysRef.current.has(keyIndex)) return;
+
+      // Share the exact same decision with compact single-Key and batch buttons.
+      if (!selectGeneratableKeys(apiKeys, apiKeyCount, tasksByKey, submittingKeysRef.current).includes(keyIndex)) {
+        notify(`Key ${keyIndex + 1} 当前不可提交：未配置、生成中或密钥重复`, 'error');
+        return;
+      }
+
+      if (BUSY_STATUSES.has(tasksByKey[keyIndex]?.status ?? 'idle')) {
+        notify(`Key ${keyIndex + 1} 正在生成，请勿重复创建`, 'error');
+        return;
+      }
+
       const apiKey = apiKeys[keyIndex]?.trim();
       if (!apiKey) {
         notify(`请先填写 Key ${keyIndex + 1}`, 'error');
+        return;
+      }
+      // The same secret configured in two slots must not create concurrent tasks.
+      const duplicateActive = apiKeys.some((other, index) => (
+        index !== keyIndex && other?.trim() === apiKey && submittingKeysRef.current.has(index)
+      ));
+      if (duplicateActive) {
+        notify('同一 Agnes Key 在其他槽位已有未结束任务：已阻止重复提交', 'error');
         return;
       }
       if (!params.prompt.trim()) {
         notify('请先填写提示词', 'error');
         return;
       }
-
-      if (params.mode === 'i2v' && !params.singleImage) {
-        notify('图生视频模式需要先上传图片或填写图片地址', 'error');
+      if ((params.mode === 'i2v' || params.mode === 'reference') && !params.singleImage) {
+        notify('当前视频模式需要一张公开可访问图片，请先填入图片URL', 'error');
         return;
       }
 
-      let requestParams = params;
-      if (modelKey === 'flash25') {
-        try {
-          requestParams = await prepareFlashParams(params);
-        } catch (err) {
-          notify(err instanceof Error ? err.message : '本地图片上传失败', 'error');
-          return;
-        }
-      } else if (params.mode === 'keyframes') {
-        const valid = params.keyframeScenes.filter((s) => s.imageUrl.trim());
-        if (valid.length < 2) {
-          notify('V2.0 多关键帧模式至少需要上传 2 张关键帧图片', 'error');
-          return;
-        }
-      }
-
-      stopFlags.current[keyIndex] = false;
-
-      const historyId = genId('task');
-      activeHistoryIdByKey.current[keyIndex] = historyId;
-      setSelectedKeyTab(keyIndex);
-
-      const modelName = VIDEO_MODELS[modelKey].apiModel;
-      const newItem: HistoryItem = {
-        id: historyId,
-        keyIndex,
-        createdAt: Date.now(),
-        promptPreview: requestParams.prompt.trim().slice(0, 100),
-        modelKey,
-        modelName,
-        mode: requestParams.mode,
-        ratio: requestParams.ratio,
-        resolution: requestParams.resolution,
-        status: 'creating',
-        progress: 0,
-        videoUrl: null,
-        videoId: null,
-        taskId: null,
-      };
-      setHistory((prev) => [newItem, ...prev]);
-      setSelectedHistoryIdByKey((prev) => ({ ...prev, [keyIndex]: historyId }));
-      updateTaskState(keyIndex, {
-        status: 'creating',
-        progress: 0,
-        videoUrl: null,
-        videoId: null,
-        taskId: null,
-        error: null,
-        modelKey,
-      });
-
+      submittingKeysRef.current.add(keyIndex);
       try {
-        const created = await createVideoTask(apiKey, modelKey, requestParams);
-        const videoId = created.video_id || created.id || created.task_id || '';
-        const taskId = created.task_id || created.id || '';
-        if (!videoId) throw new Error('未获取到有效的视频任务 ID，请检查返回结果');
-        const status = mapStatus(created.status);
-        updateTaskState(keyIndex, { status, progress: created.progress ?? 0, videoId, taskId, modelKey });
-        updateHistoryItem(historyId, { status, progress: created.progress ?? 0, videoId, taskId });
-        poll(keyIndex, apiKey, videoId, historyId, modelKey);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : '创建任务失败';
-        updateTaskState(keyIndex, { status: 'failed', error: msg, modelKey });
-        updateHistoryItem(historyId, { status: 'failed', error: msg });
-        delete activeHistoryIdByKey.current[keyIndex];
-        notify(msg, 'error');
+        let requestParams = params;
+        if (modelKey !== 'v2') {
+          try {
+            requestParams = await prepareFlashParams(params);
+          } catch (err) {
+            notify(err instanceof Error ? err.message : '本地图片准备失败；没有创建视频', 'error');
+            return;
+          }
+        } else if (params.mode === 'keyframes') {
+          const valid = params.keyframeScenes.filter((scene) => scene.imageUrl.trim());
+          if (valid.length < 2) {
+            notify('V2.0 多关键帧模式至少需要两张图片；没有创建视频', 'error');
+            return;
+          }
+        }
+
+        const historyId = genId('task');
+        // One explicit click = one POST; old localStorage records never stop a new attempt.
+        reserveVideoAttempt(keyIndex, historyId, modelKey);
+        setPromptHistory((prev) => rememberPrompt(prev, requestParams.prompt, modelKey, Date.now()));
+
+        stopFlags.current[keyIndex] = false;
+        activeHistoryIdByKey.current[keyIndex] = historyId;
+        setSelectedKeyTab(keyIndex);
+
+        const modelName = VIDEO_MODELS[modelKey].apiModel;
+        const apiDomain = apiDomains[keyIndex] ?? 'global';
+        const newItem: HistoryItem = {
+          id: historyId,
+          keyIndex,
+          createdAt: Date.now(),
+          promptPreview: requestParams.prompt.trim().slice(0, 100),
+          modelKey,
+          modelName,
+          apiDomain,
+          mode: requestParams.mode,
+          ratio: requestParams.ratio,
+          resolution: requestParams.resolution,
+          status: 'creating',
+          progress: 0,
+          videoUrl: null,
+          videoId: null,
+          taskId: null,
+        };
+        setHistory((prev) => [newItem, ...prev]);
+        setSelectedHistoryIdByKey((prev) => ({ ...prev, [keyIndex]: historyId }));
+        updateTaskState(keyIndex, {
+          status: 'creating',
+          progress: 0,
+          videoUrl: null,
+          videoId: null,
+          taskId: null,
+          error: null,
+          modelKey,
+        });
+
+        try {
+          const created = await createVideoTask(apiKey, modelKey, requestParams, apiDomain);
+          // Agnes GET needs video_id, NOT its potentially different task_id.
+          const videoId = typeof created.video_id === 'string' ? created.video_id.trim() : '';
+          if (!videoId) {
+            throw new Error('创建请求返回成功但没有 video_id；可能已提交，请先查服务商任务历史');
+          }
+          const taskId = created.task_id || created.id || '';
+          if (!attachVideoToGuard(keyIndex, historyId, videoId)) {
+            notify('已获得 video_id，但保护账本写回失败；不要重试创建', 'error');
+          }
+          const status = mapStatus(created.status);
+          updateTaskState(keyIndex, { status, progress: created.progress ?? 0, videoId, taskId, modelKey });
+          updateHistoryItem(historyId, { status, progress: created.progress ?? 0, videoId, taskId });
+          poll(keyIndex, apiKey, videoId, historyId, modelKey, apiDomain,
+            newItem.createdAt, status, created.progress ?? 0);
+        } catch (err) {
+          const reason = err instanceof Error ? err.message : '创建响应不确定';
+          const knownFailure = /^HTTP (400|401|403|404|409|422|429|503)\b/.test(reason)
+            || reason.startsWith('Agnes明确拒绝');
+          const status: TaskStatus = knownFailure ? 'failed' : 'submission_unknown';
+          const queueFull = /^HTTP 503\b/.test(reason) && /video_queue_full|queue.?full/i.test(reason);
+          const explanation = queueFull
+            ? `Agnes 免费视频队列已满：${reason}。上游拒绝创建，本次没有 video_id。换Key或重新安装不能解决共享容量；请停止九Key并发，稍后错峰单条尝试。`
+            : knownFailure
+              ? `提交失败：${reason}。可以再次点击生成。`
+              : `没有收到 Agnes 的任务编号：${reason}。可以直接再点击生成；如果上次实际已接收，可能出现重复任务。`;
+          finishVideoGuard(keyIndex, historyId);
+          updateTaskState(keyIndex, { status, error: explanation, modelKey });
+          updateHistoryItem(historyId, { status, error: explanation, finishedAt: Date.now() });
+          delete activeHistoryIdByKey.current[keyIndex];
+          notify(`Key ${keyIndex + 1}：${explanation}`, 'error');
+        }
+      } finally {
+        submittingKeysRef.current.delete(keyIndex);
       }
     },
-    [apiKeys, modelKey, params, poll],
+    [apiKeys, apiDomains, apiKeyCount, modelKey, params, poll, tasksByKey],
   );
 
   function stopGeneration(keyIndex: number) {
@@ -444,7 +697,9 @@ export default function App() {
       return { ...prev, [keyIndex]: { ...cur, status: 'stopped' } };
     });
 
-    const activeId = activeHistoryIdByKey.current[keyIndex];
+    const activeId = activeHistoryIdByKey.current[keyIndex]
+      ?? history.find((item) => item.keyIndex === keyIndex
+        && item.videoId && item.videoId === tasksByKey[keyIndex]?.videoId)?.id;
     if (activeId) {
       setHistory((prev) =>
         prev.map((h) =>
@@ -458,12 +713,23 @@ export default function App() {
   }
 
   function generateAll() {
-    for (let i = 0; i < apiKeyCount; i += 1) {
-      const busy = BUSY_STATUSES.has(tasksByKey[i]?.status ?? 'idle');
-      if (!busy && apiKeys[i]?.trim()) {
-        startGeneration(i);
-      }
+    // Running and submitting slots, duplicate credentials and empty slots are
+    // intentionally skipped. No existing poller is stopped or restarted.
+    const eligible = selectGeneratableKeys(
+      apiKeys, apiKeyCount, tasksByKey, submittingKeysRef.current,
+    );
+    if (!eligible.length) {
+      notify('当前没有可生成的 Key；正在生成的不受影响', 'error');
+      return;
     }
+    if (modelKey === 'paid25') {
+      const estimated = ((params.resolution === '1080p' ? 0.040 : 0.025)
+        * params.seconds * eligible.length).toFixed(3);
+      if (!window.confirm(
+        `当前是付费 Agnes Video 2.5，只提交 ${eligible.length} 个可用 Key，官方预估约 ${estimated}。确认提交？`,
+      )) return;
+    }
+    eligible.forEach((index) => { void startGeneration(index, true); });
   }
 
   function refreshHistoryItem(item: HistoryItem) {
@@ -473,7 +739,7 @@ export default function App() {
       return;
     }
     const itemModelKey = item.modelKey ?? 'v2';
-    getVideoResult(apiKey, item.videoId, itemModelKey)
+    getVideoResult(apiKey, item.videoId, itemModelKey, item.apiDomain ?? 'global')
       .then((result) => {
         const status = mapStatus(result.status);
         const patch: Partial<HistoryItem> = {
@@ -482,11 +748,27 @@ export default function App() {
           size: result.size,
           seconds: result.seconds,
         };
-        if (status === 'completed') patch.videoUrl = result.metadata?.url ?? null;
-        if (status === 'failed') patch.error = result.error?.message || '生成失败';
-        updateHistoryItem(item.id, patch);
+        if (status === 'completed') {
+          patch.videoUrl = result.url || result.metadata?.url || null;
+          if (!shouldReleaseVideoGuard(status, patch.videoUrl)) {
+            patch.status = 'stopped';
+            patch.error = 'Agnes 已报告完成，但未返回可播放地址；可点击历史记录里的刷新状态再次查询。';
+          } else {
+            patch.error = null;
+          }
+        }
+        if (status === 'failed') patch.error = taskErrorMessage(result.error);
+        if (shouldReleaseVideoGuard(status, patch.videoUrl)) {
+          finishVideoGuard(item.keyIndex, item.id);
+        }
+        updateHistoryItem(item.id, {
+          ...patch,
+          ...(shouldReleaseVideoGuard(status, patch.videoUrl)
+            ? { finishedAt: item.finishedAt ?? Date.now() } : {}),
+        });
 
-        if (activeHistoryIdByKey.current[item.keyIndex] === item.id) {
+        if (activeHistoryIdByKey.current[item.keyIndex] === item.id
+          || tasksByKey[item.keyIndex]?.videoId === item.videoId) {
           updateTaskState(item.keyIndex, patch as Partial<TaskState>);
         }
       })
@@ -505,7 +787,7 @@ export default function App() {
     const safeParams = stripEphemeralImages(params);
     const next = { ...defaults, [modelKey]: safeParams };
     saveJSON(STORAGE_KEYS.DEFAULT_PARAMS_BY_MODEL, next);
-    if (modelKey === 'v2') saveJSON(STORAGE_KEYS.DEFAULT_PARAMS, safeParams);
+    // Old V2.0 settings are retained only for viewing history, never for new submissions.
     notify(`已将 ${VIDEO_MODELS[modelKey].label} 当前设置保存为默认设置`);
   }
 
@@ -536,10 +818,27 @@ export default function App() {
     }
   }
 
+  function handleCopySafeReport() {
+    const report = buildSafeTrialReport(
+      apiKeys.slice(0, apiKeyCount).map((k) => Boolean(k?.trim())),
+      history,
+      Object.entries(submissionGuards).filter(([, guard]) => Boolean(guard.videoId))
+        .map(([index]) => Number(index)),
+      Date.now(),
+    );
+    if (!navigator.clipboard?.writeText) {
+      notify('当前浏览器不支持自动复制：请在可信桌面浏览器打开 AniFlow', 'error');
+      return;
+    }
+    void navigator.clipboard.writeText(report)
+      .then(() => notify('已复制9-Key安全摘要：不含任何 Key、提示词、视频 URL 或任务 ID'))
+      .catch(() => notify('复制未成功，请检查浏览器剪贴板权限', 'error'));
+  }
+
   function handleClearHistory() {
     const anyBusy = Object.values(tasksByKey).some((task) => BUSY_STATUSES.has(task.status));
     if (anyBusy) {
-      notify('有任务正在运行，暂不能清空历史；请先等待完成或停止跟踪', 'error');
+      notify('正在生成的任务尚未停止跟踪', 'error');
       return;
     }
     setHistory([]);
@@ -563,8 +862,12 @@ export default function App() {
                 <h1 className="text-base font-bold leading-tight text-zinc-900 sm:text-lg">
                   AniFlow 动画工厂
                 </h1>
-                <p className="text-xs text-zinc-400">
-                  当前视频：{VIDEO_MODELS[modelKey].label} · 多 Key 并行 · 生图 Provider 可切换
+                <p className="text-[11px] text-zinc-500" data-testid="running-version">
+                  {runningBuild?.app_version && runningBuild.frontend_verified
+                    ? `v${runningBuild.app_version} · ${runningBuild.release_stage ?? '未标阶段'} · ${runningBuild.source_commit?.slice(0, 9) ?? '未验证构建'}`
+                    : runningBuild?.source_commit
+                      ? `旧版构建 · ${runningBuild.source_commit.slice(0, 9)}`
+                      : '版本未验证'}
                 </p>
               </div>
             </div>
@@ -592,6 +895,14 @@ export default function App() {
               </button>
               <button
                 type="button"
+                onClick={handleCopySafeReport}
+                className="rounded-md border border-indigo-300 px-2.5 py-1.5 font-medium text-indigo-600 hover:bg-indigo-50"
+                title="复制不含 API Key、任务 ID、签名视频 URL、原始错误或提示词的测试摘要"
+              >
+                复制9-Key安全测试摘要
+              </button>
+              <button
+                type="button"
                 onClick={handleClearHistory}
                 className="rounded-md border border-rose-200 px-2.5 py-1.5 font-medium text-rose-500 hover:bg-rose-50"
               >
@@ -606,7 +917,6 @@ export default function App() {
               apiKeys={apiKeys}
               tasksByKey={tasksByKey}
               onGenerate={startGeneration}
-              onStop={stopGeneration}
               onGenerateAll={generateAll}
             />
           </div>
@@ -623,19 +933,21 @@ export default function App() {
         </div>
       </header>
 
-      <main className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
-          <CollapsibleSection title="API Key 设置" subtitle="配置生成所需的 API Key" defaultOpen badge={`${apiKeyCount} 个`}>
+      <main className="mx-auto grid max-w-[1440px] grid-cols-1 gap-5 px-4 py-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+        <div className="order-2 min-w-0 space-y-4 lg:order-1">
+          <CollapsibleSection title="API Key 设置" subtitle="仅在新增或修改 Key 时展开" badge={`${apiKeyCount} 个`}>
             <KeySettings
               keyCount={apiKeyCount}
               apiKeys={apiKeys}
-              busyKeyIndexes={new Set(
-                Object.entries(tasksByKey)
+              apiDomains={apiDomains}
+              busyKeyIndexes={new Set([
+                ...Object.entries(tasksByKey)
                   .filter(([, task]) => BUSY_STATUSES.has(task.status))
                   .map(([index]) => Number(index)),
-              )}
+              ])}
               onKeyCountChange={handleKeyCountChange}
               onKeyChange={handleKeyChange}
+              onDomainChange={handleDomainChange}
             />
           </CollapsibleSection>
 
@@ -654,11 +966,17 @@ export default function App() {
             onModelChange={handleModelChange}
             params={params}
             onChange={updateParams}
+            promptHistory={promptHistory}
+            onSavePrompt={() => {
+              setPromptHistory((prev) => rememberPrompt(prev, params.prompt, modelKey, Date.now()));
+              notify('当前提示词已保存，可从历史列表切换');
+            }}
+            onLoadPrompt={(value) => updateParams((prev) => ({ ...prev, prompt: value }))}
           />
         </div>
 
-        <div className="lg:col-span-1">
-          <div className="lg:sticky lg:top-[9.5rem] lg:max-h-[calc(100vh-10.5rem)]">
+        <div className="order-1 min-w-0 lg:order-2">
+          <div className="lg:sticky lg:top-[10.5rem]">
             <RightPanel
               keyCount={apiKeyCount}
               selectedKeyTab={selectedKeyTab}
@@ -668,13 +986,22 @@ export default function App() {
               selectedHistoryIdByKey={selectedHistoryIdByKey}
               onSelectHistory={selectHistory}
               onRefreshHistory={refreshHistoryItem}
+              onStopTracking={stopGeneration}
             />
           </div>
         </div>
       </main>
 
       <footer className="mx-auto max-w-7xl px-4 pb-8 pt-2 text-center text-[11px] text-zinc-400 sm:px-6">
-        当前视频模型：{VIDEO_MODELS[modelKey].label}。API Key 仅保存在本浏览器 localStorage；2.5 Flash 本地图片会自动经 {DEFAULT_BRIDGE_URL} 上传为公网 URL。
+        <span className="font-semibold">
+          正在运行版本：{runningBuild?.app_version ? `v${runningBuild.app_version} · ` : ''}
+          {runningBuild?.source_commit?.slice(0, 12)
+            ?? (runningBuild?.build_type === 'source' ? '本地源码版' : '未验证')}
+          {runningBuild?.build_type === 'prebuilt' && !runningBuild.frontend_verified
+            ? ' · 校验失败，请重装完整版' : ''}
+        </span>
+        <span className="mx-2">·</span>
+        当前视频模型：{VIDEO_MODELS[modelKey].label}。服务重启不会删除浏览器保存的 Key 和历史。
       </footer>
     </div>
   );

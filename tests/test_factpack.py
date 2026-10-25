@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
 
 from aniflow.factpack import (
     FactPack,
@@ -29,20 +30,20 @@ REUTERS = Source(
 
 
 def make_pack(**over) -> FactPack:
-    base = dict(
-        episode_id="MYCL-001",
-        core_claim="猫不是用舌头把水舀起来，而是靠惯性把水柱拉进嘴里。",
-        locked_facts=[
+    base = {
+        "episode_id": "MYCL-001",
+        "core_claim": "猫不是用舌头把水舀起来，而是靠惯性把水柱拉进嘴里。",
+        "locked_facts": [
             "家猫舔水频率为每秒 3.5 次（论文实测均值，误差 0.4 次）。",
             "舌尖最大速度为 78 厘米每秒。",
             "每舔一次摄入约 0.14 毫升液体。",
         ],
-        source_a=PAPER,
-        source_b=REUTERS,
-        qualifiers=["数据来自 10 只成年家猫的实测均值，个体存在差异。"],
-        forbidden_claims=["猫用舌头把水舀进嘴里", "猫靠吸力喝水"],
-        risk_level=RiskLevel.LOW,
-    )
+        "source_a": PAPER,
+        "source_b": REUTERS,
+        "qualifiers": ["数据来自 10 只成年家猫的实测均值，个体存在差异。"],
+        "forbidden_claims": ["猫用舌头把水舀进嘴里", "猫靠吸力喝水"],
+        "risk_level": RiskLevel.LOW,
+    }
     base.update(over)
     return FactPack(**base)
 
@@ -122,7 +123,7 @@ def test_high_risk_without_scope_limits_is_blocked():
 
 
 def test_a_pack_needs_at_least_one_locked_fact():
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         make_pack(locked_facts=[])
 
 

@@ -1,13 +1,22 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   DURATION_PRESETS,
   FLASH_SECONDS_PRESETS,
+  MYCL001_SHOT1_FROZEN_PROMPT,
+  MYCL001_PUBLIC_I2V_TEST_PROMPT,
+  MYCL001_SHOT1_REFERENCE_PROMPT,
+  MYCL001_CHARACTER_REFERENCE_URL,
   RESOLUTION_OPTIONS,
   RESOLUTION_PRESETS,
   VIDEO_MODELS,
+  SELECTABLE_VIDEO_MODELS,
   modeOptions,
 } from '../lib/constants';
 import type { GenerationParams, VideoModelKey } from '../lib/types';
+import type { SavedPrompt } from '../lib/promptHistory';
+import { safePromptHeight } from '../lib/promptHistory';
+import { SNOW_DIRECTOR_AVOID } from '../lib/negativePrompt';
+import { STORAGE_KEYS, loadJSON, saveJSON } from '../lib/storage';
 import { clampFlashSeconds, clampNumFrames } from '../lib/api';
 import RatioSelector from './RatioSelector';
 import KeyframeManager from './KeyframeManager';
@@ -20,12 +29,33 @@ interface Props {
   onModelChange: (modelKey: VideoModelKey) => void;
   params: GenerationParams;
   onChange: (updater: (prev: GenerationParams) => GenerationParams) => void;
+  promptHistory: SavedPrompt[];
+  onSavePrompt: () => void;
+  onLoadPrompt: (prompt: string) => void;
 }
 
-export default function SettingsForm({ modelKey, onModelChange, params, onChange }: Props) {
+export default function SettingsForm({
+  modelKey, onModelChange, params, onChange,
+  promptHistory, onSavePrompt, onLoadPrompt,
+}: Props) {
   const negRef = useRef<HTMLTextAreaElement>(null);
+  const promptRef = useRef<HTMLTextAreaElement>(null);
+  const [promptHeight, setPromptHeight] = useState<number>(() =>
+    safePromptHeight(loadJSON(STORAGE_KEYS.PROMPT_HEIGHT, 180)),
+  );
+
+  useEffect(() => {
+    if (promptRef.current) promptRef.current.style.height = `${promptHeight}px`;
+  }, [promptHeight]);
+
+  function saveTextareaHeight() {
+    const size = safePromptHeight(promptRef.current?.getBoundingClientRect().height);
+    setPromptHeight(size);
+    saveJSON(STORAGE_KEYS.PROMPT_HEIGHT, size);
+  }
   const modes = modeOptions(modelKey);
   const isFlash = modelKey === 'flash25';
+  const isModern = modelKey !== 'v2';
 
   function setMode(mode: GenerationParams['mode']) {
     onChange((prev) => ({ ...prev, mode }));
@@ -73,7 +103,7 @@ export default function SettingsForm({ modelKey, onModelChange, params, onChange
       <div className="rounded-xl border border-zinc-200 bg-white p-4">
         <h3 className="mb-3 text-sm font-semibold text-zinc-800">视频模型</h3>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {(Object.keys(VIDEO_MODELS) as VideoModelKey[]).map((key) => {
+          {SELECTABLE_VIDEO_MODELS.map((key) => {
             const model = VIDEO_MODELS[key];
             return (
               <button
@@ -119,10 +149,16 @@ export default function SettingsForm({ modelKey, onModelChange, params, onChange
           ))}
         </div>
 
-        {params.mode === 'i2v' ? (
+        {(params.mode === 'i2v' || (isModern && params.mode === 'reference')) ? (
           <div className="mt-3">
+            <p className="mb-2 text-xs text-zinc-600">
+              Agnes 官方要求可公开访问并在任务生成期间有效的 HTTPS 图片链接。
+              填写公开 HTTPS URL 最可靠，不需要 R2/S3。直接上传的本地图片仍按实验性 Base64 尝试，服务商尚未确认支持，可能失败。
+              可先点击上面的“公开首帧图生测试”，验证不需要 R2 的标准图生流程。
+            </p>
             <ImageUploadSlot
-              label={isFlash ? '首帧图片（first_frame）' : '待生成动画的图片'}
+              fileInputTestId="video-single-file"
+              label={isModern && params.mode === 'reference' ? '角色参考图片（images[0]；不固定首帧）' : isModern ? '首帧图片（first_frame）' : '待生成动画的图片'}
               imageUrl={params.singleImage}
               fileName={params.singleImageFileName}
               onChange={(url, fileName) =>
@@ -134,7 +170,7 @@ export default function SettingsForm({ modelKey, onModelChange, params, onChange
 
         {params.mode === 'keyframes' ? (
           <div className="mt-3">
-            {isFlash ? (
+            {isModern ? (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <ImageUploadSlot
                   label="首帧（first_frame）"
@@ -163,13 +199,101 @@ export default function SettingsForm({ modelKey, onModelChange, params, onChange
 
       <div className="rounded-xl border border-zinc-200 bg-white p-4">
         <h3 className="mb-2 text-sm font-semibold text-zinc-800">提示词</h3>
+        {isModern ? (
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <button type="button" className="rounded-md border border-indigo-500 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50"
+              onClick={() => {
+                if (params.prompt.trim() && params.prompt !== MYCL001_SHOT1_FROZEN_PROMPT) onSavePrompt();
+                onChange((prev) => ({
+                  ...prev,
+                  prompt: MYCL001_SHOT1_FROZEN_PROMPT,
+                   negativePrompt: SNOW_DIRECTOR_AVOID,
+                  mode: 't2v',
+                  ratio: '9:16',
+                  resolution: '720p',
+                  width: 720,
+                  height: 1280,
+                  seconds: 5,
+                }));
+              }}>
+              载入雪所长首镜头 · 5秒
+            </button>
+            <button type="button" className="rounded-md border border-amber-500 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50"
+              onClick={() => {
+                if (params.prompt.trim() && params.prompt !== MYCL001_SHOT1_REFERENCE_PROMPT) onSavePrompt();
+                onChange((prev) => ({
+                  ...prev,
+                  prompt: MYCL001_SHOT1_REFERENCE_PROMPT,
+                   negativePrompt: SNOW_DIRECTOR_AVOID,
+                  mode: 'reference',
+                  singleImage: MYCL001_CHARACTER_REFERENCE_URL,
+                  singleImageFileName: '',
+                  ratio: '9:16',
+                  resolution: '720p',
+                  width: 720,
+                  height: 1280,
+                  seconds: 5,
+                }));
+              }}>
+              载入角色参考图测试 · 5秒
+            </button>
+            <button type="button"
+              data-testid="public-first-frame-test"
+              className="rounded-md border border-teal-600 px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-50"
+              onClick={() => {
+                if (params.prompt.trim() && params.prompt !== MYCL001_PUBLIC_I2V_TEST_PROMPT) onSavePrompt();
+                onChange((prev) => ({
+                  ...prev,
+                  prompt: MYCL001_PUBLIC_I2V_TEST_PROMPT,
+                  negativePrompt: SNOW_DIRECTOR_AVOID,
+                  mode: 'i2v',
+                  singleImage: MYCL001_CHARACTER_REFERENCE_URL,
+                  singleImageFileName: '',
+                  ratio: '9:16',
+                  resolution: '720p',
+                  width: 720,
+                  height: 1280,
+                  seconds: 5,
+                }));
+              }}>公开首帧图生测试 · 5秒</button>
+            <span className="text-[11px] text-zinc-400">三个按钮只填写参数，不创建任务。公开图仅用于测试，不是正式首镜头，版权仍需单独审核。</span>
+          </div>
+        ) : null}
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <label className="text-xs font-medium text-zinc-600" htmlFor="aniflow-prompt-history">提示词历史</label>
+          <select id="aniflow-prompt-history" aria-label="切换历史提示词"
+            defaultValue="" onChange={(event) => {
+              const saved = promptHistory.find((item) => item.id === event.target.value);
+              if (saved) onLoadPrompt(saved.prompt);
+              event.currentTarget.value = '';
+            }}
+            className="min-w-0 max-w-full flex-1 rounded border border-zinc-300 bg-white px-2 py-1.5 text-xs">
+            <option value="">选择已保存的提示词（最多40条）</option>
+            {promptHistory.map((entry) => (
+              <option key={entry.id} value={entry.id}>
+                {new Date(entry.savedAt).toLocaleString('zh-CN')} · {entry.prompt.slice(0, 66)}
+              </option>
+            ))}
+          </select>
+          <button type="button" onClick={onSavePrompt} disabled={!params.prompt.trim()}
+            className="rounded border border-indigo-400 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 disabled:opacity-50">
+            保存当前提示词
+          </button>
+        </div>
         <textarea
+          ref={promptRef}
+          data-testid="video-prompt"
           value={params.prompt}
           onChange={(e) => onChange((prev) => ({ ...prev, prompt: e.target.value }))}
+          onMouseUp={saveTextareaHeight}
+          onTouchEnd={saveTextareaHeight}
+          onBlur={saveTextareaHeight}
           placeholder="描述画面、动作、镜头、光线与风格。"
           rows={4}
-          className="w-full resize-none rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+          style={{ height: `${promptHeight}px` }}
+          className="min-h-[120px] max-h-[80vh] w-full resize-y overflow-auto rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
         />
+        <p className="mt-1 text-[11px] text-zinc-400">拖动输入框右下角调整高度，刷新后保持；提交过的提示词会自动进入历史。</p>
       </div>
 
       <div className="rounded-xl border border-zinc-200 bg-white p-4">
@@ -182,7 +306,7 @@ export default function SettingsForm({ modelKey, onModelChange, params, onChange
               720P（2.5 Flash 固定）
             </span>
           ) : (
-            RESOLUTION_OPTIONS.map((opt) => (
+            RESOLUTION_OPTIONS.filter((opt) => isModern ? opt.value !== '480p' : true).map((opt) => (
               <button
                 key={opt.value}
                 type="button"
@@ -206,7 +330,7 @@ export default function SettingsForm({ modelKey, onModelChange, params, onChange
 
       <div className="rounded-xl border border-zinc-200 bg-white p-4">
         <h3 className="mb-3 text-sm font-semibold text-zinc-800">视频时长</h3>
-        {isFlash ? (
+        {isModern ? (
           <>
             <div className="flex flex-wrap gap-2">
               {FLASH_SECONDS_PRESETS.map((seconds) => (
@@ -297,12 +421,33 @@ export default function SettingsForm({ modelKey, onModelChange, params, onChange
         )}
       </div>
 
+      {isModern ? (
+        <div className="rounded-xl border border-zinc-200 bg-white p-4" data-testid="visible-negative-prompt">
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <label className="text-sm font-semibold text-zinc-700" htmlFor="aniflow-negative-prompt">
+              反向提示词（画面排除项）
+            </label>
+            <button type="button" onClick={() => onChange((prev) => ({ ...prev, negativePrompt: SNOW_DIRECTOR_AVOID }))}
+              className="text-xs text-indigo-600 hover:underline">恢复雪所长预设</button>
+          </div>
+          <textarea id="aniflow-negative-prompt" data-testid="negative-prompt"
+            value={params.negativePrompt}
+            onChange={(e) => onChange((prev) => ({ ...prev, negativePrompt: e.target.value }))}
+            rows={3}
+            className="w-full resize-y rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+          />
+          <p className="mt-1 text-[11px] text-zinc-500">
+            自动保存；作为避免事项附在创建请求的提示词内，不发送未确认支持的额外接口参数。
+          </p>
+        </div>
+      ) : null}
+
       <CollapsibleSection
         title="高级设置"
-        subtitle={isFlash ? '随机种子' : '反向提示词 / 推理步数 / 随机种子'}
+        subtitle={isModern ? '随机种子' : '旧版反向提示词 / 推理步数 / 随机种子'}
       >
         <div className="space-y-3">
-          {!isFlash ? (
+          {!isModern ? (
             <>
               <label className="block text-xs text-zinc-500">
                 反向提示词 negative_prompt
