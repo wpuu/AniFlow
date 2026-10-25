@@ -73,6 +73,18 @@ def main() -> int:
                     page = context.new_page()
                     page.goto(BASE+"/", wait_until="domcontentloaded")
                     page.get_by_test_id("strict-mock-banner").wait_for(timeout=15000)
+                    page.get_by_test_id("open-aws-preflight").click()
+                    panel = page.get_by_test_id("aws-preflight-panel")
+                    panel.wait_for(timeout=15000)
+                    panel.get_by_text("赠金适用 EC2").wait_for(timeout=15000)
+                    assert panel.get_by_text("未核验").count() >= 7
+                    assert panel.get_by_text("账户计划").count() >= 1
+                    assert "未授权 / 未接入" in panel.get_by_test_id("aws-launch-disabled").inner_text()
+                    snapshot = get_json("/api/studio/cloud/preflight")
+                    assert snapshot["launch_allowed"] is False
+                    assert snapshot["aws_queries"] == snapshot["aws_writes"] == 0
+                    panel.get_by_role("button", name="关闭 AWS 预检").click()
+                    print("PASS_BROWSER_AWS_PREFLIGHT_UNKNOWN_NO_LAUNCH_NO_CLOUD")
                     assert page.locator("article").count() == 0
                     assert page.get_by_role("button", name="生成视频").is_disabled()
                     page.locator('input[type="file"]').set_input_files(str(frame))

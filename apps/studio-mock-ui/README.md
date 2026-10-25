@@ -25,3 +25,9 @@ python scripts/run_studio_mock.py
 ## P0-036 提交可靠性
 
 提交前在浏览器持久保留**只有请求编号和时间戳**的防重复保护；若服务器已接受但浏览器丢失响应，不自动重发视频创建请求。页面会显示“查询原任务”只读操作；无法确认则停止新提交，除非用户明确同意放弃保护。SQLite 通过 `GET /api/studio/mock/requests/{idempotency_key}` 找回受理记录。详细情况见 `docs/reviews/2026-10-25-p0036-unknown-submission-hardening.md`。依然只生成蓝色视频假样片，不开AWS。
+
+## P0-037 AWS东京预检入口（仍为纯本机模拟）
+
+Studio 顶部新增「AWS 东京 H3：部署前资格核验（未连接）」入口。通过本机只读 `GET /api/studio/cloud/preflight` 获取未核验状态。赠金适用EC2、截止时间和余额、G/VT配额、实例库存/报价、SSM私有连接、H3地域许可、强制停机措施均在无真实AWS连接时明确显示“未核验”。不写入或传输 AWS 密钥，UI 不能创建、启动或停止EC2，不能把历史赠金数字当作实时余额。
+
+下一步需要 ChatGPT Work + 用户授权的已登录 Ego 浏览器读取真实AWS账户核验页面。浏览器权限不可用时停止云操作；详见 `docs/runbooks/2026-10-25-aws-tokyo-h3-work-handoff.md`。原有两份ZIP、8765应用与真实AWS均未修改。

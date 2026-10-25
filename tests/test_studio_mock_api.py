@@ -97,3 +97,29 @@ def test_rejects_unsafe_inputs_and_idempotency_collision(tmp_path: Path) -> None
         assert client.get("/api/studio/mock/requests/unknown-key-1").status_code == 404
         assert client.get("/api/studio/mock/jobs/unknown").status_code == 404
         assert client.get("/api/studio/mock/jobs?limit=1000").status_code == 422
+
+def test_tokyo_aws_preflight_is_read_only_and_requires_real_account_verification(
+    tmp_path: Path,
+) -> None:
+    app = create_mock_app(tmp_path, FIXTURE)
+    with TestClient(app) as client:
+        result = client.get("/api/studio/cloud/preflight")
+        assert result.status_code == 200
+        data = result.json()
+        assert data["mode"] == "UNVERIFIED_PLACEHOLDER"
+        assert data["region"] == "ap-northeast-1"
+        assert data["instance_type"] == "g6e.2xlarge"
+        assert data["actual_credit_usd"] is None
+        assert data["hourly_price_usd"] is None
+        assert data["account_plan"] == "unknown"
+        assert data["instance_id"] is None
+        assert data["launch_allowed"] is False
+        assert data["real_gpu_connected"] is False
+        assert data["aws_queries"] == 0
+        assert data["aws_writes"] == 0
+        assert len(data["checks"]) == 7
+        assert all(value is None for value in data["checks"].values())
+        # Neither user-facing POST nor GET should create a GPU resource.
+        assert client.post("/api/studio/cloud/preflight").status_code == 405
+        assert client.post("/api/studio/cloud/launch").status_code == 404
+        assert client.get("/api/studio/cloud/preflight").json() == data

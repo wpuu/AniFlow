@@ -145,6 +145,34 @@ def create_mock_app(
         return Response(content=logo, media_type="image/png",
                         headers={"Cache-Control": "private, max-age=3600"})
 
+    @app.get("/api/studio/cloud/preflight")
+    def cloud_preflight() -> dict:
+        """Non-authoritative UI contract. This route NEVER contacts AWS or creates EC2."""
+        return {
+            "mode": "UNVERIFIED_PLACEHOLDER",
+            "provider": "minimax-h3-aws",
+            "region": "ap-northeast-1",
+            "instance_type": "g6e.2xlarge",
+            "account_plan": "unknown",
+            "checks": {
+                "credit_ec2_eligible": None,
+                "credit_expiry_confirmed": None,
+                "tokyo_gpu_quota": None,
+                "tokyo_capacity_and_price": None,
+                "ssm_private_connectivity": None,
+                "h3_license_territory": None,
+                "gpu_stop_safeguard": None,
+            },
+            "actual_credit_usd": None,
+            "hourly_price_usd": None,
+            "instance_id": None,
+            "launch_allowed": False,
+            "real_gpu_connected": False,
+            "aws_queries": 0,
+            "aws_writes": 0,
+            "note": "Only a local UI placeholder; switch to Work to audit the real AWS account.",
+        }
+
     @app.get("/api/studio/mock/health")
     def health() -> dict:
         return {

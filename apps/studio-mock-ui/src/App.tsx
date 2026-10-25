@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { CreatePanel } from "./components/CreatePanel";
+import { AwsPreflightPanel } from "./components/AwsPreflightPanel";
 import { Header } from "./components/Header";
 import { PlayerModal } from "./components/PlayerModal";
 import { TaskBoard } from "./components/TaskBoard";
@@ -11,6 +12,7 @@ export default function App() {
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [active, setActive] = useState<Task | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [showAwsPreflight, setShowAwsPreflight] = useState(false);
   const [clock, setClock] = useState(Date.now());
 
   useEffect(() => {
@@ -71,6 +73,13 @@ export default function App() {
         className="border-b border-amber-600/40 bg-amber-950/60 px-4 py-2 text-center text-xs font-semibold text-amber-200">
         本机模拟模式 · 未连接 AWS / ComfyUI / Agnes · 费用 $0 · 结果仅为蓝色测试 MP4
       </div>
+      <div className="flex items-center justify-end border-b border-white/5 bg-[#0c0c10] px-4 py-1.5">
+        <button type="button" data-testid="open-aws-preflight"
+          onClick={() => setShowAwsPreflight(true)}
+          className="rounded-lg border border-cyan-400/25 px-3 py-1.5 text-[11px] font-medium text-cyan-200 hover:bg-cyan-400/10">
+          AWS 东京 H3：部署前资格核验（未连接）
+        </button>
+      </div>
       {pending && (
         <div data-testid="pending-unknown-create"
           className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-500/30 bg-amber-950/75 px-4 py-3 text-xs text-amber-100">
@@ -119,6 +128,10 @@ export default function App() {
           }}
         />
       </main>
+
+      {showAwsPreflight && (
+        <AwsPreflightPanel onClose={() => setShowAwsPreflight(false)} />
+      )}
 
       {liveActive && (
         <PlayerModal
