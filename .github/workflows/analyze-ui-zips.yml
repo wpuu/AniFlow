@@ -9,6 +9,7 @@ on:
       - src/aniflow/studio/**
       - apps/studio-mock-ui/**
       - tests/test_studio_mock_api.py
+      - scripts/e2e_studio_mock_ui.py
       - tests/fixtures/MOCK_BLUE_LOCAL_NO_AGNES.mp4
       - .github/workflows/analyze-ui-zips.yml
       - aniflow-ai-video-dashboard-claude.zip
@@ -131,3 +132,9 @@ jobs:
               assert c.get('/api/studio/mock/health').json()['aws_state']=='NOT_CONNECTED'
           print('PASS_GROK_UI_SERVED_FROM_LOCAL_MOCK_BRIDGE_ZERO_GPU')
           PY
+
+      - name: Chromium click-through with actual Mock Bridge and MP4 download
+        run: |
+          python -m pip install playwright==1.56.0
+          command -v google-chrome
+          python scripts/e2e_studio_mock_ui.py
