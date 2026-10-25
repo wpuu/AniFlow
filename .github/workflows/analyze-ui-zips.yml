@@ -6,6 +6,9 @@ on:
       - scripts/audit_uploaded_frontends.py
       - scripts/audit_uploaded_frontends_details.py
       - scripts/audit_uploaded_frontends_transfer.py
+      - src/aniflow/studio/**
+      - tests/test_studio_mock_api.py
+      - tests/fixtures/MOCK_BLUE_LOCAL_NO_AGNES.mp4
       - .github/workflows/analyze-ui-zips.yml
       - aniflow-ai-video-dashboard-claude.zip
       - aniflow-ai-video-dashboard-grok.zip
@@ -77,3 +80,17 @@ jobs:
             cd "$GITHUB_WORKSPACE" || exit 1
           done
           echo "PASS_BOTH_CANDIDATES_AUDITED_NO_AWS_OR_REAL_VIDEO"
+
+  mock-studio-api:
+    name: Mock H3 image upload, durable jobs, local MP4, no AWS
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install public Python test requirements
+        run: python -m pip install -e '.[dev]'
+      - name: Test local Mock H3 complete flow and idempotency
+        run: python -m pytest -q tests/test_studio_mock_api.py
