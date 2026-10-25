@@ -44,3 +44,17 @@
 - 端到端无真实 Key CI：生成流程、网络中断/恢复、重复点击、停止跟踪≠云端取消、磁盘失败、单任务下载校验、超预算拒绝、跨版本依赖不重装。
 
 **暂不启动 AWS，不合并 main，不花赠金，不使用任何真实个人 Key。**
+
+## P0-035 已执行工程进展（2026-10-25）
+
+经源码比较，保留两份ZIP不变；Grok的19个文本源文件已原样保存到 `apps/studio-candidate-grok/`，项目Logo仍以原ZIP为唯一二进制来源。**未修改原ZIP和候选基线**。
+
+另建 `apps/studio-mock-ui/` 工程副本，保留Grok视觉交互但将原随机模拟任务引擎替换为与本机Mock Bridge交互的真实HTTP流程；前台明确标识“本机模拟，无真实GPU，无费用”，且当前只可选择 `mock-h3`。不展示假的AWS实例在线状态和服务商价格，上传必须是用户本地PNG/JPG首帧。浏览器只保存隐藏任务的ID，任务主数据留在SQLite，不再保存图片Base64历史。
+
+`src/aniflow/studio/mock_api.py` 通过 `scripts/run_studio_mock.py` **仅监听127.0.0.1:8767**：接收图片、SQLite幂等提交、只读查询/任务恢复、6秒后生成已有蓝色测试MP4的本地副本并核SHA256、HTTP视频下载。单文件前端从该Mock服务同源托管；Logo从原始ZIP只读取对应PNG文件。原有 `127.0.0.1:8765` AniFlow不改变。
+
+证据：[CI #40152956282](https://github.com/wpuu/AniFlow/actions/runs/40152956282)，隔离自建审计工作流 **5/5 jobs成功**。其中严格TS/Vite构建两份原版均通过；Mock API两项pytest通过；Grok工程副本严格TS、Vite构建通过；真实Chromium按键、首帧上传、Mock任务提交、SQLite查询、视频下载SHA256、刷新历史和零真实请求通过，日志标记 `PASS_BROWSER_MOCK_IMAGE_UPLOAD_TASK_RESTORE_LOCAL_MP4_DOWNLOAD_NO_AWS`。与真实模型画质、G6e/H3适配和 AWS 付费许可无关，未访问云端。
+
+**尚未完成：** 将此隔离Mock集成与先前PR #2中 v0.34.2 的Windows正式安装机制合并；实际 ComfyUI/H3 任务、AWS SSM、EC2开停/费用预算、停机保护、失败恢复、真实MP4生成与人工验片。用户此前报告AWS赠金10月30日到期，但现阶段没有读取余额/配额，也没有创建资源；任何AWS真实实例操作须单独核验预算、配额、权重许可证并确认。
+
+禁自动将以上模拟程序发布或替换既有8765前台。不要把蓝色MP4作为 H3/AniFlow 真实成功的视频案例。

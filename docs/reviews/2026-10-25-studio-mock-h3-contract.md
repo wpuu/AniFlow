@@ -13,3 +13,7 @@ Mock 仅验证工程链路，不表示 L40S 能运行 H3、模型权重许可证
 后续接入 Grok 视觉前台时，必须保留**演示模式与真实模式显式隔离**。真实 `/api/studio/*` 未来才会实现 ComfyUI/AWS 的状态查询、提交和分块下载；需新的独立开发与真实设备验收，严禁模拟计时器在 REAL 模式假报已完成。
 
 测试：`pytest -q tests/test_studio_mock_api.py`；CI 不读取 API Key，不安装/启动 AWS，不产生实际视频推理费用。
+
+## 阶段验收
+
+2026-10-25：Grok工程副本现已实际连接该Mock Bridge并独立托管在8767，已用真实Chromium端到端验证上传、进度、下载、SHA256和刷新历史。[CI #40152956282](https://github.com/wpuu/AniFlow/actions/runs/40152956282) 全部5项独立审计作业通过。真实GPU与AWS仍为0次调用；正式应用 v0.34.2 在另一PR #2，尚未合并到本分支。

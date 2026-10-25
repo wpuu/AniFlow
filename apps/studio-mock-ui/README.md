@@ -19,3 +19,5 @@ python scripts/run_studio_mock.py
 `src/data.ts` 只暴露 MOCK 模型；不显示虚假的 AWS 在线状态与计价。原始文本+Logo资产在仓库根目录的 Grok ZIP 中，Mock服务可从 ZIP 原样读取 Logo，不上传外部服务。不删除当前系统任何视频或密钥。浏览器仅保存“从列表隐藏”的 ID，不保存图像Base64与任务资料。
 
 这里实现的是**Mock工程通路**，尚未连接真实 H3/ComfyUI、AWS EC2、SSM、自动关机，也不代表真实5秒图生视频成功。任何 AWS 的实际创建、启动、消费都需要重新做预算/实例/许可与显存核验并经用户允许。
+
+验收证据：[2026-10-25 Mock Studio CI](https://github.com/wpuu/AniFlow/actions/runs/40152956282)，包括真实Chromium首帧上传、任务创建、下载的Mock MP4哈希验证和刷新后任务恢复。独立实验目录；不得当成真实AWS部署包。
