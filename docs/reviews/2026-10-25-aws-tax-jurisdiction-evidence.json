@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-25",
+  "source": "User-authorized Ego Billing Tax registrations; country code only, no street address or account number",
+  "tax_settings_address_country_code": "CN",
+  "seller": "Amazon Web Services, Inc.",
+  "tax_registration_status_displayed": "-",
+  "bill_period": "2026-10",
+  "current_bill_total_tax_usd": 0,
+  "tax_exemption_certificate_verified": false,
+  "prediction": "No evidence of additional Japanese consumption tax solely from selecting Tokyo with the currently observed China tax address; final invoice controls",
+  "permanent_zero_tax_guaranteed": false,
+  "tax_settings_modified": false,
+  "tax_exemption_submitted": false,
+  "support_contacted": false,
+  "cloud_resources_created": 0
+}
