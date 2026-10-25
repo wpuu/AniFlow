@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - scripts/audit_uploaded_frontends.py
+      - scripts/audit_uploaded_frontends_details.py
       - .github/workflows/analyze-ui-zips.yml
       - aniflow-ai-video-dashboard-claude.zip
       - aniflow-ai-video-dashboard-grok.zip
@@ -24,3 +25,5 @@ jobs:
           python-version: '3.11'
       - name: Inspect both user-uploaded candidate ZIP files offline
         run: python scripts/audit_uploaded_frontends.py
+      - name: Inspect selected source for provider and task integration gaps
+        run: python scripts/audit_uploaded_frontends_details.py
