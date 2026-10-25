@@ -27,10 +27,10 @@
 
 **SageMaker Processing/Notebook**：与EC2配额独立，AWS有ComfyUI Processing官方方案及Wan图生视频教程；本次已查区域实际GPU仍为0，尚未形成可启动资源。若其他区域已有可用额度，仍需对应模型、价格、赠金与双停机核查，不能声称已经可用。[Processing官方方案](https://aws.amazon.com/blogs/machine-learning/running-comfyui-workflows-on-amazon-sagemaker-ai-processing-jobs/)、[Wan图生视频官方教程](https://aws.amazon.com/blogs/machine-learning/generate-images-and-video-with-vllm-omni-on-sagemaker-ai-part-2/)。
 
-纯CPU只找到极小视频社区案例，没有可靠依据证明原定5秒/竖屏/768p能在当前预算和时限内完成，不据此盲开实例。Nova Reel 1.0/1.1已EOL，不能作为当前可行方案。
+纯CPU补查：东京 Standard Applied 配额为5 vCPU；r7i.xlarge/r7a.xlarge 均为4 vCPU、32 GiB，Linux 计算费分别为$0.3192/$0.36708每小时。维护者支持 CPU-only Wan 推理，但没有可靠依据证明原定5秒/竖屏/768p能在当前预算和时限内完成，不据此盲开实例。新的分阶段候选及预算见[CPU视频评估](2026-10-25-aws-cpu-video-option.md)。普通配额非零也不等于账户计划、库存、SSM及费用门槛全部通过。Nova Reel 1.0/1.1已EOL，不能作为当前可行方案。
 
 ## 状态
 
 本轮仅只读核查；未创建S3/EC2/SageMaker资源、未调用视频推理、未升级计划、未充值或订阅外部平台。**真实视频仍为0；尚未证明一条可以立即执行且零额外自付的路线。** 后续决策必须围绕AWS赠金可用的视频服务，不再把外部付费作为本次解决方案。
 
-已准备一份具体的账户/账单支持咨询草稿，询问Ray2赠金抵扣与并发0原因。**未发送**；向AWS工作人员发送消息需用户明确授权。这与提交8vCPU GPU配额申请不同，不得未经同意夹带配额申请或升级计划。
+用户已明确拒绝联系 AWS 客服。咨询草稿已取消，未发送；不继续申请客服授权，不申请配额，不升级计划。下一步仅评估无需审批、仍能使用现有赠金的技术候选。

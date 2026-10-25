@@ -3,24 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AniFlow｜仅用 AWS 赠金生成视频：核查纠正</title>
+<title>AniFlow｜AWS赠金视频：CPU候选与止损方案</title>
 <style>
 :root{color-scheme:light;--ink:#172735;--muted:#566773;--line:#dbe2e5;--accent:#086b61;--paper:#f5f7f7}*{box-sizing:border-box}body{margin:0;background:var(--paper);font:15px/1.75 "Microsoft YaHei",system-ui,sans-serif;color:var(--ink)}main{max-width:1140px;margin:auto;padding:40px 28px}header{border-bottom:1px solid var(--line);padding-bottom:24px}.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--accent)}h1{font-size:28px;line-height:1.45;margin:12px 0}h2{font-size:20px;margin:32px 0 12px}h3{font-size:16px;margin:0 0 8px}p{margin:10px 0}a{color:var(--accent);text-underline-offset:3px}small,.muted{color:var(--muted);font-size:12px}.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;padding:22px 0}.fact strong{display:block;font-size:24px}.fact span{color:var(--muted);font-size:12px}.note{border-left:3px solid var(--accent);background:white;padding:14px 18px;margin:14px 0}.scroll{overflow:auto;background:white;border:1px solid var(--line)}table{width:100%;border-collapse:collapse;min-width:820px;font-size:13px}th,td{padding:14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}th{font-weight:600;background:#edf2f1}tbody tr:last-child td{border-bottom:0}.best{color:var(--accent);font-weight:bold}.pick{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}button{border:1px solid var(--line);border-radius:5px;background:white;padding:10px 15px;color:var(--ink);font:inherit;cursor:pointer}button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:white}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #ba8c26;outline-offset:3px}.decision{background:white;border:1px solid var(--line);padding:20px;min-height:120px}.calc{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:20px 0}.calc label{display:block}input[type="range"]{width:100%;accent-color:var(--accent)}output{font-size:24px;color:var(--accent);font-weight:600}.limits{display:grid;grid-template-columns:1fr 1fr;gap:24px}details{border-top:1px solid var(--line);padding:15px 0}summary{font-weight:600;cursor:pointer}li{margin:7px 0}footer{border-top:1px solid var(--line);margin-top:30px;padding-top:18px} @media(max-width:700px){main{padding:24px 16px}h1{font-size:24px}.facts,.calc,.limits{grid-template-columns:1fr}.fact strong{font-size:21px}}@media print{body{background:white}main{max-width:none;padding:12px}.pick,input{display:none}.scroll{overflow:visible}table{min-width:0}details{break-inside:avoid}}
 </style>
 </head>
 <body><main>
-<header><div class="eyebrow">ANIFLOW / AWS 赠金视频 · 2026-10-25</div>
-<h1>唯一目标：在到期前，用已有 AWS 赠金生成真实视频。</h1>
-<p><strong>撤回此前“优先另付费API或外部GPU”的推荐。</strong>那不符合本次目标。当前不购买其他平台、不升级AWS计划、不申请GPU配额。</p></header>
-<h2>已确认的赠金事实</h2><p>预计剩余$49.96，控制台显示2026-10-30到期；估算约24小时更新，具体截止时刻未确认。五笔赠金完整适用清单都包含 <strong>AmazonBedrockFoundationModels</strong>。</p>
-<h2>Ray2：赠金产品匹配有证据，当前调用额度仍卡住</h2>
-<p>Bedrock托管Luma Ray2的官方计费服务代码正是AmazonBedrockFoundationModels，不能仅凭Marketplace一般条款排除。它不需要创建本人的EC2 GPU实例，可做首帧图生、5秒、9:16，保存MP4到S3。</p>
-<div class="note"><strong>实际账户限制：</strong>俄勒冈Ray2并发配额为0；官方默认1不能当作本账户可用。首次自动开通模型也不等于自动提升配额。Playground能打开，但S3创建提示已取消，没有创建或运行。</div>
-<p>官方基础价：540p5秒$3.75；720p5秒$7.50，另需明确S3和税费。尚无该账户实际抵扣账单，<strong>不能保证零自付、不能声称已经能生成</strong>。若选择Ray2，必须明确它不是H3。</p>
-<h2>SageMaker：配额独立，已查区域仍为0</h2><p>东京G/P GPU配额按账户实际值降序检查，最大仍为0；弗吉尼亚G GPU配额最大也为0。不能用CPU额度或官方默认值冒充已有GPU额度。其他区域没有全部扫描。</p>
-<p>新补查的弗吉尼亚、俄勒冈EC2 G/VT按需，以及弗吉尼亚、爱尔兰G/VT Spot也为0。之前东京、新加坡、悉尼的G按需/Spot同为0。没有据此断言全球所有GPU均不可用。</p>
-<h2>下一步的具体问题</h2><p>已准备账户/账单支持咨询稿，请AWS核实两件事：本账户赠金是否明确抵扣Ray2和S3；Ray2并发0是什么账户限制，是否有无需升级付款计划的正常开通或纠正途径。<strong>草稿未发送，向AWS工作人员发消息需用户明确授权。</strong>不夹带8vCPU申请，也不擅自升级或调用。</p>
-<p><a href="https://github.com/wpuu/AniFlow/blob/audit/2026-10-25-claude-grok-ui/docs/reviews/2026-10-25-aws-video-support-draft.md">查看完整咨询草稿</a> · <a href="https://github.com/wpuu/AniFlow/blob/audit/2026-10-25-claude-grok-ui/docs/reviews/2026-10-25-aws-credit-video-correction.md">查看账户核查纠正</a></p>
-<h2>当前结果</h2><p>未创建S3/EC2/SageMaker资源、未调用视频、未充值或升级。<strong>真实视频0条，尚未证明一条能立即执行且零额外自付的路线。</strong>本地工程测试不计作视频成功；不拿CPU盲烧赠金。</p>
-<footer><p><a href="https://github.com/wpuu/AniFlow/pull/7">Draft PR #7记录</a> · <a href="https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-luma-ai-ray2.html">Ray2官方模型卡</a> · <a href="https://docs.aws.amazon.com/bedrock/latest/userguide/quotas.html">Bedrock配额说明</a> · <a href="https://aws.amazon.com/bedrock/pricing/">官方价格</a></p><small>本页替代先前外部付费优先的对比页；仅展示核查结果，不执行账户或计费操作。</small></footer>
+<header><div class="eyebrow">ANIFLOW / AWS赠金视频 · 2026-10-25</div>
+<h1>不联系AWS客服，不申请配额，不另付费买视频。</h1>
+<p>目标仍是用已有AWS赠金，在到期前生成真实视频。<strong>客服草稿已取消，未发送；本轮没有启动或调用计费资源。</strong></p></header>
+<h2>换GPU型号能解决吗？</h2>
+<p>已查区域的g4dn/g5/g6/g6e受同一G/VT配额约束，换型号不能绕过0。东京P系列、已查SageMaker GPU也为0。Ray2虽然赠金计费产品匹配有依据，但本账户实际并发为0。尚未扫描全球所有区域，也没有已证实可立即生成的GPU路线。</p>
+<h2>新发现：普通CPU配额为5，可以评估另一条路径</h2>
+<div class="facts"><div class="fact"><strong>5 vCPU</strong><span>东京Standard实际额度，已观察使用0</span></div><div class="fact"><strong>$0.36708/小时</strong><span>r7a.xlarge基础Linux计算费</span></div><div class="fact"><strong>4 vCPU / 32 GiB</strong><span>候选机器；库存与计划资格未验证</span></div></div>
+<p>备选r7i.xlarge同为4 vCPU/32 GiB，$0.3192/小时。r7a有4物理核心，r7i有2物理核心/4线程，但尚未实测哪款生成更快。</p>
+<h2>CPU方案需要接受什么代价？</h2>
+<p>模型需切换为<strong>Wan2.2 TI2V-5B量化版</strong>，采用支持CPU-only的stable-diffusion.cpp。它不是H3，也不是已接通的ComfyUI后端。Wan模型Apache-2.0、推理器MIT；软件支持CPU不代表已证明速度。</p>
+<div class="note"><strong>没有4 vCPU机器的可靠完整速度基准。</strong>不能保证24小时内出片，也不能保证32 GiB足够。网上缺完整日志的“12分钟”案例不作为承诺依据。</div>
+<h2>建议：先2小时小样，再决定是否继续</h2>
+<ol><li>先确认账户计划、赠金及全部费用、SSM权限，并落实云端和实例内两套独立停止保护；任何门槛不满足就不启动。</li>
+<li>先用真实首图及提示词生成256×256、9帧样本。下载、编译、加载都计入2小时止损窗口，记录内存和各阶段耗时。</li>
+<li>小样成功后才评估288×512、25个真实生成帧、5fps播放的5秒实验片。明确低分辨率、低帧率，不能算H3/768p成功。</li>
+<li>总运行最多24小时，绝对截止不晚于2026-10-29 00:00北京时间。导出MP4后做SHA256和完整解码验证，再清理计费资源。</li></ol>
+<div class="scroll"><table><thead><tr><th>阶段</th><th>计算费</th><th>50GB gp3估算</th><th>预算要求</th></tr></thead><tbody>
+<tr><td>2小时小样</td><td>$0.73416</td><td>$0.01315</td><td>包含其他项目的目标≤$2</td></tr>
+<tr><td>24小时总上限</td><td>$8.80992</td><td>$0.15781</td><td>包含其他项目的目标≤$20</td></tr></tbody></table></div>
+<p>表内计算和磁盘合计约$0.75/$8.97，<strong>不是全包价或AWS硬性消费上限</strong>。网络、日志、保护资源等需先报价；停机后磁盘仍收费。Free/Paid计划与税费尚未明确，因此目前不能保证零自付，也没有启动许可。</p>
+<h2>当前决策</h2><p>若接受CPU/Wan的低画质实验，可继续准备启动门槛和保护措施；若需要稳定高画质批量产片，当前证据不支持推荐CPU。没有擅自切模型或修改前端。<strong>真实视频仍为0条。</strong></p>
+<footer><p><a href="https://github.com/wpuu/AniFlow/blob/audit/2026-10-25-claude-grok-ui/docs/reviews/2026-10-25-aws-cpu-video-option.md">完整方案与证据</a> · <a href="https://github.com/wpuu/AniFlow/pull/7">Draft PR #7</a> · <a href="https://github.com/leejet/stable-diffusion.cpp/blob/master/docs/build.md#build-cpu-only">CPU推理支持</a></p><small>赠金预计余额沿用当日$49.96估算，非实时；页面到期日为2026-10-30，准确截止时区未确认。此页为决策分析，不执行云端操作。</small></footer>
 </main></body></html>

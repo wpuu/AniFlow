@@ -1,0 +1,30 @@
+{
+  "observed_date": "2026-10-25",
+  "source": "User-authorized Ego browser; Tokyo AWS console DOM",
+  "cloud_mutations": 0,
+  "support_contact": "User declined; draft cancelled and never sent",
+  "standard_quota": {
+    "code": "L-1216C47A",
+    "applied_vcpus": 5,
+    "observed_usage_vcpus": 0,
+    "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+  },
+  "instances": {
+    "r7i.xlarge": {
+      "vcpus": 4,
+      "memory_gib": 32,
+      "linux_hourly_usd": 0.3192,
+      "capacity_verified": false,
+      "account_plan_eligibility_verified": false
+    },
+    "r7a.xlarge": {
+      "vcpus": 4,
+      "memory_gib": 32,
+      "linux_hourly_usd": 0.36708,
+      "capacity_verified": false,
+      "account_plan_eligibility_verified": false
+    }
+  },
+  "launch_allowed": false,
+  "real_video_count": 0
+}
