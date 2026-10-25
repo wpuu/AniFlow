@@ -63,5 +63,9 @@
     "Exact credit expiry timestamp/timezone and any tax exposure are unconfirmed",
     "Instance capacity and SSM target permissions are untested",
     "Two independent stop safeguards have not been deployed and verified"
-  ]
+  ],
+  "cpu_alternative_accepted": false,
+  "original_video_quality_required": true,
+  "aws_support_contact_authorized": false,
+  "additional_gpu_region_evidence": "2026-10-25-aws-gpu-remaining-evidence.json"
 }

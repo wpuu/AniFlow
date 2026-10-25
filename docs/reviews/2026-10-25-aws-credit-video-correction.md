@@ -27,7 +27,7 @@
 
 **SageMaker Processing/Notebook**：与EC2配额独立，AWS有ComfyUI Processing官方方案及Wan图生视频教程；本次已查区域实际GPU仍为0，尚未形成可启动资源。若其他区域已有可用额度，仍需对应模型、价格、赠金与双停机核查，不能声称已经可用。[Processing官方方案](https://aws.amazon.com/blogs/machine-learning/running-comfyui-workflows-on-amazon-sagemaker-ai-processing-jobs/)、[Wan图生视频官方教程](https://aws.amazon.com/blogs/machine-learning/generate-images-and-video-with-vllm-omni-on-sagemaker-ai-part-2/)。
 
-纯CPU补查：东京 Standard Applied 配额为5 vCPU；r7i.xlarge/r7a.xlarge 均为4 vCPU、32 GiB，Linux 计算费分别为$0.3192/$0.36708每小时。维护者支持 CPU-only Wan 推理，但没有可靠依据证明原定5秒/竖屏/768p能在当前预算和时限内完成，不据此盲开实例。新的分阶段候选及预算见[CPU视频评估](2026-10-25-aws-cpu-video-option.md)。普通配额非零也不等于账户计划、库存、SSM及费用门槛全部通过。Nova Reel 1.0/1.1已EOL，不能作为当前可行方案。
+纯CPU补查曾发现东京 Standard Applied 配额5 vCPU，但**用户已明确否决CPU，要求保留原视频质量**。该分阶段候选不实施；[CPU历史评估](2026-10-25-aws-cpu-video-option.md)仅留档，不再作为当前推荐，不切换模型、不降低分辨率/帧率。Nova Reel 1.0/1.1已EOL，不能作为当前可行方案。
 
 ## 状态
 

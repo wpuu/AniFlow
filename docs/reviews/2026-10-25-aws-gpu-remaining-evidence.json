@@ -1,0 +1,81 @@
+{
+  "date": "2026-10-25",
+  "source": "User-authorized Ego browser; applied account values",
+  "decision": "CPU rejected; original video quality retained",
+  "cloud_resources_created": 0,
+  "quota_requests_submitted": 0,
+  "support_messages_sent": 0,
+  "real_videos": 0,
+  "observations": [
+    {
+      "region": "eu-central-1",
+      "kind": "on-demand",
+      "quota_code": "L-DB2E81BA",
+      "applied_vcpus": 0,
+      "url": "https://eu-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+    },
+    {
+      "region": "eu-central-1",
+      "kind": "spot",
+      "quota_code": "L-3819A6DF",
+      "applied_vcpus": 0,
+      "url": "https://eu-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+    },
+    {
+      "region": "eu-west-2",
+      "kind": "on-demand",
+      "quota_code": "L-DB2E81BA",
+      "applied_vcpus": 0,
+      "url": "https://eu-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+    },
+    {
+      "region": "eu-west-2",
+      "kind": "spot",
+      "quota_code": "L-3819A6DF",
+      "applied_vcpus": 0,
+      "url": "https://eu-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+    },
+    {
+      "region": "ap-south-1",
+      "kind": "on-demand",
+      "quota_code": "L-DB2E81BA",
+      "applied_vcpus": 0,
+      "url": "https://ap-south-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+    },
+    {
+      "region": "ap-south-1",
+      "kind": "spot",
+      "quota_code": "L-3819A6DF",
+      "applied_vcpus": 0,
+      "url": "https://ap-south-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+    },
+    {
+      "region": "ca-central-1",
+      "kind": "on-demand",
+      "quota_code": "L-DB2E81BA",
+      "applied_vcpus": 0,
+      "url": "https://ca-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+    },
+    {
+      "region": "ca-central-1",
+      "kind": "spot",
+      "quota_code": "L-3819A6DF",
+      "applied_vcpus": 0,
+      "url": "https://ca-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+    },
+    {
+      "region": "sa-east-1",
+      "kind": "on-demand",
+      "quota_code": "L-DB2E81BA",
+      "applied_vcpus": 0,
+      "url": "https://sa-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+    },
+    {
+      "region": "sa-east-1",
+      "kind": "spot",
+      "quota_code": "L-3819A6DF",
+      "applied_vcpus": 0,
+      "url": "https://sa-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+    }
+  ]
+}
