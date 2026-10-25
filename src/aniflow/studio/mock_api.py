@@ -7,16 +7,17 @@ from __future__ import annotations
 
 import hashlib
 import json
-from contextlib import contextmanager
 import os
 import re
 import shutil
 import sqlite3
 import time
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from pathlib import Path
-from zipfile import ZipFile
-from typing import Callable, Iterator
+from typing import Annotated
 from uuid import uuid4
+from zipfile import ZipFile
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -156,7 +157,7 @@ def create_mock_app(
         }
 
     @app.post("/api/studio/mock/assets")
-    async def add_image(file: UploadFile = File(...)) -> dict:
+    async def add_image(file: Annotated[UploadFile, File(...)]) -> dict:
         content = await file.read(MAX_IMAGE_BYTES + 1)
         if len(content) > MAX_IMAGE_BYTES or len(content) < 12:
             raise HTTPException(413, "Image too large or empty")

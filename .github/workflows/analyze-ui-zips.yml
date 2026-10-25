@@ -138,3 +138,17 @@ jobs:
           python -m pip install playwright==1.56.0
           command -v google-chrome
           python scripts/e2e_studio_mock_ui.py
+
+  lint-studio:
+    name: Ruff focused Mock H3 source lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Ruff
+        run: python -m pip install 'ruff>=0.9,<1'
+      - name: Check new Studio service and unit tests
+        run: python -m ruff check src/aniflow/studio/mock_api.py tests/test_studio_mock_api.py
