@@ -1,0 +1,26 @@
+name: Analyze uploaded Claude and Grok UI zips
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - scripts/audit_uploaded_frontends.py
+      - .github/workflows/analyze-ui-zips.yml
+      - aniflow-ai-video-dashboard-claude.zip
+      - aniflow-ai-video-dashboard-grok.zip
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-archives:
+    name: Read-only ZIP analysis, no npm, no AWS
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Inspect both user-uploaded candidate ZIP files offline
+        run: python scripts/audit_uploaded_frontends.py
