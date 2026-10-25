@@ -7,7 +7,7 @@ import { useTaskEngine } from "./hooks/useTaskEngine";
 import type { CreatePayload, StatusFilter, Task } from "./types";
 
 export default function App() {
-  const { tasks, createTask, retryTask, removeTask, stats, error } = useTaskEngine();
+  const { tasks, createTask, retryTask, removeTask, stats, error, pending, recoverPending, forgetPending } = useTaskEngine();
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [active, setActive] = useState<Task | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -71,7 +71,26 @@ export default function App() {
         className="border-b border-amber-600/40 bg-amber-950/60 px-4 py-2 text-center text-xs font-semibold text-amber-200">
         本机模拟模式 · 未连接 AWS / ComfyUI / Agnes · 费用 $0 · 结果仅为蓝色测试 MP4
       </div>
-      {error && <div className="bg-rose-950/80 px-4 py-2 text-xs text-rose-200">Mock Bridge连接失败：{error}</div>}
+      {pending && (
+        <div data-testid="pending-unknown-create"
+          className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-500/30 bg-amber-950/75 px-4 py-3 text-xs text-amber-100">
+          <span>上次任务提交结果未知，已保存原请求编号。为避免未来 GPU 重复扣费，已暂停新的提交。</span>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => {
+              void recoverPending()
+                .then(task => flash(task ? "已找回原任务：" + task.id : "原任务尚未查到；继续保留保护"))
+                .catch(err => flash("核查未完成：" + String(err)));
+            }} className="rounded border border-amber-300/50 px-2 py-1">查询原任务</button>
+            <button type="button" onClick={() => {
+              if (window.confirm("无法查到不代表没有提交成功。放弃保护可能导致未来重复生成或扣费。确定仅清除本地保护？")) {
+                try { forgetPending(); flash("仅清除了本地保护，云端原任务没有被取消"); }
+                catch (err) { flash("操作失败：" + String(err)); }
+              }
+            }} className="rounded border border-amber-300/30 px-2 py-1 text-amber-200">确认放弃保护</button>
+          </div>
+        </div>
+      )}
+      {error && <div className="bg-rose-950/80 px-4 py-2 text-xs text-rose-200">Mock Bridge 提示：{error}</div>}
       <Header
         queued={stats.queued}
         running={stats.running}
@@ -80,7 +99,7 @@ export default function App() {
       />
 
       <main className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
-        <CreatePanel onSubmit={handleCreate} busyCount={stats.queued + stats.running} />
+        <CreatePanel onSubmit={handleCreate} busyCount={stats.queued + stats.running} disabled={Boolean(pending)} />
         <TaskBoard
           tasks={tasks}
           filter={filter}

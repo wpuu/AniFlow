@@ -97,6 +97,37 @@ def main() -> int:
                     assert job["id"] in page.locator("article").first.inner_text()
                     assert len(get_json("/api/studio/mock/jobs")["jobs"]) == 1
                     assert get_json("/api/studio/mock/health")["paid_request_count"] == 0
+                    # Simulate: server ACCEPTS create, browser loses response.
+                    # A mistaken automatic retry would create a third task.
+                    page.locator('input[type="file"]').set_input_files(str(frame))
+                    def lose_create_response(route):
+                        accepted = route.fetch()
+                        assert accepted.status == 202
+                        route.abort("failed")
+                    page.route("**/api/studio/mock/jobs", lose_create_response)
+                    page.get_by_role("button", name="生成视频").click()
+                    page.get_by_test_id("pending-unknown-create").wait_for(timeout=15000)
+                    assert page.get_by_role("button", name="生成视频").is_disabled()
+                    assert len(get_json("/api/studio/mock/jobs")["jobs"]) == 2
+                    pending = page.evaluate("localStorage.getItem('aniflow.mock.pending_submission.v1')")
+                    assert pending and "prompt" not in pending and "data:image" not in pending
+                    page.unroute("**/api/studio/mock/jobs")
+
+                    # Restart browser with recovery GET unavailable: keep guard.
+                    page.route("**/api/studio/mock/requests/*", lambda route: route.abort("failed"))
+                    page.reload(wait_until="domcontentloaded")
+                    page.get_by_test_id("pending-unknown-create").wait_for(timeout=15000)
+                    assert page.get_by_role("button", name="生成视频").is_disabled()
+                    assert len(get_json("/api/studio/mock/jobs")["jobs"]) == 2
+                    page.unroute("**/api/studio/mock/requests/*")
+                    page.get_by_role("button", name="查询原任务").click()
+                    page.wait_for_function(
+                        "() => localStorage.getItem('aniflow.mock.pending_submission.v1') === null",
+                        timeout=15000,
+                    )
+                    page.locator("article").first.wait_for(timeout=15000)
+                    assert len(get_json("/api/studio/mock/jobs")["jobs"]) == 2
+                    print("PASS_BROWSER_UNKNOWN_POST_RECOVERY_READ_ONLY_IDEMPOTENT_NO_REPOST")
                     context.close()
                     browser.close()
                 print("PASS_BROWSER_MOCK_IMAGE_UPLOAD_TASK_RESTORE_LOCAL_MP4_DOWNLOAD_NO_AWS")

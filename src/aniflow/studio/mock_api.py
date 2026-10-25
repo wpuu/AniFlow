@@ -190,6 +190,8 @@ def create_mock_app(
     def create_job(task: JobRequest) -> dict:
         if task.provider != "mock-h3":
             raise HTTPException(422, "Real AWS generation is not enabled")
+        if not re.fullmatch(r"[A-Za-z0-9_-]{8,128}", task.idempotency_key):
+            raise HTTPException(422, "Invalid idempotency key")
         if not LABEL_RE.fullmatch(task.project_id) or not LABEL_RE.fullmatch(task.shot_id):
             raise HTTPException(422, "Unsafe project/shot ID")
         if task.aspect_ratio not in ("9:16", "16:9", "1:1"):
@@ -226,6 +228,20 @@ def create_mock_app(
                 raise HTTPException(500, "Failed to commit mock job")
             if row["payload_hash"] != payload_hash:
                 raise HTTPException(409, "Idempotency key reused for different payload")
+        return status_for(row)
+
+    @app.get("/api/studio/mock/requests/{request_key}")
+    def get_submission_by_key(request_key: str) -> dict:
+        """Read-only recovery after POST response loss; never create a second job."""
+        if not re.fullmatch(r"[A-Za-z0-9_-]{8,128}", request_key):
+            raise HTTPException(404, "Unknown request key")
+        with connect() as cx:
+            row = cx.execute(
+                "SELECT * FROM jobs WHERE idempotency_key = ?", (request_key,)
+            ).fetchone()
+        if row is None:
+            # A preceding POST might still be processing: 404 is NOT proof of rejection.
+            raise HTTPException(404, "Request not indexed yet; do not auto-resubmit")
         return status_for(row)
 
     @app.get("/api/studio/mock/jobs/{job_id}")

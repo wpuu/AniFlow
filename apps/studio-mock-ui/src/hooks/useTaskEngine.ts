@@ -3,6 +3,8 @@ import type { CreatePayload, Task } from "../types";
 
 const API = "/api/studio/mock";
 const HIDDEN_KEY = "aniflow.mock.hidden_ids.v1";
+const PENDING_KEY = "aniflow.mock.pending_submission.v1";
+
 interface ServerJob {
   id: string; project_id: string; shot_id: string; image_id: string;
   prompt: string; negative_prompt: string; aspect_ratio: Task["aspectRatio"];
@@ -10,6 +12,26 @@ interface ServerJob {
   status: "queued" | "running" | "completed" | "failed";
   progress: number; video_download_path: string | null;
   actual_cost_usd: number; simulation: boolean; gpu_connected: boolean;
+}
+
+export interface PendingSubmission {
+  key: string;
+  createdAt: number;
+}
+
+function readPending(): PendingSubmission | null {
+  try {
+    const obj: unknown = JSON.parse(localStorage.getItem(PENDING_KEY) || "null");
+    if (obj && typeof obj === "object" && "key" in obj && "createdAt" in obj) {
+      const key = (obj as {key:unknown}).key;
+      const createdAt = (obj as {createdAt:unknown}).createdAt;
+      if (typeof key === "string" && /^[A-Za-z0-9_-]{8,128}$/.test(key)
+          && typeof createdAt === "number" && Number.isFinite(createdAt)) {
+        return {key, createdAt};
+      }
+    }
+  } catch { /* no cross-origin or external access; uncertain state stays blocked */ }
+  return null;
 }
 function toTask(job: ServerJob): Task {
   if (job.simulation !== true || job.gpu_connected !== false || job.provider !== "mock-h3") {
@@ -41,8 +63,20 @@ export function useTaskEngine() {
       return new Set(Array.isArray(v) ? v.filter((i)=>typeof i==="string") : []);
     } catch { return new Set(); }
   });
+  const [pending, setPending] = useState<PendingSubmission | null>(readPending);
+  const pendingRef = useRef<PendingSubmission | null>(pending);
   const [error, setError] = useState<string|null>(null);
   const submitting = useRef(false);
+
+  const persistPending = useCallback((next: PendingSubmission | null) => {
+    // Persist the idempotency key before sending any create POST.
+    // No prompt, image, account or AWS credentials are stored here.
+    if (next) localStorage.setItem(PENDING_KEY, JSON.stringify(next));
+    else localStorage.removeItem(PENDING_KEY);
+    pendingRef.current = next;
+    setPending(next);
+  }, []);
+
   const refresh = useCallback(async () => {
     const response = await fetch(API + "/jobs?limit=100", {cache: "no-store"});
     const body = await jsonOrError(response);
@@ -52,14 +86,41 @@ export function useTaskEngine() {
     setAllTasks(body.jobs.map(toTask));
     setError(null);
   }, []);
+
+  const recoverPending = useCallback(async (): Promise<Task | null> => {
+    const attempt = pendingRef.current;
+    if (!attempt) return null;
+    const response = await fetch(API + "/requests/" + encodeURIComponent(attempt.key), {
+      cache: "no-store",
+    });
+    if (response.status === 404) {
+      setError("原提交尚未查到；保留请求保护，不会自动再次创建。可稍后重查。");
+      return null;
+    }
+    const accepted = toTask(await jsonOrError(response));
+    // Keep the guard if local history synchronization fails.
+    await refresh();
+    persistPending(null);
+    setAllTasks(prev => [accepted, ...prev.filter(t=>t.id!==accepted.id)]);
+    setError(null);
+    return accepted;
+  }, [refresh, persistPending]);
+
   useEffect(() => {
     void refresh().catch(e=>setError(String(e)));
+    if (pendingRef.current) {
+      void recoverPending().catch(e=>setError(
+        "未知提交暂未核实：" + String(e) + "。不会再次提交。"));
+    }
     const id=window.setInterval(()=>{void refresh().catch(e=>setError(String(e)));},1600);
     return ()=>window.clearInterval(id);
-  },[refresh]);
+  },[refresh, recoverPending]);
 
   const createTask = useCallback(async(payload:CreatePayload):Promise<Task>=>{
     if (submitting.current) throw new Error("上次提交仍在进行，未创建重复任务");
+    if (pendingRef.current) {
+      throw new Error("上次创建请求结果未确认，请先点击「查询原任务」；禁止再次创建以避免重复扣费");
+    }
     if (!payload.firstFrame?.startsWith("data:image/")) {
       throw new Error("请先上传电脑中的 PNG/JPG 首帧，示例网络图片不能提交");
     }
@@ -74,7 +135,9 @@ export function useTaskEngine() {
       const key = typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
         : "mock-" + Date.now() + "-" + Math.random().toString(36).slice(2);
-      const result:ServerJob = await jsonOrError(await fetch(API + "/jobs",{
+      // Guard is durable before the potentially chargeable operation.
+      persistPending({key, createdAt:Date.now()});
+      const response = await fetch(API + "/jobs",{
         method:"POST", headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           project_id:"SnowDirector", shot_id:"MYCL001-01",
@@ -83,15 +146,27 @@ export function useTaskEngine() {
           duration_seconds:payload.duration, aspect_ratio:payload.aspectRatio,
           idempotency_key:key, provider:"mock-h3",
         }),
-      }));
-      if (!result.simulation) throw new Error("非模拟响应已拒绝");
+      });
+      if (!response.ok && [400, 401, 403, 404, 422].includes(response.status)) {
+        // Explicit server rejection means no job accepted under this key.
+        persistPending(null);
+      }
+      const result:ServerJob = await jsonOrError(response);
       const created=toTask(result);
+      persistPending(null);
       setAllTasks(prev=>[created,...prev.filter(t=>t.id!==created.id)]);
       return created;
     } finally {
       submitting.current = false;
     }
-  },[]);
+  },[persistPending]);
+
+  const forgetPending = useCallback(() => {
+    // Explicit owner acknowledgement only. May leave an accepted remote job.
+    if (submitting.current) throw new Error("提交请求仍在发送，不允许放弃保护");
+    persistPending(null);
+    setError(null);
+  }, [persistPending]);
 
   const removeTask=useCallback((id:string)=>{
     setHidden(prev=>{
@@ -111,5 +186,5 @@ export function useTaskEngine() {
     failed:tasks.filter(t=>t.status==="failed").length,
     todayCost:0,total:tasks.length,tick:0,
   }),[tasks]);
-  return {tasks,createTask,retryTask,removeTask,stats,error};
+  return {tasks,createTask,retryTask,removeTask,stats,error,pending,recoverPending,forgetPending};
 }

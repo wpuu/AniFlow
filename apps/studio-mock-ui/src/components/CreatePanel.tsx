@@ -15,9 +15,10 @@ import { ModelDot } from "./StatusBadge";
 interface CreatePanelProps {
   onSubmit: (payload: CreatePayload) => void;
   busyCount: number;
+  disabled?: boolean;
 }
 
-export function CreatePanel({ onSubmit, busyCount }: CreatePanelProps) {
+export function CreatePanel({ onSubmit, busyCount, disabled = false }: CreatePanelProps) {
   const [prompt, setPrompt] = useState(PROMPT_PRESETS[0]);
   const [negativePrompt, setNegativePrompt] = useState("抖动, 过曝, 文字水印, 畸变, 低清晰度");
   const [modelId, setModelId] = useState(MODELS[0].id);
@@ -46,7 +47,7 @@ export function CreatePanel({ onSubmit, busyCount }: CreatePanelProps) {
   }
 
   function submit() {
-    if (!prompt.trim() || !firstFrame?.startsWith("data:image/")) return;
+    if (disabled || !prompt.trim() || !firstFrame?.startsWith("data:image/")) return;
     onSubmit({
       prompt,
       negativePrompt,
@@ -346,7 +347,7 @@ export function CreatePanel({ onSubmit, busyCount }: CreatePanelProps) {
         </div>
         <button
           onClick={submit}
-          disabled={!prompt.trim() || !firstFrame?.startsWith("data:image/")}
+          disabled={disabled || !prompt.trim() || !firstFrame?.startsWith("data:image/")}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-[#062824] transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Sparkles className="h-4 w-4" />

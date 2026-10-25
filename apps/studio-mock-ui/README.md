@@ -21,3 +21,7 @@ python scripts/run_studio_mock.py
 这里实现的是**Mock工程通路**，尚未连接真实 H3/ComfyUI、AWS EC2、SSM、自动关机，也不代表真实5秒图生视频成功。任何 AWS 的实际创建、启动、消费都需要重新做预算/实例/许可与显存核验并经用户允许。
 
 验收证据：[2026-10-25 Mock Studio CI](https://github.com/wpuu/AniFlow/actions/runs/40152956282)，包括真实Chromium首帧上传、任务创建、下载的Mock MP4哈希验证和刷新后任务恢复。独立实验目录；不得当成真实AWS部署包。
+
+## P0-036 提交可靠性
+
+提交前在浏览器持久保留**只有请求编号和时间戳**的防重复保护；若服务器已接受但浏览器丢失响应，不自动重发视频创建请求。页面会显示“查询原任务”只读操作；无法确认则停止新提交，除非用户明确同意放弃保护。SQLite 通过 `GET /api/studio/mock/requests/{idempotency_key}` 找回受理记录。详细情况见 `docs/reviews/2026-10-25-p0036-unknown-submission-hardening.md`。依然只生成蓝色视频假样片，不开AWS。

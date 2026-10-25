@@ -41,10 +41,16 @@ def test_upload_create_resume_and_download_are_local_durable(tmp_path: Path) -> 
         img = client.post("/api/studio/mock/assets", files={"file": ("snow.png", ONE_PIXEL_PNG, "image/png")})
         assert img.status_code == 200
         image_id = img.json()["image_id"]
+        assert client.get("/api/studio/mock/requests/test-owner-click-001").status_code == 404
         first = client.post("/api/studio/mock/jobs", json=payload(image_id))
         assert first.status_code == 202
         job_id = first.json()["id"]
         assert job_id.startswith("mock-")
+        # Recover accepted request after client has lost its create response.
+        recovered = client.get("/api/studio/mock/requests/test-owner-click-001")
+        assert recovered.status_code == 200
+        assert recovered.json()["id"] == job_id
+        assert recovered.json()["simulation"] is True
         assert first.json()["status"] == "queued"
         assert first.json()["simulation"] is True
         assert first.json()["actual_cost_usd"] == 0
@@ -86,5 +92,7 @@ def test_rejects_unsafe_inputs_and_idempotency_collision(tmp_path: Path) -> None
         assert client.post("/api/studio/mock/jobs", json=changed).status_code == 409
         assert client.post("/api/studio/mock/jobs", json={**p, "idempotency_key": "other-key-001", "provider":"minimax-h3-aws"}).status_code == 422
         assert client.post("/api/studio/mock/jobs", json={**p, "idempotency_key": "third-key-001", "project_id":"../evil"}).status_code == 422
+        assert client.post("/api/studio/mock/jobs", json={**p, "idempotency_key": "../unsafe-key"}).status_code == 422
+        assert client.get("/api/studio/mock/requests/unknown-key-1").status_code == 404
         assert client.get("/api/studio/mock/jobs/unknown").status_code == 404
         assert client.get("/api/studio/mock/jobs?limit=1000").status_code == 422
