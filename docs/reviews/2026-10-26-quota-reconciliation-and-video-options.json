@@ -1,0 +1,595 @@
+{
+  "review_date": "2026-10-26",
+  "recorded_at_utc": "2026-10-26T05:37:15.704550+00:00",
+  "status": "WORKSPACES_ROOT_CAUSE_UNKNOWN_TOKYO_GAMELIFT_H3_PREFERRED_CANDIDATE_NOT_CREATED",
+  "scope": "Existing account evidence and public official sources only; this review performs no AWS resource mutation.",
+  "constraints": {
+    "use_existing_aws_credits_before": "2026-10-30",
+    "exact_credit_expiry_time_and_timezone": null,
+    "cash_cap_usd": 1,
+    "initial_credit_service_cost_target_usd": 20,
+    "gpu_max_runtime_seconds": 14400,
+    "quota_increase_allowed": false,
+    "paid_plan_upgrade_allowed": false,
+    "aws_support_request_allowed": false,
+    "external_self_funded_platform_allowed": false,
+    "quality_reduction_allowed": false,
+    "model_change_requires_user_agreement": true
+  },
+  "account_evidence": {
+    "provenance": "Lead agent read the authenticated AWS console; this recording agent only read the local whitelisted CloudTrail artifact.",
+    "same_account_comparison": {
+      "same": true,
+      "account_id_included": false
+    },
+    "tokyo_workspaces": {
+      "region": "ap-northeast-1",
+      "graphics_g6_4xlarge": {
+        "quota_code": "L-40A36AF9",
+        "quota_name": "Graphics.g6.4xlarge WorkSpaces",
+        "applied": 1,
+        "aws_default": 0,
+        "usage": 0
+      },
+      "total_workspaces": {
+        "applied": 1,
+        "aws_default": 1,
+        "usage": 0
+      },
+      "bundle": {
+        "id": "wsb-9zg6r5j55",
+        "compute_type": "Graphics.g6.4xlarge",
+        "public": true,
+        "os": "Windows Server 2022",
+        "vcpus": 16,
+        "system_ram_gib": 64,
+        "gpu_nominal_vram_gib": 24,
+        "provenance": "Lead re-read the actual same public bundle in Tokyo."
+      }
+    },
+    "create_event": {
+      "event_time": "2026-10-26T04:07:58Z",
+      "event_source": "workspaces.amazonaws.com",
+      "event_name": "CreateWorkspaces",
+      "aws_region": "ap-northeast-1",
+      "event_id": "e4c2d63e-9e7a-466b-9033-f4398bcb38bd",
+      "request_id": "a089275f-d1d1-4151-a49c-802ad8b2116f",
+      "request_item_count": 1,
+      "bundle_id": "wsb-9zg6r5j55",
+      "running_mode": "AUTO_STOP",
+      "autostop_timeout_minutes": 120,
+      "root_volume_gib": 200,
+      "user_volume_gib": 150,
+      "experiment_id": "aniflow-h3-tokyo-20261026-a",
+      "error_code": "ResourceLimitExceededException",
+      "reported_graphics_limit": 0,
+      "whitelisted_error_message": "You cannot create more than 0 number of Graphics.g6.4xlarge WorkSpaces in this region. Request a limit increase by contacting AWS Support.",
+      "evidence_workspace_relative_path": "work/aws-quota-reconciliation-20261026/cloudtrail-create-whitelisted.json",
+      "evidence_sha256": "cefd23bfbf3f46e454fb2892360285e321c5b446a81501eef327a95e1f771d51",
+      "excluded_fields": [
+        "accountId",
+        "userIdentity",
+        "userName",
+        "directoryId",
+        "authentication tokens",
+        "encrypted token values"
+      ]
+    },
+    "tokyo_sagemaker": {
+      "status": "CHECKED_BY_LEAD",
+      "instance_types": [
+        "ml.g6e.2xlarge",
+        "ml.g6.4xlarge",
+        "ml.g5.4xlarge"
+      ],
+      "all_checked_purposes_applied": 0,
+      "scope_note": "Only Tokyo and the listed types/purposes checked by the lead; not a statement that every region is zero."
+    },
+    "tokyo_appstream": {
+      "status": "CHECKED_BY_LEAD",
+      "image_builder_quotas": [
+        {
+          "family": "G6e",
+          "quota_code": "L-C9C1E1C3",
+          "applied": 0
+        },
+        {
+          "family": "G6",
+          "quota_code": "L-4EFC345A",
+          "applied": 0
+        }
+      ]
+    },
+    "ohio_ec2": {
+      "region": "us-east-2",
+      "quota_name": "Running On-Demand G and VT instances",
+      "applied_vcpus": 8,
+      "aws_default_vcpus": 0,
+      "status": "CHECKED_TODAY_BY_LEAD",
+      "inventory_confirmed": false,
+      "instance_created": false
+    },
+    "other_sagemaker_regions": {
+      "status": "TEN_ENABLED_LICENSE_COMPATIBLE_REGIONS_SCANNED_BY_LEAD",
+      "scope": [
+        "ap-northeast-1",
+        "ap-northeast-3",
+        "ap-southeast-1",
+        "ap-southeast-2",
+        "ap-east-1",
+        "ap-east-2",
+        "ap-south-1",
+        "ap-south-2",
+        "ca-central-1",
+        "sa-east-1"
+      ],
+      "filters": [
+        "ml.g",
+        "ml.p"
+      ],
+      "method": "Each filter sorted by Applied descending; observed maximum Applied zero. No exact filtered_count retained because aria counts may be stale.",
+      "observed_maxima": {
+        "ap-northeast-1": {
+          "ml.g": {
+            "sorted_descending": true,
+            "max_applied": 0,
+            "observed_at_utc": "2026-10-26T05:18:18.271Z"
+          },
+          "ml.p": {
+            "sorted_descending": true,
+            "max_applied": 0,
+            "observed_at_utc": "2026-10-26T05:18:19.173Z"
+          }
+        },
+        "ap-northeast-3": {
+          "ml.g": {
+            "sorted_descending": true,
+            "max_applied": 0,
+            "observed_at_utc": "2026-10-26T05:19:02.036Z"
+          },
+          "ml.p": {
+            "sorted_descending": true,
+            "max_applied": 0,
+            "observed_at_utc": "2026-10-26T05:19:02.683Z"
+          }
+        },
+        "ap-southeast-1": {
+          "ml.g": {
+            "sorted_descending": true,
+            "max_applied": 0,
+            "observed_at_utc": "2026-10-26T05:19:06.050Z"
+          },
+          "ml.p": {
+            "sorted_descending": true,
+            "max_applied": 0,
+            "observed_at_utc": "2026-10-26T05:19:06.936Z"
+          }
+        },
+        "ap-southeast-2": {
+          "ml.g": {
+            "sorted_descending": true,
+            "max_applied": 0,
+            "observed_at_utc": "2026-10-26T05:19:09.329Z"
+          },
+          "ml.p": {
+            "sorted_descending": true,
+            "max_applied": 0,
+            "observed_at_utc": "2026-10-26T05:19:10.394Z"
+          }
+        },
+        "ap-east-1": {
+          "ml.g": {
+            "sorted_descending": true,
+            "max_applied": 0,
+            "observed_at_utc": "2026-10-26T05:21:32.789Z"
+          },
+          "ml.p": {
+            "sorted_descending": true,
+            "max_applied": 0,
+            "observed_at_utc": "2026-10-26T05:21:33.428Z"
+          }
+        },
+        "ap-east-2": {
+          "ml.g": {
+            "sorted_descending": true,
+            "max_applied": 0,
+            "observed_at_utc": "2026-10-26T05:21:35.832Z"
+          },
+          "ml.p": {
+            "sorted_descending": true,
+            "max_applied": 0,
+            "observed_at_utc": "2026-10-26T05:21:36.554Z"
+          }
+        },
+        "ap-south-1": {
+          "ml.g": {
+            "sorted_descending": true,
+            "max_applied": 0,
+            "observed_at_utc": "2026-10-26T05:21:39.095Z"
+          },
+          "ml.p": {
+            "sorted_descending": true,
+            "max_applied": 0,
+            "observed_at_utc": "2026-10-26T05:21:40.060Z"
+          }
+        },
+        "ap-south-2": {
+          "ml.g": {
+            "sorted_descending": true,
+            "max_applied": 0,
+            "observed_at_utc": "2026-10-26T05:22:13.081Z"
+          },
+          "ml.p": {
+            "sorted_descending": true,
+            "max_applied": 0,
+            "observed_at_utc": "2026-10-26T05:22:14.101Z"
+          }
+        },
+        "ca-central-1": {
+          "ml.g": {
+            "sorted_descending": true,
+            "max_applied": 0,
+            "observed_at_utc": "2026-10-26T05:22:17.986Z"
+          },
+          "ml.p": {
+            "sorted_descending": true,
+            "max_applied": 0,
+            "observed_at_utc": "2026-10-26T05:22:19.265Z"
+          }
+        },
+        "sa-east-1": {
+          "ml.g": {
+            "sorted_descending": true,
+            "max_applied": 0,
+            "observed_at_utc": "2026-10-26T05:22:22.683Z"
+          },
+          "ml.p": {
+            "sorted_descending": true,
+            "max_applied": 0,
+            "observed_at_utc": "2026-10-26T05:22:23.807Z"
+          }
+        }
+      },
+      "evidence_workspace_relative_path": "work/aws-quota-reconciliation-20261026/sagemaker-regional-readback.json",
+      "evidence_sha256": "5bbe36f75b52a85cb918c65475b3585877ff317ccf3202340234dbb59b2efa03",
+      "outside_this_scope_not_asserted": true
+    },
+    "tokyo_gamelift_streams": {
+      "region": "ap-northeast-1",
+      "provenance": "Lead read authenticated Ego Service Quotas; this recorder did not access the account.",
+      "gen6n_gpu_quota": {
+        "quota_code": "L-9F99CEA2",
+        "applied": 1,
+        "aws_default": 0,
+        "scope": "GameLift Streams Gen6n GPUs in ap-northeast-1, separate from EC2 and WorkSpaces quotas.",
+        "capacity_or_launch_verified": false
+      },
+      "gen6e_gpu_quota": {
+        "quota_code": "L-BD8BFCD5",
+        "applied": 0,
+        "aws_default": 0
+      },
+      "prior_credit_service_evidence": [
+        {
+          "workspace_relative_path": "work/aws-audit-20261025/credit-services-0.txt",
+          "contains_service": "Amazon GameLift Streams",
+          "sha256": "03b1a58ad17b15a14aa5c3aa2883a4d7742fb9b0ce87c81e739796568d50c232",
+          "evidence_date": "2026-10-25"
+        },
+        {
+          "workspace_relative_path": "work/aws-audit-20261025/credit-services-1.txt",
+          "contains_service": "Amazon GameLift Streams",
+          "sha256": "03b1a58ad17b15a14aa5c3aa2883a4d7742fb9b0ce87c81e739796568d50c232",
+          "evidence_date": "2026-10-25"
+        },
+        {
+          "workspace_relative_path": "work/aws-audit-20261025/credit-services-2.txt",
+          "contains_service": "Amazon GameLift Streams",
+          "sha256": "03b1a58ad17b15a14aa5c3aa2883a4d7742fb9b0ce87c81e739796568d50c232",
+          "evidence_date": "2026-10-25"
+        },
+        {
+          "workspace_relative_path": "work/aws-audit-20261025/credit-services-3.txt",
+          "contains_service": "Amazon GameLift Streams",
+          "sha256": "03b1a58ad17b15a14aa5c3aa2883a4d7742fb9b0ce87c81e739796568d50c232",
+          "evidence_date": "2026-10-25"
+        },
+        {
+          "workspace_relative_path": "work/aws-audit-20261025/credit-services-4.txt",
+          "contains_service": "Amazon GameLift Streams",
+          "sha256": "03b1a58ad17b15a14aa5c3aa2883a4d7742fb9b0ce87c81e739796568d50c232",
+          "evidence_date": "2026-10-25"
+        }
+      ],
+      "current_balance_expiry_or_all_ancillary_services_revalidated_by_this_recorder": false
+    },
+    "tokyo_deadline_cloud": {
+      "quota_name": "On-Demand G",
+      "quota_code": "L-5D6BA491",
+      "applied": 0,
+      "provenance": "Lead authenticated console read"
+    },
+    "tokyo_lightsail": {
+      "quota_name": "Instances",
+      "quota_code": "L-4259AF9B",
+      "applied": 4,
+      "aws_default": 20,
+      "description_measurement_unit": "vCPU",
+      "research_gpu_eligibility": "NOT_CONFIRMED",
+      "note": "Do not interpret this as four GPU instances or permission to use Lightsail Research GPU."
+    }
+  },
+  "reconciliation": {
+    "excluded_explanations": [
+      "wrong AWS account",
+      "wrong Region",
+      "wrong requested public bundle/compute type",
+      "more than one WorkSpace requested"
+    ],
+    "observed_contradiction": "Same-account Tokyo exact G6.4xlarge Applied=1 and usage=0, total WorkSpaces Applied=1 and usage=0, but CreateWorkspaces reports allowed G6.4xlarge count=0.",
+    "root_cause": "UNKNOWN",
+    "unproven_explanations": [
+      "Free Plan restriction",
+      "customer EC2 parent G/VT quota",
+      "Graphics-family shared parent quota",
+      "Service Quotas/backend synchronization defect"
+    ],
+    "correction": "Applied=1 was insufficient evidence that the backend would permit creation. It must not be presented as a verified launch capability.",
+    "repeated_create_attempt_as_diagnostic": false
+  },
+  "options": [
+    {
+      "id": "tokyo-gamelift-gen6n-pro-h3",
+      "classification": "PREFERRED_CANDIDATE_PENDING_USER_SERVICE_SEMANTICS_ACCEPTANCE_AND_PREFLIGHT",
+      "service": "Amazon GameLift Streams",
+      "region": "ap-northeast-1",
+      "stream_class": "gen6n_pro",
+      "runtime": "Ubuntu 22.04 LTS",
+      "model": "MiniMax H3 original pruned_int8_convrot four-file path",
+      "public_hardware": {
+        "vcpus": 16,
+        "ram_gb": 64,
+        "gpu": "NVIDIA L4",
+        "gpu_memory_gb": 24,
+        "tenancy": "one concurrent stream per full GPU"
+      },
+      "official_driver_versions": {
+        "linux_or_proton": "580.95.05",
+        "windows": "581.42",
+        "actual_target_verified": false
+      },
+      "workflow_target": {
+        "native_width": 800,
+        "native_height": 1376,
+        "generated_frames": 124,
+        "fps": 24,
+        "steps": 20,
+        "turbo": false,
+        "attention": "default",
+        "diffusion_precision": "original official pruned_int8_convrot",
+        "final_width": 774,
+        "final_height": 1376,
+        "final_frames": 120,
+        "final_seconds": 5,
+        "final_crop_left": 12,
+        "final_crop_right": 14,
+        "generated_video_resize_or_frame_interpolation": false
+      },
+      "price_estimate": {
+        "source": "Lead read the official Tokyo Linux pricing; public pricing documentation separately confirms allocated-capacity billing.",
+        "usd_per_allocated_gpu_hour": 2.3028,
+        "assumed_allocated_hours": 2,
+        "gpu_compute_subtotal_usd": 4.6056,
+        "additional_items": [
+          "content storage",
+          "private S3 storage/requests",
+          "network transfer",
+          "temporary safety/monitoring usage where chargeable"
+        ],
+        "total_credit_service_cost_target_usd": 20,
+        "net_cash_cap_usd": 1,
+        "estimate_not_actual_bill": true,
+        "deallocation_delay_not_instantaneous": true
+      },
+      "proposed_preflight": {
+        "minutes": 10,
+        "actions": [
+          "Check real GPU identity/usable VRAM",
+          "Check real driver version and CUDA13 compatibility",
+          "Check packaged user-space dependencies and writable application paths",
+          "Check admin-shell permissions and private result upload/download path"
+        ],
+        "failure_action": "Immediately stop the experiment and release/delete allocated capacity; do not download/load H3 or submit video after failure.",
+        "performed": false
+      },
+      "access_and_bridge": {
+        "admin_shell_api": "CreateStreamSessionAdminShell",
+        "connection_tool": "SSM Session Manager plugin",
+        "general_ssm_port_forwarding_proven": false,
+        "root_access_granted": false,
+        "permission_scope": "Same access level as the application, not an unrestricted host administrator.",
+        "temporary_app_role": "GameLiftStreams-prefixed role assumed by gameliftstreams.amazonaws.com; private experiment-prefix S3 only.",
+        "result_path": "Private S3 result objects, then new Bridge adapter downloads and verifies local MP4.",
+        "bridge_adapter_implemented": false,
+        "adapter_work_this_round": false
+      },
+      "session_differences": {
+        "requires_webrtc_client_connection": true,
+        "connection_timeout_seconds_maximum": 3600,
+        "connection_timeout_default_seconds": 120,
+        "connected_no_user_input_termination_minutes": 60,
+        "session_end_terminates_app_processes": true,
+        "session_end_discards_container_filesystem_modifications": true,
+        "can_claim_four_hour_offline_continuation": false,
+        "admin_shell_connection_max_minutes": 30,
+        "admin_shell_connection_idle_minutes": 15,
+        "same_existing_prompt_must_not_be_resubmitted_after_uncertain_disconnect": true
+      },
+      "proposed_safety": {
+        "status": "DESIGN_ONLY_NOT_DEPLOYED",
+        "initial_group_capacity": {
+          "AlwaysOnCapacity": 0,
+          "MaximumCapacity": 0,
+          "TargetIdleCapacity": 0
+        },
+        "primary_deadline_minutes_after_predeclared_t0": 90,
+        "primary_actions": [
+          "Terminate all experiment stream sessions",
+          "Set AlwaysOnCapacity, MaximumCapacity and TargetIdleCapacity to zero",
+          "Poll real AllocatedCapacity to zero; do not rely on request acceptance"
+        ],
+        "independent_backup_deadline_minutes_after_predeclared_t0": 95,
+        "independent_backup_action": "DeleteStreamGroup",
+        "delete_allowed_for_any_group_status_per_official_guide": true,
+        "delete_async_and_retry_required": true,
+        "delete_completion_evidence": "GetStreamGroup returns ResourceNotFound, not just DELETING or HTTP204.",
+        "gpu_absolute_authorized_max_seconds": 14400,
+        "session_terminated_is_not_billing_stopped": true,
+        "protect_before_positive_capacity": true,
+        "stop_inference_early_if_schedule_or_backup_not_verified": true,
+        "residual_storage_costs": "Deleting the stream group releases compute; retained application content and private S3 objects can still incur storage charges and require separate review/cleanup after verified local retrieval."
+      },
+      "ready_to_launch": false,
+      "inventory_or_capacity_allocated": false,
+      "inference_performed": false,
+      "quality_or_runtime_benchmarked": false,
+      "requires": [
+        "User decision accepting the session lifecycle and disconnection differences",
+        "Package and validate Linux user-space H3 dependencies without requiring root",
+        "New Bridge private-S3 adapter and actual local integrity/recovery test",
+        "Zero-capacity group and verified independent release/delete protection before any positive capacity",
+        "Actual ten-minute GPU/CUDA/driver preflight",
+        "Fresh credit validity/balance and ancillary charge eligibility check",
+        "Single real task with recorded prompt_id, VRAM/runtime/cost and verified final local MP4"
+      ]
+    },
+    {
+      "id": "tokyo-workspaces-h3",
+      "classification": "BLOCKED_BY_OBSERVED_CREATE_REJECTION",
+      "model": "MiniMax H3",
+      "reason": "Exact requested WorkSpace still rejected at reported limit zero; root cause unresolved. No claim of actual GPU availability."
+    },
+    {
+      "id": "ohio-g7e-wan-a14b",
+      "classification": "CANDIDATE_PENDING_USER_MODEL_CHANGE_AND_PREFLIGHT",
+      "region": "us-east-2",
+      "instance_type": "g7e.2xlarge",
+      "public_hardware": {
+        "vcpus": 8,
+        "system_ram_gib": 64,
+        "gpu_memory_gb": 96
+      },
+      "model": "Wan2.2-I2V-A14B",
+      "official_model_license_label": "Apache-2.0",
+      "desired_native_output": {
+        "width": 864,
+        "height": 1536,
+        "seconds": 5,
+        "fps": 24,
+        "upscale_or_interpolation_substitute": false
+      },
+      "official_example_scope": "Official I2V-A14B example specifies at least 80 GB VRAM for its 720p-area single-GPU command, not a tested 864x1536/5s result.",
+      "quality_equivalence_to_h3": "NOT_ESTABLISHED",
+      "native_target_memory_and_runtime_benchmarked": false,
+      "ready_to_launch": false,
+      "requires": [
+        "explicit agreement to change model from H3",
+        "actual Ohio instance-type offering and capacity check",
+        "current exact price and all ancillary charge/credit mapping",
+        "reliable independent dual stop guards before launch",
+        "pinned official model/workflow plus native target geometry/FPS/frame-grid validation",
+        "96 GB GPU and 64 GiB system RAM real workload validation",
+        "finish within credit validity and cash/service-cost limits"
+      ],
+      "priority": "BACKUP_ONLY_PENDING_EXPLICIT_MODEL_CHANGE_AGREEMENT"
+    },
+    {
+      "id": "ohio-h3",
+      "classification": "LICENSE_APPLICABILITY_UNRESOLVED",
+      "reason": "License excludes United States and limits use/reproduction geographically. Mainland operator/output does not itself establish that copying/loading weights on an Ohio server is authorized.",
+      "explicit_server_location_clause_present": false,
+      "legal_inference_not_verbatim_rule": true,
+      "license_pass": false
+    },
+    {
+      "id": "bedrock-ray2",
+      "classification": "NOT_COMPLIANT_WITH_UNCHANGED_RESOLUTION_TARGET",
+      "model": "luma.ray-v2:0",
+      "public_resolutions": [
+        "540p",
+        "720p"
+      ],
+      "target_short_edge_minimum": 768,
+      "marketplace_billing_context": true,
+      "credit_eligibility": "Requires account-specific product mapping/authorization; do not infer ineligibility solely from Marketplace.",
+      "actual_invoke_performed": false
+    },
+    {
+      "id": "bedrock-nova-reel",
+      "classification": "NOT_AVAILABLE_EOL",
+      "model_ids": [
+        "amazon.nova-reel-v1:0",
+        "amazon.nova-reel-v1:1"
+      ],
+      "eol": "2026-09-30",
+      "reason": "Official lifecycle table says listed models passed EOL and requests fail."
+    },
+    {
+      "id": "marketplace-h3-saas",
+      "classification": "OUTSIDE_BUDGET_AND_NO_SPECIFIC_CREDIT_AUTHORIZATION",
+      "listing": "prodview-wi37h23rw6ed6",
+      "public_minimum_contract_usd": 10000,
+      "deployed_on_aws_in_listing": false,
+      "reason": "Public prepaid contract starts at USD10,000; no suitable USD20 experiment purchase shown. Promotional credit terms normally exclude Marketplace unless AWS authorizes it; no special authorization for this SaaS listing established."
+    }
+  ],
+  "actions_this_review": {
+    "new_chargeable_resources_created": false,
+    "video_generation_called": false,
+    "quota_increase_requested": false,
+    "plan_upgraded": false,
+    "support_contacted": false,
+    "model_weights_downloaded": false,
+    "files_changed": [
+      "docs/reviews/2026-10-26-quota-reconciliation-and-video-options.md",
+      "docs/reviews/2026-10-26-quota-reconciliation-and-video-options.json"
+    ],
+    "note": "This read-only reconciliation statement does not assert that historical directory/guard resources had zero cost or were already cleaned up.",
+    "new_guards_deployed": false,
+    "scope_note": "Current reconciliation/options round is read-only on AWS: no GameLift group/application/session/capacity or new safety deployment."
+  },
+  "sources": {
+    "workspaces_quotas": "https://docs.aws.amazon.com/workspaces/latest/adminguide/workspaces-limits.html",
+    "workspaces_bundles": "https://docs.aws.amazon.com/workspaces/latest/adminguide/bundle-options.html",
+    "get_service_quota": "https://docs.aws.amazon.com/servicequotas/2019-06-24/apireference/API_GetServiceQuota.html",
+    "workspaces_create": "https://docs.aws.amazon.com/workspaces/latest/api/API_CreateWorkspaces.html",
+    "workspaces_cloudtrail": "https://docs.aws.amazon.com/workspaces/latest/adminguide/cloudtrail_logging.html",
+    "account_plans": "https://docs.aws.amazon.com/us_en/awsaccountbilling/latest/aboutv2/free-tier-plans.html",
+    "h3_license": "https://huggingface.co/MiniMaxAI/MiniMax-H3/blob/42ed227ee7df40d41602854ae760620d6eb651fe/LICENSE",
+    "g7e_specs": "https://aws.amazon.com/ec2/instance-types/g7e/",
+    "wan_official": "https://github.com/Wan-Video/Wan2.2",
+    "wan_i2v_model": "https://huggingface.co/Wan-AI/Wan2.2-I2V-A14B",
+    "ray2_parameters": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-luma.html",
+    "nova_reel_eol": "https://docs.aws.amazon.com/en_en/bedrock/latest/userguide/model-lifecycle-legacy.html",
+    "h3_marketplace": "https://aws.amazon.com/marketplace/pp/prodview-wi37h23rw6ed6",
+    "promotional_credit_terms": "https://aws.amazon.com/tw/awscredits/",
+    "gamelift_configuration": "https://docs.aws.amazon.com/gameliftstreams/latest/developerguide/configuration-options.html",
+    "gamelift_pricing": "https://aws.amazon.com/gamelift/streams/pricing/",
+    "gamelift_groups": "https://docs.aws.amazon.com/gameliftstreams/latest/developerguide/stream-groups.html",
+    "gamelift_session_api": "https://docs.aws.amazon.com/gameliftstreams/latest/apireference/API_StartStreamSession.html",
+    "gamelift_sessions": "https://docs.aws.amazon.com/gameliftstreams/latest/developerguide/stream-sessions.html",
+    "gamelift_admin_shell": "https://docs.aws.amazon.com/gameliftstreams/latest/developerguide/troubleshoot-admin-shell-guide.html",
+    "gamelift_admin_shell_api": "https://docs.aws.amazon.com/gameliftstreams/latest/apireference/API_CreateStreamSessionAdminShell.html",
+    "gamelift_delete_group": "https://docs.aws.amazon.com/gameliftstreams/latest/apireference/API_DeleteStreamGroup.html",
+    "gamelift_capacity": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-gameliftstreams-streamgroup-locationconfiguration.html",
+    "gamelift_reuse": "https://docs.aws.amazon.com/gameliftstreams/latest/developerguide/infrastructure-security-tenancy.html"
+  },
+  "decision_summary": {
+    "preferred_candidate": "tokyo-gamelift-gen6n-pro-h3",
+    "reason": "Keeps original H3 and output/step target, with independently read Tokyo Gen6n GPU quota and all five earlier credit-service lists containing GameLift Streams.",
+    "ready_to_launch": false,
+    "user_decision_required": "Accept the GameLift Streams session/disconnection limits and the need for a new private-S3 Bridge adapter before any resource creation.",
+    "backup_candidate": "ohio-g7e-wan-a14b",
+    "model_change_without_user_agreement": false
+  }
+}
