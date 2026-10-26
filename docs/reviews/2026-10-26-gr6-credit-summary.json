@@ -1,0 +1,10 @@
+{
+  "observed_at_utc": "2026-10-26T13:19:56.089Z",
+  "estimated_remaining_usd": 47.25,
+  "active_credit_rows": 5,
+  "expiry_dates": [
+    "2026/10/30"
+  ],
+  "update_note": "Estimated amounts update approximately every 24 hours; total amounts update when your monthly invoice is finalized.",
+  "exact_expiry_time_confirmed": false
+}

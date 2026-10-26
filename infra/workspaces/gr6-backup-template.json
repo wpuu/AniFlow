@@ -1,0 +1,209 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Parameters": {
+    "ExperimentId": {
+      "Type": "String",
+      "AllowedPattern": "aniflow-h3-gr6-[a-z0-9-]+"
+    },
+    "CleanupUtc": {
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "Role": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ssm.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "CleanOnlyTaggedTokyoExperiment",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "workspaces:DescribeWorkspaces",
+                    "workspaces:DescribeTags",
+                    "workspaces:DescribeWorkspaceDirectories",
+                    "ds:DescribeDirectories",
+                    "ds:ListTagsForResource"
+                  ],
+                  "Resource": "*",
+                  "Condition": {
+                    "StringEquals": {
+                      "aws:RequestedRegion": "ap-northeast-1"
+                    }
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "workspaces:StopWorkspaces",
+                    "workspaces:TerminateWorkspaces"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:workspaces:ap-northeast-1:${AWS::AccountId}:workspace/*"
+                  },
+                  "Condition": {
+                    "StringEquals": {
+                      "aws:RequestedRegion": "ap-northeast-1",
+                      "aws:ResourceTag/ExperimentId": {
+                        "Ref": "ExperimentId"
+                      }
+                    }
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "workspaces:DeregisterWorkspaceDirectory",
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:workspaces:ap-northeast-1:${AWS::AccountId}:directory/*"
+                  },
+                  "Condition": {
+                    "StringEquals": {
+                      "aws:RequestedRegion": "ap-northeast-1",
+                      "aws:ResourceTag/ExperimentId": {
+                        "Ref": "ExperimentId"
+                      }
+                    }
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "ds:DeleteDirectory",
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:ds:ap-northeast-1:${AWS::AccountId}:directory/*"
+                  },
+                  "Condition": {
+                    "StringEquals": {
+                      "aws:RequestedRegion": "ap-northeast-1",
+                      "aws:ResourceTag/ExperimentId": {
+                        "Ref": "ExperimentId"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "Document": {
+      "Type": "AWS::SSM::Document",
+      "Properties": {
+        "DocumentType": "Automation",
+        "UpdateMethod": "NewVersion",
+        "Content": {
+          "schemaVersion": "0.3",
+          "description": "Independent fixed-deadline Tokyo experiment cleanup",
+          "assumeRole": {
+            "Fn::GetAtt": [
+              "Role",
+              "Arn"
+            ]
+          },
+          "mainSteps": [
+            {
+              "name": "WaitUntilCleanup",
+              "action": "aws:sleep",
+              "inputs": {
+                "Timestamp": {
+                  "Ref": "CleanupUtc"
+                }
+              }
+            },
+            {
+              "name": "IndependentCleanup1",
+              "action": "aws:executeScript",
+              "timeoutSeconds": 600,
+              "onFailure": "Continue",
+              "inputs": {
+                "Runtime": "python3.11",
+                "Handler": "backup",
+                "Script": "\"\"\"Fixed-deadline cleanup for an explicitly tagged, disposable experiment.\"\"\"\nimport json\nimport os\nimport time\nfrom datetime import UTC, datetime\n\nimport boto3\nfrom botocore.config import Config\nfrom botocore.exceptions import BotoCoreError, ClientError\n\n\ndef api(service):\n    return boto3.client(service, region_name=\"ap-northeast-1\", config=Config(\n        connect_timeout=5, read_timeout=10, retries={\"total_max_attempts\": 2, \"mode\": \"standard\"}))\n\n\ndef sweep(ws, ds, experiment, stop_due, cleanup_due):\n    workspaces = []\n    for page in ws.get_paginator(\"describe_workspaces\").paginate():\n        for item in page.get(\"Workspaces\", []):\n            tags = ws.describe_tags(ResourceId=item[\"WorkspaceId\"])[\"TagList\"]\n            if any(t[\"Key\"] == \"ExperimentId\" and t.get(\"Value\") == experiment for t in tags):\n                workspaces.append(item)\n    summary = {\"matched_workspaces\": len(workspaces), \"states\": [w[\"State\"] for w in workspaces],\n               \"stop_due\": stop_due, \"cleanup_due\": cleanup_due, \"all_resources_absent\": False}\n    if not stop_due:\n        return summary\n    for item in workspaces:\n        if cleanup_due:\n            if item[\"State\"] not in {\"TERMINATING\", \"TERMINATED\", \"SUSPENDED\"}:\n                result = ws.terminate_workspaces(TerminateWorkspaceRequests=[{\n                    \"WorkspaceId\": item[\"WorkspaceId\"]}])\n            else:\n                continue\n        elif (item[\"State\"] in {\"AVAILABLE\", \"IMPAIRED\", \"UNHEALTHY\", \"ERROR\"}\n              and item.get(\"WorkspaceProperties\", {}).get(\"RunningMode\") == \"AUTO_STOP\"):\n            result = ws.stop_workspaces(StopWorkspaceRequests=[{\"WorkspaceId\": item[\"WorkspaceId\"]}])\n        else:\n            continue\n        if result.get(\"FailedRequests\"):\n            raise RuntimeError(\"WorkSpaces returned FailedRequests; cleanup is not confirmed\")\n    if not cleanup_due or any(w[\"State\"] != \"TERMINATED\" for w in workspaces):\n        return summary\n\n    owned = []\n    for page in ds.get_paginator(\"describe_directories\").paginate():\n        for directory in page.get(\"DirectoryDescriptions\", []):\n            tags = ds.list_tags_for_resource(ResourceId=directory[\"DirectoryId\"])[\"Tags\"]\n            if any(t[\"Key\"] == \"ExperimentId\" and t.get(\"Value\") == experiment for t in tags):\n                owned.append(directory)\n    registered = {d[\"DirectoryId\"]: d for page in\n                  ws.get_paginator(\"describe_workspace_directories\").paginate()\n                  for d in page.get(\"Directories\", [])}\n    for directory in owned:\n        identifier = directory[\"DirectoryId\"]\n        if identifier in registered:\n            if registered[identifier].get(\"State\") != \"DEREGISTERING\":\n                ws.deregister_workspace_directory(DirectoryId=identifier)\n        elif directory.get(\"Stage\") != \"Deleting\":\n            ds.delete_directory(DirectoryId=identifier)\n    summary[\"matched_directories\"] = len(owned)\n    summary[\"all_resources_absent\"] = not workspaces and not owned\n    return summary\n\n\ndef handler(event, context):\n    now = datetime.now(UTC)\n    stop = datetime.fromisoformat(os.environ[\"STOP_UTC\"])\n    cleanup = datetime.fromisoformat(os.environ[\"CLEANUP_UTC\"])\n    if cleanup <= stop:\n        raise RuntimeError(\"Cleanup deadline must follow the stop deadline\")\n    result = sweep(api(\"workspaces\"), api(\"ds\"), os.environ[\"EXPERIMENT_ID\"],\n                   now >= stop, now >= cleanup)\n    print(json.dumps(result))\n    return result\n\n\ndef backup(event, context):\n    deadline = datetime.fromisoformat(event[\"CleanupUtc\"])\n    if datetime.now(UTC) < deadline:\n        raise RuntimeError(\"Backup refuses to delete before its fixed deadline\")\n    ws = api(\"workspaces\")\n    ds = api(\"ds\")\n    until = time.monotonic() + 540\n    while time.monotonic() < until:\n        try:\n            result = sweep(ws, ds, event[\"ExperimentId\"], True, True)\n            print(json.dumps(result))\n            if result[\"all_resources_absent\"]:\n                return result\n        except (BotoCoreError, ClientError, RuntimeError) as exc:\n            print(json.dumps({\"retrying\": True, \"error_class\": type(exc).__name__}))\n        time.sleep(15)\n    raise RuntimeError(\"Independent cleanup has not confirmed absence; primary guard remains active\")\n",
+                "InputPayload": {
+                  "ExperimentId": {
+                    "Ref": "ExperimentId"
+                  },
+                  "CleanupUtc": {
+                    "Ref": "CleanupUtc"
+                  }
+                }
+              }
+            },
+            {
+              "name": "IndependentCleanup2",
+              "action": "aws:executeScript",
+              "timeoutSeconds": 600,
+              "onFailure": "Continue",
+              "inputs": {
+                "Runtime": "python3.11",
+                "Handler": "backup",
+                "Script": "\"\"\"Fixed-deadline cleanup for an explicitly tagged, disposable experiment.\"\"\"\nimport json\nimport os\nimport time\nfrom datetime import UTC, datetime\n\nimport boto3\nfrom botocore.config import Config\nfrom botocore.exceptions import BotoCoreError, ClientError\n\n\ndef api(service):\n    return boto3.client(service, region_name=\"ap-northeast-1\", config=Config(\n        connect_timeout=5, read_timeout=10, retries={\"total_max_attempts\": 2, \"mode\": \"standard\"}))\n\n\ndef sweep(ws, ds, experiment, stop_due, cleanup_due):\n    workspaces = []\n    for page in ws.get_paginator(\"describe_workspaces\").paginate():\n        for item in page.get(\"Workspaces\", []):\n            tags = ws.describe_tags(ResourceId=item[\"WorkspaceId\"])[\"TagList\"]\n            if any(t[\"Key\"] == \"ExperimentId\" and t.get(\"Value\") == experiment for t in tags):\n                workspaces.append(item)\n    summary = {\"matched_workspaces\": len(workspaces), \"states\": [w[\"State\"] for w in workspaces],\n               \"stop_due\": stop_due, \"cleanup_due\": cleanup_due, \"all_resources_absent\": False}\n    if not stop_due:\n        return summary\n    for item in workspaces:\n        if cleanup_due:\n            if item[\"State\"] not in {\"TERMINATING\", \"TERMINATED\", \"SUSPENDED\"}:\n                result = ws.terminate_workspaces(TerminateWorkspaceRequests=[{\n                    \"WorkspaceId\": item[\"WorkspaceId\"]}])\n            else:\n                continue\n        elif (item[\"State\"] in {\"AVAILABLE\", \"IMPAIRED\", \"UNHEALTHY\", \"ERROR\"}\n              and item.get(\"WorkspaceProperties\", {}).get(\"RunningMode\") == \"AUTO_STOP\"):\n            result = ws.stop_workspaces(StopWorkspaceRequests=[{\"WorkspaceId\": item[\"WorkspaceId\"]}])\n        else:\n            continue\n        if result.get(\"FailedRequests\"):\n            raise RuntimeError(\"WorkSpaces returned FailedRequests; cleanup is not confirmed\")\n    if not cleanup_due or any(w[\"State\"] != \"TERMINATED\" for w in workspaces):\n        return summary\n\n    owned = []\n    for page in ds.get_paginator(\"describe_directories\").paginate():\n        for directory in page.get(\"DirectoryDescriptions\", []):\n            tags = ds.list_tags_for_resource(ResourceId=directory[\"DirectoryId\"])[\"Tags\"]\n            if any(t[\"Key\"] == \"ExperimentId\" and t.get(\"Value\") == experiment for t in tags):\n                owned.append(directory)\n    registered = {d[\"DirectoryId\"]: d for page in\n                  ws.get_paginator(\"describe_workspace_directories\").paginate()\n                  for d in page.get(\"Directories\", [])}\n    for directory in owned:\n        identifier = directory[\"DirectoryId\"]\n        if identifier in registered:\n            if registered[identifier].get(\"State\") != \"DEREGISTERING\":\n                ws.deregister_workspace_directory(DirectoryId=identifier)\n        elif directory.get(\"Stage\") != \"Deleting\":\n            ds.delete_directory(DirectoryId=identifier)\n    summary[\"matched_directories\"] = len(owned)\n    summary[\"all_resources_absent\"] = not workspaces and not owned\n    return summary\n\n\ndef handler(event, context):\n    now = datetime.now(UTC)\n    stop = datetime.fromisoformat(os.environ[\"STOP_UTC\"])\n    cleanup = datetime.fromisoformat(os.environ[\"CLEANUP_UTC\"])\n    if cleanup <= stop:\n        raise RuntimeError(\"Cleanup deadline must follow the stop deadline\")\n    result = sweep(api(\"workspaces\"), api(\"ds\"), os.environ[\"EXPERIMENT_ID\"],\n                   now >= stop, now >= cleanup)\n    print(json.dumps(result))\n    return result\n\n\ndef backup(event, context):\n    deadline = datetime.fromisoformat(event[\"CleanupUtc\"])\n    if datetime.now(UTC) < deadline:\n        raise RuntimeError(\"Backup refuses to delete before its fixed deadline\")\n    ws = api(\"workspaces\")\n    ds = api(\"ds\")\n    until = time.monotonic() + 540\n    while time.monotonic() < until:\n        try:\n            result = sweep(ws, ds, event[\"ExperimentId\"], True, True)\n            print(json.dumps(result))\n            if result[\"all_resources_absent\"]:\n                return result\n        except (BotoCoreError, ClientError, RuntimeError) as exc:\n            print(json.dumps({\"retrying\": True, \"error_class\": type(exc).__name__}))\n        time.sleep(15)\n    raise RuntimeError(\"Independent cleanup has not confirmed absence; primary guard remains active\")\n",
+                "InputPayload": {
+                  "ExperimentId": {
+                    "Ref": "ExperimentId"
+                  },
+                  "CleanupUtc": {
+                    "Ref": "CleanupUtc"
+                  }
+                }
+              }
+            },
+            {
+              "name": "IndependentCleanup3",
+              "action": "aws:executeScript",
+              "timeoutSeconds": 600,
+              "isEnd": true,
+              "inputs": {
+                "Runtime": "python3.11",
+                "Handler": "backup",
+                "Script": "\"\"\"Fixed-deadline cleanup for an explicitly tagged, disposable experiment.\"\"\"\nimport json\nimport os\nimport time\nfrom datetime import UTC, datetime\n\nimport boto3\nfrom botocore.config import Config\nfrom botocore.exceptions import BotoCoreError, ClientError\n\n\ndef api(service):\n    return boto3.client(service, region_name=\"ap-northeast-1\", config=Config(\n        connect_timeout=5, read_timeout=10, retries={\"total_max_attempts\": 2, \"mode\": \"standard\"}))\n\n\ndef sweep(ws, ds, experiment, stop_due, cleanup_due):\n    workspaces = []\n    for page in ws.get_paginator(\"describe_workspaces\").paginate():\n        for item in page.get(\"Workspaces\", []):\n            tags = ws.describe_tags(ResourceId=item[\"WorkspaceId\"])[\"TagList\"]\n            if any(t[\"Key\"] == \"ExperimentId\" and t.get(\"Value\") == experiment for t in tags):\n                workspaces.append(item)\n    summary = {\"matched_workspaces\": len(workspaces), \"states\": [w[\"State\"] for w in workspaces],\n               \"stop_due\": stop_due, \"cleanup_due\": cleanup_due, \"all_resources_absent\": False}\n    if not stop_due:\n        return summary\n    for item in workspaces:\n        if cleanup_due:\n            if item[\"State\"] not in {\"TERMINATING\", \"TERMINATED\", \"SUSPENDED\"}:\n                result = ws.terminate_workspaces(TerminateWorkspaceRequests=[{\n                    \"WorkspaceId\": item[\"WorkspaceId\"]}])\n            else:\n                continue\n        elif (item[\"State\"] in {\"AVAILABLE\", \"IMPAIRED\", \"UNHEALTHY\", \"ERROR\"}\n              and item.get(\"WorkspaceProperties\", {}).get(\"RunningMode\") == \"AUTO_STOP\"):\n            result = ws.stop_workspaces(StopWorkspaceRequests=[{\"WorkspaceId\": item[\"WorkspaceId\"]}])\n        else:\n            continue\n        if result.get(\"FailedRequests\"):\n            raise RuntimeError(\"WorkSpaces returned FailedRequests; cleanup is not confirmed\")\n    if not cleanup_due or any(w[\"State\"] != \"TERMINATED\" for w in workspaces):\n        return summary\n\n    owned = []\n    for page in ds.get_paginator(\"describe_directories\").paginate():\n        for directory in page.get(\"DirectoryDescriptions\", []):\n            tags = ds.list_tags_for_resource(ResourceId=directory[\"DirectoryId\"])[\"Tags\"]\n            if any(t[\"Key\"] == \"ExperimentId\" and t.get(\"Value\") == experiment for t in tags):\n                owned.append(directory)\n    registered = {d[\"DirectoryId\"]: d for page in\n                  ws.get_paginator(\"describe_workspace_directories\").paginate()\n                  for d in page.get(\"Directories\", [])}\n    for directory in owned:\n        identifier = directory[\"DirectoryId\"]\n        if identifier in registered:\n            if registered[identifier].get(\"State\") != \"DEREGISTERING\":\n                ws.deregister_workspace_directory(DirectoryId=identifier)\n        elif directory.get(\"Stage\") != \"Deleting\":\n            ds.delete_directory(DirectoryId=identifier)\n    summary[\"matched_directories\"] = len(owned)\n    summary[\"all_resources_absent\"] = not workspaces and not owned\n    return summary\n\n\ndef handler(event, context):\n    now = datetime.now(UTC)\n    stop = datetime.fromisoformat(os.environ[\"STOP_UTC\"])\n    cleanup = datetime.fromisoformat(os.environ[\"CLEANUP_UTC\"])\n    if cleanup <= stop:\n        raise RuntimeError(\"Cleanup deadline must follow the stop deadline\")\n    result = sweep(api(\"workspaces\"), api(\"ds\"), os.environ[\"EXPERIMENT_ID\"],\n                   now >= stop, now >= cleanup)\n    print(json.dumps(result))\n    return result\n\n\ndef backup(event, context):\n    deadline = datetime.fromisoformat(event[\"CleanupUtc\"])\n    if datetime.now(UTC) < deadline:\n        raise RuntimeError(\"Backup refuses to delete before its fixed deadline\")\n    ws = api(\"workspaces\")\n    ds = api(\"ds\")\n    until = time.monotonic() + 540\n    while time.monotonic() < until:\n        try:\n            result = sweep(ws, ds, event[\"ExperimentId\"], True, True)\n            print(json.dumps(result))\n            if result[\"all_resources_absent\"]:\n                return result\n        except (BotoCoreError, ClientError, RuntimeError) as exc:\n            print(json.dumps({\"retrying\": True, \"error_class\": type(exc).__name__}))\n        time.sleep(15)\n    raise RuntimeError(\"Independent cleanup has not confirmed absence; primary guard remains active\")\n",
+                "InputPayload": {
+                  "ExperimentId": {
+                    "Ref": "ExperimentId"
+                  },
+                  "CleanupUtc": {
+                    "Ref": "CleanupUtc"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "Document": {
+      "Value": {
+        "Ref": "Document"
+      }
+    },
+    "Role": {
+      "Value": {
+        "Ref": "Role"
+      }
+    }
+  }
+}

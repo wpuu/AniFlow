@@ -1,0 +1,7 @@
+{
+  "observed_at_utc": "2026-10-26T13:26:49.349012+00:00",
+  "ssm_activation_tier": "standard",
+  "managed_node_count": 0,
+  "read_only": true,
+  "settings_changed": false
+}

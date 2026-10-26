@@ -1,0 +1,63 @@
+{
+  "observed_at_utc": "2026-10-26T13:44:54.842292+00:00",
+  "primary_real_invocation": {
+    "matched_workspaces": 0,
+    "states": [],
+    "stop_due": true,
+    "cleanup_due": true,
+    "all_resources_absent": true,
+    "matched_directories": 0
+  },
+  "primary_rule_enabled": true,
+  "iam_simulation": [
+    {
+      "mode": "primary",
+      "action": "workspaces:StopWorkspaces",
+      "owned": "allowed",
+      "unrelated": "implicitDeny"
+    },
+    {
+      "mode": "primary",
+      "action": "workspaces:TerminateWorkspaces",
+      "owned": "allowed",
+      "unrelated": "implicitDeny"
+    },
+    {
+      "mode": "primary",
+      "action": "workspaces:DeregisterWorkspaceDirectory",
+      "owned": "allowed",
+      "unrelated": "implicitDeny"
+    },
+    {
+      "mode": "primary",
+      "action": "ds:DeleteDirectory",
+      "owned": "allowed",
+      "unrelated": "implicitDeny"
+    },
+    {
+      "mode": "backup",
+      "action": "workspaces:StopWorkspaces",
+      "owned": "allowed",
+      "unrelated": "implicitDeny"
+    },
+    {
+      "mode": "backup",
+      "action": "workspaces:TerminateWorkspaces",
+      "owned": "allowed",
+      "unrelated": "implicitDeny"
+    },
+    {
+      "mode": "backup",
+      "action": "workspaces:DeregisterWorkspaceDirectory",
+      "owned": "allowed",
+      "unrelated": "implicitDeny"
+    },
+    {
+      "mode": "backup",
+      "action": "ds:DeleteDirectory",
+      "owned": "allowed",
+      "unrelated": "implicitDeny"
+    }
+  ],
+  "actual_gpu_stop_tested": false
+}

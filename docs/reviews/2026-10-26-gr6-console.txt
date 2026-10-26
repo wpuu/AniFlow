@@ -1,0 +1,55 @@
+跳转至主要内容
+[Alt+S]
+亚太地区 (东京)
+rerise ([ACCOUNT])
+rerise
+EC2
+服务配额
+AWS 服务
+Amazon WorkSpaces
+Graphics.gr6.4xlarge WorkSpaces
+服务配额
+AWS 服务
+Amazon WorkSpaces
+Graphics.gr6.4xlarge WorkSpaces
+服务配额
+控制面板
+AWS 服务
+配额请求历史记录
+组织
+配额请求模板
+自动管理
+全新
+Graphics.gr6.4xlarge WorkSpaces
+请求在账户级别增加
+详细信息
+描述
+The maximum number of Graphics.gr6.4xlarge WorkSpaces in this account in the current Region.
+配额代码
+L-EF6817EC
+配额 ARN
+arn:aws:servicequotas:ap-northeast-1:[ACCOUNT]:workspaces/L-EF6817EC
+利用率
+0
+应用的账户级别配额值
+1
+AWS 默认配额值
+0
+可否调整
+账户级别
+监控
+请求历史记录
+警报
+标签
+监控
+
+这将显示一个可自定义的 CloudWatch 嵌入式图表。 了解更多 
+
+CloudShell
+Agent Toolkit for AWS
+反馈
+控制台移动应用程序
+© 2026, Amazon Web Services, Inc. 或其关联公司。
+隐私
+条款
+Cookie 首选项

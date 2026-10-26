@@ -1,0 +1,187 @@
+{
+  "observed_at_utc": "2026-10-26T13:49:51.740117+00:00",
+  "source": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDirectoryService/current/ap-northeast-1/index.json",
+  "publication_date": "2026-09-11T12:45:44Z",
+  "prices": [
+    {
+      "sku": "37GAQ9HRJD6PPXC9",
+      "attributes": {
+        "servicecode": "AWSDirectoryService",
+        "location": "Asia Pacific (Tokyo)",
+        "locationType": "AWS Region",
+        "usagetype": "APN1-SharedMsftAD-Usage",
+        "operation": "Hourly",
+        "directorySize": "Enterprise",
+        "directoryType": "Shared Microsoft AD",
+        "directoryTypeDescription": "Shared AWS Directory Service for Microsoft Active Directory",
+        "regionCode": "ap-northeast-1",
+        "servicename": "AWS Directory Service"
+      },
+      "unit": "Hrs",
+      "price_usd": "0.0667500000",
+      "description": "USD 0.06675 per hour per account to which a Microsoft AD (Enterprise) directory is shared in Asia Pacific (Tokyo)"
+    },
+    {
+      "sku": "G7HUKZWZ2MWNZTWN",
+      "attributes": {
+        "servicecode": "AWSDirectoryService",
+        "location": "Asia Pacific (Tokyo)",
+        "locationType": "AWS Region",
+        "usagetype": "APN1-Std-SharedMsftAD-Usage",
+        "operation": "Hourly",
+        "directorySize": "Standard",
+        "directoryType": "Shared Microsoft AD",
+        "directoryTypeDescription": "Shared AWS Directory Service for Microsoft Active Directory",
+        "regionCode": "ap-northeast-1",
+        "servicename": "AWS Directory Service"
+      },
+      "unit": "Hrs",
+      "price_usd": "0.0219000000",
+      "description": "USD 0.0219 per hour per account to which a Microsoft AD (Standard) directory is shared in Asia Pacific (Tokyo)"
+    },
+    {
+      "sku": "FJCNG2QRJ67E2959",
+      "attributes": {
+        "servicecode": "AWSDirectoryService",
+        "location": "Asia Pacific (Tokyo)",
+        "locationType": "AWS Region",
+        "usagetype": "APN1-Small-Directory-Usage",
+        "operation": "Hourly",
+        "directorySize": "Small",
+        "directoryType": "Simple AD or AD Connector",
+        "directoryTypeDescription": "Simple AD or AD Connector",
+        "regionCode": "ap-northeast-1",
+        "servicename": "AWS Directory Service"
+      },
+      "unit": "Hrs",
+      "price_usd": "0.0800000000",
+      "description": "$0.08 per hour for a small directory in the Asia Pacific (Tokyo) region"
+    },
+    {
+      "sku": "Q2RAGHQDBNFUXMBD",
+      "attributes": {
+        "servicecode": "AWSDirectoryService",
+        "location": "Asia Pacific (Tokyo)",
+        "locationType": "AWS Region",
+        "usagetype": "APN1-MicrosoftAD-DC-Usage",
+        "operation": "Hourly",
+        "directorySize": "Enterprise",
+        "directoryType": "Microsoft AD",
+        "directoryTypeDescription": "AWS Directory Service for Microsoft Active Directory (Microsoft AD)",
+        "regionCode": "ap-northeast-1",
+        "servicename": "AWS Directory Service"
+      },
+      "unit": "Hrs",
+      "price_usd": "0.2225000000",
+      "description": "$0.2225 per hour for a Microsoft AD directory controller in the Asia Pacific (Tokyo) region"
+    },
+    {
+      "sku": "CE656Q5JC7BD7M23",
+      "attributes": {
+        "servicecode": "AWSDirectoryService",
+        "location": "Asia Pacific (Tokyo)",
+        "locationType": "AWS Region",
+        "usagetype": "APN1-Hyb-MicrosoftAD-DC-Usage",
+        "operation": "Hourly",
+        "directorySize": "Hybrid",
+        "directoryType": "Microsoft AD",
+        "directoryTypeDescription": "AWS Directory Service for Microsoft Active Directory (Microsoft AD)",
+        "regionCode": "ap-northeast-1",
+        "servicename": "AWS Directory Service"
+      },
+      "unit": "Hrs",
+      "price_usd": "0.3750000000",
+      "description": "$0.3750 per hour for Microsoft AD (Hybrid) per domain controller usage in Asia Pacific (Tokyo)"
+    },
+    {
+      "sku": "9UMJ8V57YCCSCJEE",
+      "attributes": {
+        "servicecode": "AWSDirectoryService",
+        "location": "Asia Pacific (Tokyo)",
+        "locationType": "AWS Region",
+        "usagetype": "APN1-Large-SimpleAD-Usage",
+        "operation": "Hourly",
+        "directorySize": "Large",
+        "directoryType": "Simple AD",
+        "directoryTypeDescription": "Simple AD",
+        "regionCode": "ap-northeast-1",
+        "servicename": "AWS Directory Service"
+      },
+      "unit": "Hrs",
+      "price_usd": "0.2400000000",
+      "description": "$0.24 per hour for a large Simple AD directory in the Asia Pacific (Tokyo) region"
+    },
+    {
+      "sku": "THEEJ2M4AX23XKAQ",
+      "attributes": {
+        "servicecode": "AWSDirectoryService",
+        "location": "Asia Pacific (Tokyo)",
+        "locationType": "AWS Region",
+        "usagetype": "APN1-Hyb-SharedMsftAD-Usage",
+        "operation": "Hourly",
+        "directorySize": "Hybrid",
+        "directoryType": "Shared Microsoft AD",
+        "directoryTypeDescription": "Shared AWS Directory Service for Microsoft Active Directory",
+        "regionCode": "ap-northeast-1",
+        "servicename": "AWS Directory Service"
+      },
+      "unit": "Hrs",
+      "price_usd": "0.0667500000",
+      "description": "$0.06675 per hour per account to which a Microsoft AD (Hybrid) directory is shared in Asia Pacific (Tokyo)"
+    },
+    {
+      "sku": "77GMZ4UGPKPPTTKH",
+      "attributes": {
+        "servicecode": "AWSDirectoryService",
+        "location": "Asia Pacific (Tokyo)",
+        "locationType": "AWS Region",
+        "usagetype": "APN1-Std-MicrosoftAD-DC-Usage",
+        "operation": "Hourly",
+        "directorySize": "Standard",
+        "directoryType": "Microsoft AD",
+        "directoryTypeDescription": "AWS Directory Service for Microsoft Active Directory (Microsoft AD)",
+        "regionCode": "ap-northeast-1",
+        "servicename": "AWS Directory Service"
+      },
+      "unit": "Hrs",
+      "price_usd": "0.0730000000",
+      "description": "$0.073 per hour for Microsoft AD (Standard Edition) domain controllers in the Asia Pacific (Tokyo) region"
+    },
+    {
+      "sku": "F3YG3KWNDQR3FTXZ",
+      "attributes": {
+        "servicecode": "AWSDirectoryService",
+        "location": "Asia Pacific (Tokyo)",
+        "locationType": "AWS Region",
+        "usagetype": "APN1-Small-SimpleAD-Usage",
+        "operation": "Hourly",
+        "directorySize": "Small",
+        "directoryType": "Simple AD",
+        "directoryTypeDescription": "Simple AD",
+        "regionCode": "ap-northeast-1",
+        "servicename": "AWS Directory Service"
+      },
+      "unit": "Hrs",
+      "price_usd": "0.0800000000",
+      "description": "$0.0800 per hour for Simple AD (Small) in Asia Pacific (Tokyo)"
+    },
+    {
+      "sku": "CCTPQS7WSJU8HKGD",
+      "attributes": {
+        "servicecode": "AWSDirectoryService",
+        "location": "Asia Pacific (Tokyo)",
+        "locationType": "AWS Region",
+        "usagetype": "APN1-Large-ADConnector-Usage",
+        "operation": "Hourly",
+        "directorySize": "Large",
+        "directoryType": "AD Connector",
+        "directoryTypeDescription": "AD Connector",
+        "regionCode": "ap-northeast-1",
+        "servicename": "AWS Directory Service"
+      },
+      "unit": "Hrs",
+      "price_usd": "0.2400000000",
+      "description": "$0.24 per hour for a large AD Connector directory in the Asia Pacific (Tokyo) region"
+    }
+  ]
+}

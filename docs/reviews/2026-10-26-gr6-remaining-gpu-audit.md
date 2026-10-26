@@ -1,0 +1,46 @@
+# 东京 gr6 与剩余 GPU 路径核查
+
+2026-10-26，Asia/Shanghai。用户同意继续核查东京 gr6 与 H3 许可地域内其他 GameLift 位置。主负责人是唯一 AWS 操作者；代码审阅代理仅只读本地文件。
+
+**东京 Graphics.gr6.4xlarge 的页面、ListServiceQuotas、GetServiceQuota 均为 1；已找到准确公共 Windows 捆绑包。实际创建资格仍未知，未启动 GPU、未完成真实预检、未生成视频。** 已失败的 Graphics.g6.4xlarge 当前两个配额接口也仍为 1，不能再将两个配额接口一致当作创建成功保证。
+
+## 本次实读
+
+- 浏览器现有登录与临时官方 CLI 身份私下比较，同账户；不输出账号编号或凭证。账户 PAID / ACTIVE，没有转换计划。预计剩余赠金 USD47.25，五笔 Active、到期显示 2026/10/30；页面注明预计数约每 24 小时更新，精确到期时刻未知。[账户及价格快照](2026-10-26-gr6-costs-and-state.json)、[赠金摘要](2026-10-26-gr6-credit-summary.json)。
+- 东京 gr6.4xlarge 代码 L-EF6817EC，当前应用值 1、默认 0、使用 0；gr6.8xlarge 独立额度也为 1；总 WorkSpaces 为 1，不能将不同型号额度合并。[页面原文](2026-10-26-gr6-console.txt)、[详情接口](2026-10-26-gr6-exact-quota.json)。
+- 东京官方捆绑包 `wsb-5mpqp50vv`：GRAPHICS_GR6_4XLARGE，Windows Server 2022 / WSP，16vCPU、128GiB RAM、单 L4 24GiB显存、根卷250GB/用户卷200GB；没有找到该型 Linux 公共包。四个原 H3 模型可复用，D盘 Linux runtime.tar 不能当成 Windows 可执行环境。[全部列表证据](2026-10-26-gr6-eligibility.json)。
+- GameLift 当前应用额度列表包含 42 项 GPU 配额，涉及 Gen4n/Gen5n/Gen6n/Gen6e 和各支持位置，**全部为 0**；控制台两页也未见非零。此结论限该服务当前已返回项目，不等于 AWS 全部服务全球 GPU 都为 0。
+- 东京 WorkSpaces 实例 0、已注册目录 0；另用 Directory Service 接口确认目录 0。SSM 管理节点 0，旧 activation-tier 设置值 standard；未修改设置。
+- WorkSpaces CreateWorkspaces 请求模型和[官方接口](https://docs.aws.amazon.com/workspaces/latest/api/API_CreateWorkspaces.html)没有 DryRun。DescribeAccount 只描述 BYOL，不提供可替代真实创建的 GPU 准入确认。因此仍可能在单次真实 gr6 创建时遇到服务端上限拒绝；不伪造“只读验证创建成功”。
+
+## 费用与赠金
+
+官方东京当前价格数据发布时间 2026-10-16：Windows 许可包含、Basic utilities、AutoStop 的 gr6.4xlarge 为 **USD5.40/小时＋USD35/月基础费**。小时 SKU `2DYRCHY4BHVXA56R`，基础费 `VP3XC6QH6W9B9ZQK`；未采用 BYOL 或 WorkSpaces Core 的便宜报价。根卷250GB、用户卷200GB保持包默认，不增盘。[官方价格数据](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonWorkSpaces/current/ap-northeast-1/index.json)。
+
+首月基础费按比例计算，不足一小时按一小时计；停止不消除基础费，需要终止桌面避免后续月份续费。[AWS FAQ](https://aws.amazon.com/workspaces-family/workspaces/faqs/)。按10月26日剩余6/31日估算，基础费约 USD6.77；保守按7/31则 USD7.90。
+
+- 一次不超过10分钟 GPU 预检，若发生首次计费运行：小时费 USD5.40，加基础费约 USD6.77～7.90。
+- 若预检后停止并在新保护下恢复，两个分别不足一小时的运行段也保守按两小时计费 USD10.80。加新 Microsoft AD Standard 最多4小时、沿用常规两控制器合计USD0.146/h的估算，桌面及目录约 **USD18.16～19.29**；这不是实测账单或完整全包承诺。
+- SSM、保护执行、日志、少量网络和请求另计，全部纳入首轮约USD20服务费目标及抵扣后自付≤USD1条件。目录及保护部署前继续确认；不创建 NAT、收费 VPC 端点、Office 包或公共 Comfy/SSH 服务。
+
+本次逐份重新打开五笔赠金完整服务列表，均列有 WorkSpaces、Directory Service、Systems Manager、Lambda、CloudWatch Events、S3、Data Transfer、VPC。[逐笔资格结果](2026-10-26-gr6-credit-eligibility.json)。不代表抵扣已入账；预估余额不是实时硬消费上限，最终抵扣及税仍待结算。本次账单页显示当期总计税费 USD0.00，不能将其当未来永久免税保证。
+
+**SSM旧费率已纠正：** 官方定价说明2026-06-30取消 Advanced Instances Tier，2026-09-30起混合节点 Session Manager 每会话USD0.05、Run Command 每调用USD0.002。不得沿用旧高级节点小时价，也不因旧 standard 设置值就擅自开启付费层级。[官方SSM价格](https://aws.amazon.com/systems-manager/pricing/)。
+
+## 本次受控验证安排
+
+1. 在任何专用目录或桌面前，先部署并核验东京每分钟主保护和新加坡独立 SSM Automation 备用；两者只处理新唯一 ExperimentId 标签的东京实验资源。主路径按固定时刻停止，再于清理截止终止桌面并清理本次目录；备用不调用主 Lambda，独立执行终止与目录清理。退出/断网不影响云端保护。两个路径可能共享区域 API 依赖，不能称绝对无故障保证。
+2. 新保护补上旧 Stop-only 模板缺少的桌面终止及目录清理，避免失联后目录和后续月份收费。原始模型/环境已在 D盘校验保存；本轮临时桌面及目录均可清理。旧模板和历史审计不覆盖。
+3. 两个模板 AWS ValidateTemplate 均通过；新增8项财务保护相关契约测试与 Ruff 通过。只读审阅发现的网络超时重试问题已修正。这些测试尚不证明真实桌面停止。
+4. 只提交一次单台 `wsb-5mpqp50vv` 创建请求，原子带实验标签，AUTO_STOP；若上限0、错误或准入不明，立即进入清理，不重试、不提额、不升级、不联系支持，不上传模型。
+5. 创建成功才进入固定10分钟真实 GPU/驱动/CUDA/私有SSM预检；未通过清理。通过后只有在实际 STOPPED、重新生效的主备保护及剩余预算都核实后，才可恢复并运行一条原参数5秒H3，自动保存到本机并校验。未知提交不自动重发；不将本地GPU或Mock当成云端成功。
+
+## 本轮实际执行进度
+
+- 东京 `aniflow-h3-gr6-primary-20261026`、新加坡 `aniflow-h3-gr6-backup-20261026` 均已 CREATE_COMPLETE，后续固定时刻更新完成。新实验标签为 `aniflow-h3-gr6-20261026-b`。
+- [保护验证](2026-10-26-gr6-guard-proof.json)：东京主路径真实执行时读到本次桌面和目录均为0；两个独立角色共8组写权限检查均为本次标签允许、其他标签拒绝。没有把“没有目标”当作真实停机成功。
+- 新加坡备用验证执行 `7db548da-4c66-4559-976b-202610260002` 四步全部 Success。新的备用执行 `88953ad2-72b0-4672-a721-202610260003` 实际处于 InProgress，aws:sleep 的固定时间已读回；主路径真实返回 stop_due=false、cleanup_due=false。
+- 初始固定截止为北京时间 **2026-10-26 23:29:13 停止、23:34:13 终止及目录清理**。目录及启动准备也占用这一窗口；不会在GPU运行中延后截止。GPU AVAILABLE后须将预检保护进一步缩短到10分钟停止/15分钟清理。
+- 专用目录首次 CreateMicrosoftAD 因描述含不支持的分号而返回确定的 ValidationException，未创建目录。修正前先重新读取目录确认0，保留拒绝及提交意图，避免未知结果重提。尚未请求创建gr6桌面，没有上传模型。
+
+当前真实驱动、CUDA、GPU显存实测、H3耗时、真实MP4和最终费用均未知。两个原始ZIP保持不变，PR7保持Draft，不合并main。上述本轮新保护栈仍在运行，不能沿用上一轮GameLift“已清理”来声称本轮也已清理。

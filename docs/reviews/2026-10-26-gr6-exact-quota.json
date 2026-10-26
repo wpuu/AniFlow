@@ -1,0 +1,33 @@
+{
+  "observed_at_utc": "2026-10-26T13:25:21.194985+00:00",
+  "get_service_quota": [
+    {
+      "QuotaName": "Graphics.gr6.4xlarge WorkSpaces",
+      "QuotaCode": "L-EF6817EC",
+      "Value": 1.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT"
+    },
+    {
+      "QuotaName": "Graphics.g6.4xlarge WorkSpaces",
+      "QuotaCode": "L-40A36AF9",
+      "Value": 1.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT"
+    },
+    {
+      "QuotaName": "WorkSpaces",
+      "QuotaCode": "L-34278094",
+      "Value": 1.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT"
+    }
+  ],
+  "tokyo_directory_service_directory_count": 0,
+  "create_workspaces_input_fields": [
+    "Workspaces"
+  ],
+  "create_workspaces_has_dry_run": false,
+  "actual_gr6_creation_verified": false,
+  "resources_created": 0
+}
