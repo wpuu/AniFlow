@@ -1,0 +1,8 @@
+{
+  "local_contract_tests_passed": true,
+  "checks": "39 local PowerShell, private assets, and one-job export behavior tests plus Ruff passed",
+  "aws_private_bucket_bootstrap_put_and_head_verified": true,
+  "real_gpu_preflight_passed": false,
+  "real_video_generated": false,
+  "remote_export_run": false
+}

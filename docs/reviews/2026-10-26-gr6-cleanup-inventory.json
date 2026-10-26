@@ -1,0 +1,11 @@
+{
+  "observed_at_utc": "2026-10-26T15:55:30.963273+00:00",
+  "workspaces_count": 0,
+  "registered_directories_count": 0,
+  "owned_directory_states": [],
+  "assets": {
+    "stack_state": "ABSENT",
+    "bucket_absent": true,
+    "hybrid_role_absent": true
+  }
+}

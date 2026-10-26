@@ -1,0 +1,40 @@
+{
+  "observed_at_utc": "2026-10-26T16:03:56.619818+00:00",
+  "source": "Actual local HTTP; no cloud/GPU query",
+  "preflight": {
+    "mode": "LOCAL_AUDIT_PROJECTION",
+    "service": "workspaces",
+    "region": "ap-northeast-1",
+    "instance_type": "Graphics.gr6.4xlarge",
+    "expected_gpu": "NVIDIA L4",
+    "expected_gpu_vram_gib": 24,
+    "expected_ram_gib": 128,
+    "account_plan": "PAID / ACTIVE",
+    "estimated_credit_remaining_usd": 47.25,
+    "credit_settled_remaining_usd": null,
+    "credit_observed_at_utc": "2026-10-26T13:19:56.089Z",
+    "hourly_price_usd": 5.4,
+    "checks": {
+      "credit_workspaces_eligible": true,
+      "credit_expiry_confirmed": null,
+      "tokyo_workspaces_quota": false,
+      "tokyo_capacity_and_price": null,
+      "ssm_private_connectivity": false,
+      "h3_license_territory": true,
+      "gpu_stop_safeguard": false,
+      "independent_stop_safeguard": false,
+      "account_plan_unchanged": true,
+      "workspaces_account_eligible": false
+    },
+    "launch_allowed": false,
+    "real_gpu_connected": false,
+    "tunnel_connected": false,
+    "aws_queries": 0,
+    "aws_writes": 0,
+    "blocked_reasons": [
+      "A real AWS/license/dual-stop audit and pinned API workflow are required",
+      "ComfyUI loopback tunnel is unavailable"
+    ],
+    "note": "Local audit snapshot only; no live AWS query. Expected hardware is not observed hardware. ComfyUI connectivity does not establish AWS account, credit, capacity, or shutdown evidence."
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "intent_at_utc": "2026-10-26T15:41:15.051815+00:00",
+  "experiment_id": "aniflow-h3-gr6-20261026-b",
+  "stack_name": "aniflow-h3-gr6-assets-20261026",
+  "region": "ap-northeast-1",
+  "gpu_count_before": 0,
+  "validation_passed": true,
+  "credits_estimate_usd": 47.25,
+  "template": "infra/workspaces/gr6-private-assets-template.json",
+  "cleanup_requirement": "Explicitly empty bucket, abort multipart uploads, delete stack after verified local copies",
+  "create_accepted": true,
+  "request_id": "6459d612-004b-4477-ac8d-55162ae8b35d"
+}

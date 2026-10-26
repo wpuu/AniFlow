@@ -2,7 +2,7 @@
 
 2026-10-26，Asia/Shanghai。用户同意继续核查东京 gr6 与 H3 许可地域内其他 GameLift 位置。主负责人是唯一 AWS 操作者；代码审阅代理仅只读本地文件。
 
-**东京 Graphics.gr6.4xlarge 的页面、ListServiceQuotas、GetServiceQuota 均为 1；已找到准确公共 Windows 捆绑包。实际创建资格仍未知，未启动 GPU、未完成真实预检、未生成视频。** 已失败的 Graphics.g6.4xlarge 当前两个配额接口也仍为 1，不能再将两个配额接口一致当作创建成功保证。
+**东京 Graphics.gr6.4xlarge 单次创建也被 AWS 实际上限 0 拒绝；复查配额接口仍为 1。CloudTrail 证实本次准确的东京区域、WorkSpaces 服务及 gr6 公共捆绑包，未创建 GPU、未完成真实预检、未生成视频。** 没有提额、升级、重试或联系支持。内部配额矛盾的原因仍未知，不能将配额页面的 1 当可用容量。
 
 ## 本次实读
 
@@ -64,3 +64,23 @@ CloudShell实际提示“无法创建环境”“正在验证您的账户”，�
 只读代理依据[官方协议说明](https://docs.aws.amazon.com/workspaces/latest/adminguide/amazon-workspaces-networking.html)确认Windows Server2022的DCV支持Web Access，WSP为DCV旧名。私有SSM引导脚本已补齐并通过8项本地PowerShell安全门槛测试；没有安装/注册真实节点，尚不能声称远端Online、私有隧道或CUDA通过。实际GPU显存、推理耗时和MP4仍全部未知。
 
 目录注册请求已接受，目录用户已建立并独立读取Enabled；本次目录创建属性已实读允许本地管理员、互联网连接、Web Access，关闭Maintenance。[目录Active](2026-10-26-gr6-directory-active.json)、[注册回执](2026-10-26-gr6-directory-registration.json)、[配置读回](2026-10-26-gr6-directory-config.json)、[首次启动前重设](2026-10-26-gr6-prelaunch-rearm.json)、[新备用](2026-10-26-gr6-prelaunch-backup.json)、[备用等待实读](2026-10-26-gr6-future-backup-status.json)。这些仅是准备完成的证据，仍没有请求创建GPU。
+
+## 23:54 实际拒绝及清理进度
+
+北京时间23:49:01，唯一一次 CreateWorkspaces 请求返回 ResourceLimitExceededException，原文为 "You cannot create more than 0 number of Graphics.gr6.4xlarge WorkSpaces in this region." 请求号 88083dc2-77ad-4c6a-bab7-0682564eeb48。[单次请求及拒绝](2026-10-26-gr6-create-rejection.json)。请求前已确认两个保护、最新PAID状态及赠金估算47.25美元、私有加密S3、单节点激活、已注册目录及Enabled用户；没有以网络未知状态为由重发创建。
+
+随后实际读取东京桌面仍0、应用配额1，重新读取相同 wsb-5mpqp50vv 确为 GRAPHICS_GR6_4XLARGE。[拒绝后复查](2026-10-26-gr6-create-reconciliation.json)。CloudTrail 找到唯一相同请求号，服务 workspaces.amazonaws.com、区域 ap-northeast-1、捆绑包完全一致，并记录相同上限0错误。[CloudTrail脱敏证据](2026-10-26-gr6-create-cloudtrail.json)。这排除了本次错误区域、错误服务或错选G6包；不能据此确定AWS内部为何显示1但执行0。
+
+本轮私有S3桶及Hybrid角色已随专用资产栈删除，S3唯一引导文件已删除，multipart为0，激活已撤销、管理节点0。目录已从WorkSpaces注销，Directory Service实际Stage=Deleting；主备保护继续保留直到确认目录不存在，不能提前称全部清理。[资产清理](2026-10-26-gr6-private-assets-cleanup.json)、[当前清理实读](2026-10-26-gr6-cleanup-inventory.json)。目录、保护及请求可能已有小额辅助费用，最终抵扣和税仍待账单；没有GPU实测费用或视频成功。
+
+独立本地开发已完成Windows首次SSM引导、私有资产模板、单个已提交任务的只读历史轮询及MP4自动保存helper；本轮39项行为/权限测试与Ruff通过。helper验证唯一MP4、边界路径、真实ffprobe时长及尺寸、SHA256后依次上传视频和manifest；已确认阶段持久存档，网络未知PUT仅有限重试同一对象，不再提交Comfy任务。测试中的HTTP和视频探测使用替身，未发生真实远端保存。既有原参数工作流、Grok视觉和两个原ZIP未改。本机Bridge快照已反映实际准入失败，保持launch_allowed=false、GPU未连接、AWS写入0。
+
+## 2026-10-27 00:02 最终清理
+
+[最终实读](2026-10-26-gr6-final-absence.json)确认：东京桌面0、本次已注册目录不存在、本次Directory Service目录不存在；东京主保护、新加坡备用保护、东京私有资产三个栈均ABSENT；私有桶404、激活0、管理节点0，最后备用执行Cancelled。只有确认目录及桌面不存在后才取消备用及删除保护。下文或历史记录中的Creating/Deleting/保护运行状态均已被此结果取代。
+
+[官方临时连接退出回执](2026-10-26-gr6-auth-cleanup.json)确认缓存文件0，精确删除本任务8个认证/目录密码/注册及接入私有文件；没有修改用户全局AWS配置或退出用户自己的浏览器AWS登录。Ego任务空间已结束，保留用户给定的东京EC2页，该页最终快照为“没有实例”。[用户指定入口原文](2026-10-26-gr6-ec2-user-entry.txt)。
+
+[本机真实HTTP复查](2026-10-26-gr6-local-http-after-rejection.json)确认gr6/128GiB目标、实际配额及账户准入均失败、launch_allowed=false、GPU未连接、AWS读写0；不会让本机其他GPU冒充AWS成功。模型及环境保持D盘，未覆盖原ZIP、未合并main。
+
+最终仍为真实视频0、真实GPU预检0、驱动/CUDA/显存/耗时未知。目录、保护和请求辅助费用及赠金抵扣/税需要等待实际账单，不把资源清理当费用已结算。在用户不提额、不升级、不降低画质、不联系支持的约束下，本次已核查的GPU路径受阻，停止继续云端创建。

@@ -1,0 +1,18 @@
+{
+  "observed_at_utc": "2026-10-26T15:54:11.158461+00:00",
+  "matched_request_count": 1,
+  "events": [
+    {
+      "event_time": "2026-10-26T15:49:01Z",
+      "event_source": "workspaces.amazonaws.com",
+      "event_name": "CreateWorkspaces",
+      "region": "ap-northeast-1",
+      "request_id": "88083dc2-77ad-4c6a-bab7-0682564eeb48",
+      "bundle_ids": [
+        "wsb-5mpqp50vv"
+      ],
+      "error_code": "ResourceLimitExceededException",
+      "error_message": "You cannot create more than 0 number of Graphics.gr6.4xlarge WorkSpaces in this region. Request a limit increase by contacting AWS Support."
+    }
+  ]
+}

@@ -1,0 +1,145 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AniFlow gr6 private output storage and SSM hybrid node role.",
+  "Metadata": {
+    "OperatingNotes": [
+      "Deploy only after current credit eligibility and net self-payment <= USD 1 checks pass.",
+      "Storage, requests, transfer and hybrid SSM usage may incur charges; this template does not enforce a billing cap.",
+      "One-day lifecycle is not an exact shutdown or deletion timer. Explicitly empty and delete the bucket after verified local download, including incomplete multipart uploads."
+    ]
+  },
+  "Parameters": {
+    "ExperimentId": {
+      "Type": "String",
+      "AllowedPattern": "aniflow-h3-gr6-[a-z0-9-]+"
+    }
+  },
+  "Resources": {
+    "AssetsBucket": {
+      "Type": "AWS::S3::Bucket",
+      "DeletionPolicy": "Delete",
+      "UpdateReplacePolicy": "Delete",
+      "Properties": {
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "IgnorePublicAcls": true,
+          "BlockPublicPolicy": true,
+          "RestrictPublicBuckets": true
+        },
+        "OwnershipControls": {
+          "Rules": [
+            { "ObjectOwnership": "BucketOwnerEnforced" }
+          ]
+        },
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            { "ServerSideEncryptionByDefault": { "SSEAlgorithm": "AES256" } }
+          ]
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "Id": "ExpireExperimentObjectsAndIncompleteUploads",
+              "Status": "Enabled",
+              "Prefix": "",
+              "ExpirationInDays": 1,
+              "AbortIncompleteMultipartUpload": { "DaysAfterInitiation": 1 }
+            }
+          ]
+        },
+        "Tags": [
+          { "Key": "Project", "Value": "AniFlow" },
+          { "Key": "ExperimentId", "Value": { "Ref": "ExperimentId" } }
+        ]
+      }
+    },
+    "AssetsBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": { "Ref": "AssetsBucket" },
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "DenyInsecureTransport",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:*",
+              "Resource": [
+                { "Fn::GetAtt": [ "AssetsBucket", "Arn" ] },
+                { "Fn::Sub": "${AssetsBucket.Arn}/*" }
+              ],
+              "Condition": { "Bool": { "aws:SecureTransport": "false" } }
+            }
+          ]
+        }
+      }
+    },
+    "HybridNodeRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": { "Service": "ssm.amazonaws.com" },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": { "aws:SourceAccount": { "Ref": "AWS::AccountId" } },
+                "ArnLike": {
+                  "aws:SourceArn": {
+                    "Fn::Sub": "arn:${AWS::Partition}:ssm:ap-northeast-1:${AWS::AccountId}:*"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "ManagedPolicyArns": [
+          { "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore" }
+        ],
+        "Policies": [
+          {
+            "PolicyName": "ExperimentOutputAndReportAccess",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "s3:ListBucket",
+                  "Resource": { "Fn::GetAtt": [ "AssetsBucket", "Arn" ] },
+                  "Condition": {
+                    "StringLike": { "s3:prefix": [ "outputs/*", "reports/*" ] }
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [ "s3:PutObject", "s3:GetObject" ],
+                  "Resource": [
+                    { "Fn::Sub": "${AssetsBucket.Arn}/outputs/*" },
+                    { "Fn::Sub": "${AssetsBucket.Arn}/reports/*" }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "Tags": [
+          { "Key": "Project", "Value": "AniFlow" },
+          { "Key": "ExperimentId", "Value": { "Ref": "ExperimentId" } }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "BucketName": {
+      "Description": "Private experiment bucket; explicitly empty and delete after verified download.",
+      "Value": { "Ref": "AssetsBucket" }
+    },
+    "HybridRoleName": {
+      "Description": "Role name for a single-node SSM hybrid activation.",
+      "Value": { "Ref": "HybridNodeRole" }
+    }
+  }
+}
