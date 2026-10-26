@@ -1,0 +1,12 @@
+{
+  "observed_at_utc": "2026-10-26T15:28:31.713014+00:00",
+  "directories": [
+    {
+      "DirectoryId": "d-95679b0534",
+      "Stage": "Active",
+      "Type": "MicrosoftAD",
+      "Edition": "Standard"
+    }
+  ],
+  "exact_experiment_tag_present": true
+}

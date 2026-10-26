@@ -47,8 +47,20 @@
 
 本机Bridge已补充精确gr6目标校验和128GiB主存展示；gr6的阻塞快照不会借用本机其他ComfyUI GPU，snapshot_only仍不能授权生成。真实本地HTTP预检返回目标gr6、128GiB、GPU未连接、launch_allowed=false、AWS查询0。相关82项Python接口/保护契约及Ruff通过，均非H3真实推理。未更改Grok视觉或降低原工作流质量。
 
-## 最新认证阻塞（本轮尚在进行）
+## 认证阻塞历史（已恢复）
 
 目录最后一次成功读取为北京时间22:28:58的Creating。随后本机官方CLI短期凭证返回ExpiredTokenException，Ego原专用空间9也已不存在。按用户此前允许重建的授权恢复专用空间10，AWS重新要求邮箱登录；已将页面控制交给用户，等待本人完成登录及可能MFA。没有读取/索取密码或验证码，没有创建gr6桌面、GPU或上传模型。云端两个服务角色及固定停止/清理执行不依赖过期的本机登录，仍按23:29:13/23:34:13执行；本轮保护栈仍存在，不能宣称本轮已清理。
 
 为Windows候选准备的官方Portable运行包已在本机D盘独立目录完成字节数和完整SHA256核对：[归档清单](2026-10-26-gr6-windows-runtime-package.json)。2,018,444,114字节，仍为ComfyUI v0.42.1固定来源，原47.4GB Linux/模型归档未改；未安装到GPU、未验证CUDA、没有真实成片。登录恢复后先读回当前目录及保护状态，只有固定保护窗口仍足够才继续，不重复提交未知结果。
+
+## 2026-10-26 23:35 更新
+
+用户完成浏览器登录并明确授权继续空间10。已从用户提供的东京 EC2 实例地址进入；EC2 与 WorkSpaces 是不同服务，不以 EC2 列表推断 WorkSpaces 准入。官方临时CLI登录已恢复；15:28:31 UTC 实读本次目录 d-95679b0534 为 Active，实验标签匹配，GPU尚未请求创建。
+
+首次GPU启动前、桌面数量仍为0时，重新设置固定停止为 **2026-10-27 01:08:57 北京时间**，终止及目录清理为 **01:13:57**。两个栈更新完成、参数读回一致，东京主路径真实调用返回未到截止且匹配桌面0。旧新加坡备用 88953ad2-72b0-4672-a721-202610260003 已确认 Cancelled；新备用 88953ad2-72b0-4672-a721-202610260005 已实际读回 InProgress，WaitUntilCleanup 的 aws:sleep 正在等待 17:13:57 UTC。这是GPU为0时的首次启动准备，没有延长运行中GPU的截止。
+
+CloudShell实际提示“无法创建环境”“正在验证您的账户”，没有执行命令。此事实只说明CloudShell受限，不能推断gr6已被拒绝；未联系AWS支持。当前新加坡接口出现过TLS超时，未将网络错误当配额0，未重发任何GPU创建。
+
+只读代理依据[官方协议说明](https://docs.aws.amazon.com/workspaces/latest/adminguide/amazon-workspaces-networking.html)确认Windows Server2022的DCV支持Web Access，WSP为DCV旧名。私有SSM引导脚本已补齐并通过8项本地PowerShell安全门槛测试；没有安装/注册真实节点，尚不能声称远端Online、私有隧道或CUDA通过。实际GPU显存、推理耗时和MP4仍全部未知。
+
+目录注册请求已接受，目录用户已建立并独立读取Enabled；本次目录创建属性已实读允许本地管理员、互联网连接、Web Access，关闭Maintenance。[目录Active](2026-10-26-gr6-directory-active.json)、[注册回执](2026-10-26-gr6-directory-registration.json)、[配置读回](2026-10-26-gr6-directory-config.json)、[首次启动前重设](2026-10-26-gr6-prelaunch-rearm.json)、[新备用](2026-10-26-gr6-prelaunch-backup.json)、[备用等待实读](2026-10-26-gr6-future-backup-status.json)。这些仅是准备完成的证据，仍没有请求创建GPU。

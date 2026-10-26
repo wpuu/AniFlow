@@ -1,0 +1,21 @@
+{
+  "intent_at_utc": "2026-10-26T15:28:57.331647+00:00",
+  "gpu_count_before": 0,
+  "previous_stop_utc": "2026-10-26T15:29:13Z",
+  "previous_cleanup_utc": "2026-10-26T15:34:13Z",
+  "previous_backup_execution": "88953ad2-72b0-4672-a721-202610260003",
+  "updates": [
+    {
+      "mode": "primary",
+      "accepted": true
+    },
+    {
+      "mode": "backup",
+      "accepted": true
+    }
+  ],
+  "old_backup_before": "InProgress",
+  "old_backup_cancel_accepted": true,
+  "stop_utc": "2026-10-26T17:08:57Z",
+  "cleanup_utc": "2026-10-26T17:13:57Z"
+}

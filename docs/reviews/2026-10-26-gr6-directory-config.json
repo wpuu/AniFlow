@@ -1,0 +1,11 @@
+{
+  "directory_id": "d-95679b0534",
+  "intent": true,
+  "gpu_created": false,
+  "creation_properties": {
+    "EnableInternetAccess": true,
+    "UserEnabledAsLocalAdministrator": true,
+    "EnableMaintenanceMode": false
+  },
+  "web_access": "ALLOW"
+}
