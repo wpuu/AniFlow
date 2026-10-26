@@ -128,7 +128,8 @@ function Workspace({mode, onMode}: {mode:StudioMode; onMode:(mode:StudioMode)=>v
         clock={clock}
         mode={mode}
         ready={service.ready}
-        connected={service.connected}
+        tunnelConnected={service.tunnelConnected}
+        gpuConnected={service.gpuConnected}
       />
 
       <main className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">

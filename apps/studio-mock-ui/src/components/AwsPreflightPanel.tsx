@@ -10,23 +10,37 @@ type CheckKey =
   | "tokyo_capacity_and_price"
   | "ssm_private_connectivity"
   | "h3_license_territory"
-  | "gpu_stop_safeguard";
+  | "gpu_stop_safeguard"
+  | "credit_workspaces_eligible"
+  | "tokyo_workspaces_quota"
+  | "independent_stop_safeguard"
+  | "account_plan_unchanged"
+  | "workspaces_account_eligible";
 
 interface CloudPreflight {
   mode: string;
+  service?: string;
   region: string;
   instance_type: string;
   account_plan: string;
-  actual_credit_usd: number | null;
+  estimated_credit_remaining_usd?: number | null;
+  credit_settled_remaining_usd?: number | null;
+  credit_observed_at_utc?: string | null;
   hourly_price_usd: number | null;
-  checks: Record<CheckKey, Verification>;
+  expected_gpu?: string;
+  expected_gpu_vram_gib?: number;
+  expected_ram_gib?: number;
+  checks: Partial<Record<CheckKey, Verification>>;
   launch_allowed: boolean;
   real_gpu_connected: boolean;
+  tunnel_connected?: boolean;
   aws_queries: number;
   aws_writes: number;
+  note?: string;
+  blocked_reasons?: string[];
 }
 
-const CHECKS: { key: CheckKey; label: string; detail: string }[] = [
+const MOCK_CHECKS: { key: CheckKey; label: string; detail: string }[] = [
   { key: "credit_ec2_eligible", label: "赠金适用 EC2", detail: "查看账户中这笔赠金的 Eligible Services" },
   { key: "credit_expiry_confirmed", label: "到期日与可用余额", detail: "以 AWS 账单控制台的最新数值为准" },
   { key: "tokyo_gpu_quota", label: "东京 G/VT 按需配额", detail: "至少需要8 vCPU；配额不足则不能启动" },
@@ -35,6 +49,43 @@ const CHECKS: { key: CheckKey; label: string; detail: string }[] = [
   { key: "h3_license_territory", label: "H3 使用地域与许可", detail: "核对开放权重许可、商业用途和用户所在地" },
   { key: "gpu_stop_safeguard", label: "预算与停机保护", detail: "预算告警不能代替预先配置的定时停机" },
 ];
+
+const WORKSPACES_CHECKS: { key: CheckKey; label: string; detail: string }[] = [
+  { key: "credit_workspaces_eligible", label: "赠金适用 WorkSpaces", detail: "核对本笔赠金的适用服务与费用项目" },
+  { key: "credit_expiry_confirmed", label: "到期日与预计余额", detail: "展示已核验的账单估算快照，不是实时可用余额" },
+  { key: "tokyo_workspaces_quota", label: "东京 WorkSpaces Graphics G6 配额", detail: "使用 WorkSpaces 独立配额核验结果" },
+  { key: "tokyo_capacity_and_price", label: "桌面容量与费用", detail: "核对东京 Graphics.g6.4xlarge 与完整费用项目" },
+  { key: "ssm_private_connectivity", label: "SSM 私有连接", detail: "通过私有隧道访问 ComfyUI，禁止公网开放8188" },
+  { key: "h3_license_territory", label: "H3 使用地域与许可", detail: "核对模型许可与实际使用地域" },
+  { key: "gpu_stop_safeguard", label: "定时停机保护", detail: "限制GPU运行时长；停机不代表所有费用归零" },
+  { key: "independent_stop_safeguard", label: "独立备用停机", detail: "本机断网时仍能生效的第二停止措施" },
+  { key: "account_plan_unchanged", label: "账户计划保持不变", detail: "不得擅自升级付费计划" },
+  { key: "workspaces_account_eligible", label: "WorkSpaces 账户资格", detail: "核对本账户使用目标桌面的资格" },
+];
+
+export function parseCloudPreflight(body: unknown, mode: StudioMode): CloudPreflight {
+  if (!body || typeof body !== "object" || !("checks" in body)) {
+    throw new Error("无效的 AWS 预检返回");
+  }
+  const value = body as CloudPreflight;
+  const checks = mode === "real" ? WORKSPACES_CHECKS : MOCK_CHECKS;
+  if (typeof value.launch_allowed !== "boolean" || typeof value.real_gpu_connected !== "boolean"
+      || !value.checks || !checks.every(c => Object.prototype.hasOwnProperty.call(value.checks, c.key)
+        && (value.checks[c.key] === true || value.checks[c.key] === false || value.checks[c.key] === null))) {
+    throw new Error("AWS 预检返回缺少必要安全字段");
+  }
+  if (mode === "real" && (value.mode !== "LOCAL_AUDIT_PROJECTION" || value.service !== "workspaces")) {
+    throw new Error("真实预检必须返回 WorkSpaces 本机审计投影");
+  }
+  if (mode === "real") {
+    for (const amount of [value.estimated_credit_remaining_usd, value.credit_settled_remaining_usd]) {
+      if (amount != null && (typeof amount !== "number" || !Number.isFinite(amount) || amount < 0)) {
+        throw new Error("赠金预计或结算余额格式无效");
+      }
+    }
+  }
+  return value;
+}
 
 function Status({ value }: { value: Verification }) {
   if (value === true) return <span className="text-emerald-300">已验证</span>;
@@ -53,24 +104,14 @@ export function AwsPreflightPanel({ onClose, mode }: { onClose: () => void; mode
     try {
       const response = await fetch("/api/studio/cloud/preflight", { cache: "no-store" });
       if (!response.ok) throw new Error("HTTP " + response.status);
-      const body: unknown = await response.json();
-      if (!body || typeof body !== "object" || !("checks" in body)) {
-        throw new Error("无效的 AWS 预检返回");
-      }
-      const value = body as CloudPreflight;
-      if (typeof value.launch_allowed !== "boolean" ||
-          typeof value.real_gpu_connected !== "boolean" ||
-          !value.checks || !CHECKS.every((c) => Object.prototype.hasOwnProperty.call(value.checks, c.key))) {
-        throw new Error("AWS 预检返回缺少必要安全字段");
-      }
-      setData(value);
+      setData(parseCloudPreflight(await response.json(), mode));
     } catch (err) {
       setData(null);
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [mode]);
 
   useEffect(() => { void refresh(); }, [refresh]);
 
@@ -97,17 +138,24 @@ export function AwsPreflightPanel({ onClose, mode }: { onClose: () => void; mode
             <p className="text-xs leading-relaxed text-amber-100">
               {data?.mode === "UNVERIFIED_PLACEHOLDER"
                 ? "当前连接的是本机模拟 Bridge，并未读取你的 AWS 账户。所有资格、赠金余额及实例价格均为未知，不能据此开机。"
-                : "只有 AWS 账户实时核验并落实停止计费的保护后，才可单独授权创建 GPU 实例。"}
+                : mode === "real"
+                  ? "本机审计投影：只展示已保存的 WorkSpaces 核验结果，不实时查询 AWS。目标硬件不是实测设备；是否允许生成仍需通过账户资格与双重停机保护。"
+                  : "只有 AWS 账户核验并落实定时停机与独立备用措施后，才可创建 GPU 实例。"}
             </p>
           </div>
           <div className="grid gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs sm:grid-cols-2">
             <div>目标区域 <span className="font-mono text-cyan-200">{data?.region ?? "ap-northeast-1"}</span></div>
-            <div>目标规格 <span className="font-mono text-cyan-200">{data?.instance_type ?? "g6e.2xlarge"}</span></div>
+            <div>目标规格 <span className="font-mono text-cyan-200">{data?.instance_type ?? (mode === "real" ? "Graphics.g6.4xlarge" : "g6e.2xlarge")}</span></div>
             <div>账户计划 <span className="text-amber-300">{data?.account_plan === "unknown" || !data ? "未知" : data.account_plan}</span></div>
-            <div>赠金余额 <span className="text-amber-300">{data?.actual_credit_usd == null ? "尚未读取" : "$" + data.actual_credit_usd.toFixed(2)}</span></div>
+            <div>赠金预计余额 <span className="text-amber-300">{data?.estimated_credit_remaining_usd == null ? "尚未核验" : "$" + data.estimated_credit_remaining_usd.toFixed(2)}</span></div>
+            {mode === "real" && <>
+              <div>结算余额 <span className="text-zinc-400">{data?.credit_settled_remaining_usd == null ? "尚未核验" : "$" + data.credit_settled_remaining_usd.toFixed(2)}</span></div>
+              <div>核验时间（UTC） <span className="text-zinc-400">{data?.credit_observed_at_utc ?? "尚未核验"}</span></div>
+              <div className="sm:col-span-2">目标硬件（未实测） <span className="text-cyan-200">{data?.expected_gpu ?? "NVIDIA L4"} / {data?.expected_gpu_vram_gib ?? 24}GiB 显存 / {data?.expected_ram_gib ?? 64}GiB 内存</span></div>
+            </>}
           </div>
           <div className="space-y-1" data-testid="aws-preflight-checklist">
-            {CHECKS.map((c) => (
+            {(mode === "real" ? WORKSPACES_CHECKS : MOCK_CHECKS).map((c) => (
               <div key={c.key} className="flex justify-between gap-3 border-b border-white/5 py-2.5">
                 <div>
                   <p className="text-xs font-medium">{c.label}</p>
@@ -118,9 +166,13 @@ export function AwsPreflightPanel({ onClose, mode }: { onClose: () => void; mode
             ))}
           </div>
           {error && <p role="alert" className="text-xs text-rose-300">无法读取本机预检接口：{error}</p>}
+          {mode === "real" && data?.note && <p className="text-xs text-zinc-400">{data.note}</p>}
+          {mode === "real" && data?.blocked_reasons && data.blocked_reasons.length > 0 && <ul className="list-disc space-y-1 pl-4 text-xs text-amber-300">
+            {data.blocked_reasons.map(reason => <li key={reason}>{reason}</li>)}
+          </ul>}
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] text-zinc-500">
-              {mode === "real" ? "EC2 控制保持关闭；真实生成需独立核验资格和停机保护。" : "EC2 控制保持关闭；本机 Studio 只执行不收费的模拟任务。"}
+              {mode === "real" ? "此面板只读；WorkSpaces 资格、预算与停机保护未通过时禁止真实生成。" : "EC2 控制保持关闭；本机 Studio 只执行不收费的模拟任务。"}
             </p>
             <button type="button" onClick={() => void refresh()} disabled={loading}
               className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-white/15 px-3 py-2 text-xs hover:bg-white/5 disabled:opacity-50">
@@ -128,7 +180,7 @@ export function AwsPreflightPanel({ onClose, mode }: { onClose: () => void; mode
             </button>
           </div>
           <div className="rounded-lg bg-zinc-900 px-3 py-2 text-xs text-zinc-400" data-testid="aws-launch-disabled">
-            {mode === "real" ? "AWS 创建与开机不在此页面执行。真实生成是否可用以本机服务的预检结果为准。" : "AWS 创建、开机和真实生成：未授权 / 未接入。此页面无法执行计费操作。"}
+            {mode === "real" ? "WorkSpaces 创建、启动与恢复不在此页面执行。预计余额与核验时间来自本机审计快照；真实生成以本机服务的完整预检为准。" : "AWS 创建、开机和真实生成：未授权 / 未接入。此页面无法执行计费操作。"}
           </div>
         </div>
       </section>

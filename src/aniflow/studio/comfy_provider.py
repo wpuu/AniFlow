@@ -81,7 +81,8 @@ class ComfyProvider:
                 return candidate, "running", None
         return prompt_id, "submission_unknown", None
 
-    def download(self, history: dict, path: Path) -> tuple[str, int, dict]:
+    def download(self, history: dict, path: Path,
+                 profile: str | None = None) -> tuple[str, int, dict]:
         candidates = []
         for output in history.get("outputs", {}).values():
             for values in output.values():
@@ -112,18 +113,18 @@ class ComfyProvider:
                 length = response.headers.get("content-length")
                 if length is not None and size != int(length):
                     raise ValueError("MP4 response length mismatch")
-            metadata = verify_mp4(partial)
+            metadata = verify_mp4(partial, profile)
             partial.replace(path)
             return digest.hexdigest(), size, metadata
         finally:
             partial.unlink(missing_ok=True)
 
 
-def verify_mp4(path: Path) -> dict:
+def verify_mp4(path: Path, profile: str | None = None) -> dict:
     with path.open("rb") as source:
         if source.read(12)[4:8] != b"ftyp":
             raise ValueError("Output is not an MP4 container")
-    result = subprocess.run(["ffprobe", "-v", "error", "-show_streams", "-show_format",
+    result = subprocess.run(["ffprobe", "-v", "error", "-count_frames", "-show_streams", "-show_format",
                              "-of", "json", str(path)], capture_output=True, text=True,
                             check=True, timeout=30)
     data = json.loads(result.stdout)
@@ -132,11 +133,47 @@ def verify_mp4(path: Path) -> dict:
     width, height = int(video["width"]), int(video["height"])
     numerator, denominator = video["avg_frame_rate"].split("/")
     fps = int(numerator) / int(denominator)
-    if not (4.8 <= duration <= 5.2 and width >= 768 and height > width
-            and abs(width / height - 9 / 16) < 0.025 and fps > 0):
+    frames = int(video.get("nb_read_frames") or video.get("nb_frames") or 0)
+    sar = video.get("sample_aspect_ratio")
+    audio = [stream for stream in data["streams"] if stream.get("codec_type") == "audio"]
+    if profile == "h3_native_source":
+        valid = width == 800 and height == 1376 and fps == 24 and frames >= 124
+    elif profile == "h3_native_final":
+        valid = (width == 774 and height == 1376 and fps == 24 and frames == 120
+                 and sar == "1:1" and abs(duration - 5) < 0.000001
+                 and abs(float(data["format"]["duration"]) - 5) < 0.000001
+                 and all(float(stream["duration"]) <= 5.000001 for stream in audio))
+    elif profile is None:
+        valid = (4.8 <= duration <= 5.2 and width >= 768 and height > width
+                 and abs(width / height - 9 / 16) < 0.025 and fps > 0)
+    else:
+        raise ValueError("Unknown MP4 verification profile")
+    if not valid:
         raise ValueError("MP4 does not satisfy the audited 5-second portrait experiment")
     # Decode every frame: ffprobe alone can accept a truncated container.
     subprocess.run(["ffmpeg", "-v", "error", "-xerror", "-i", str(path),
-                    "-map", "0:v:0", "-f", "null", "-"], capture_output=True,
+                    "-map", "0:v:0", "-map", "0:a:0?", "-f", "null", "-"], capture_output=True,
                    check=True, timeout=120)
-    return {"duration_seconds": duration, "width": width, "height": height, "fps": fps}
+    return {"duration_seconds": duration, "width": width, "height": height, "fps": fps,
+            "frame_count": frames, "sample_aspect_ratio": sar, "audio_present": bool(audio)}
+
+
+def postprocess_h3_portrait(source: Path, path: Path) -> tuple[str, int, dict]:
+    """Keep source frames 0..119 and crop pixels; re-encode without temporal resampling."""
+    verify_mp4(source, "h3_native_source")
+    partial = path.with_suffix(".mp4.partial")
+    try:
+        subprocess.run(["ffmpeg", "-v", "error", "-xerror", "-y", "-i", str(source),
+                        "-map", "0:v:0", "-map", "0:a:0?", "-vf",
+                        "trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS,crop=774:1376:12:0,setsar=1",
+                        "-af", "atrim=start=0:end=5,asetpts=PTS-STARTPTS", "-fps_mode", "passthrough",
+                        "-c:v", "libx264", "-crf", "18", "-preset", "medium", "-pix_fmt", "yuv420p",
+                        "-c:a", "aac", "-b:a", "192k", "-t", "5", "-movflags", "+faststart",
+                        "-f", "mp4", str(partial)], capture_output=True, check=True, timeout=300)
+        metadata = verify_mp4(partial, "h3_native_final")
+        digest = hashlib.sha256(partial.read_bytes()).hexdigest()
+        size = partial.stat().st_size
+        partial.replace(path)
+        return digest, size, metadata
+    finally:
+        partial.unlink(missing_ok=True)

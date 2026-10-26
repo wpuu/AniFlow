@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import math
 import os
 import re
 import shutil
@@ -22,7 +23,7 @@ from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse
 
-from aniflow.studio.comfy_provider import ComfyProvider
+from aniflow.studio.comfy_provider import ComfyProvider, postprocess_h3_portrait
 from aniflow.studio.mock_api import JobRequest, create_mock_app
 
 CHECKS = ("credit_ec2_eligible", "credit_expiry_confirmed", "tokyo_gpu_quota",
@@ -87,6 +88,10 @@ class RealConfig:
                      and shutil.which("ffmpeg"))
             if not valid:
                 return ["Real audit is blocked, expired, incomplete, or workflow tools/hash are invalid"], None
+            if "postprocess" in bundle and bundle["postprocess"] != {"preset": "h3_native_5s_portrait_v1"}:
+                return ["Unknown or invalid audited postprocess preset"], None
+            if service == "workspaces" and bundle.get("postprocess") != {"preset": "h3_native_5s_portrait_v1"}:
+                return ["This WorkSpaces H3 experiment requires the audited strict 5-second portrait preset"], None
             prompt = bundle["prompt"]
             if not prompt or not all(isinstance(node, dict) and "class_type" in node
                                      and isinstance(node.get("inputs"), dict)
@@ -96,7 +101,7 @@ class RealConfig:
                 node, input_name = bundle["bindings"][field]
                 if input_name not in prompt[node]["inputs"]:
                     return ["Workflow binding does not exist in the pinned API prompt"], None
-            return [], bundle
+            return [], {**bundle, "_local_audit": gate}
         except (OSError, ValueError, TypeError, KeyError):
             return ["Real audit/workflow could not be validated"], None
 
@@ -144,7 +149,16 @@ def create_real_app(config: RealConfig | None = None,
                     job.update(comfy_prompt_id=prompt_id, status=status, error=None)
                     if history:
                         path = videos / (job["id"] + ".mp4")
-                        digest, size, metadata = provider.download(history, path)
+                        if job.get("postprocess") == {"preset": "h3_native_5s_portrait_v1"}:
+                            source = videos / (job["id"] + ".source.mp4")
+                            source_digest, source_size, source_metadata = provider.download(
+                                history, source, "h3_native_source")
+                            job.update(source_local_path=str(source), source_sha256=source_digest,
+                                       source_bytes=source_size, source_video_metadata=source_metadata)
+                            save(job)
+                            digest, size, metadata = postprocess_h3_portrait(source, path)
+                        else:
+                            digest, size, metadata = provider.download(history, path)
                         job.update(status="completed", verified=True, progress=100,
                                    output_sha256=digest, output_bytes=size,
                                    video_metadata=metadata, local_path=str(path),
@@ -205,6 +219,42 @@ def create_real_app(config: RealConfig | None = None,
                 "gpu_connected": gpu_connected, "blocked_reasons": reasons,
                 "note": "Tunnel connectivity alone does not verify GPU, license, credit, or shutdown protection"}
 
+    @app.get("/api/studio/cloud/preflight")
+    def preflight():
+        reasons, bundle = cfg.audited_workflow()
+        audit = bundle["_local_audit"] if bundle else {}
+        service = audit.get("service", "ec2") if audit else "workspaces"
+        workspaces = service == "workspaces"
+        tunnel_connected, gpu_connected = provider.connection_state()
+        if not tunnel_connected:
+            reasons.append("ComfyUI loopback tunnel is unavailable")
+        elif not gpu_connected:
+            reasons.append("ComfyUI system stats do not report a CUDA GPU with positive VRAM")
+
+        def number(name):
+            value = audit.get(name)
+            return value if type(value) in (int, float) and math.isfinite(value) else None
+
+        checks = WORKSPACES_CHECKS if workspaces else CHECKS
+        return {"mode": "LOCAL_AUDIT_PROJECTION", "service": service, "region": "ap-northeast-1",
+                "instance_type": "Graphics.g6.4xlarge" if workspaces else "g6e.2xlarge",
+                "expected_gpu": "NVIDIA L4" if workspaces else None,
+                "expected_gpu_vram_gib": 24 if workspaces else None,
+                "expected_ram_gib": 64 if workspaces else None,
+                "account_plan": audit.get("account_plan") if isinstance(audit.get("account_plan"), str)
+                                and audit["account_plan"] else "unknown",
+                "estimated_credit_remaining_usd": number("estimated_credit_remaining_usd"),
+                "credit_settled_remaining_usd": number("credit_settled_remaining_usd"),
+                "credit_observed_at_utc": audit.get("credit_observed_at_utc")
+                                         if isinstance(audit.get("credit_observed_at_utc"), str) else None,
+                "hourly_price_usd": number("hourly_price_usd"),
+                "checks": {name: audit["checks"][name] if audit else None for name in checks},
+                "launch_allowed": not reasons, "real_gpu_connected": gpu_connected,
+                "tunnel_connected": tunnel_connected, "aws_queries": 0, "aws_writes": 0,
+                "blocked_reasons": reasons,
+                "note": "Local validated audit projection only; no live AWS query. Expected hardware is not observed hardware. "
+                        "ComfyUI connectivity does not establish AWS account, credit, capacity, or shutdown evidence."}
+
     @app.post("/api/studio/real/assets")
     async def upload(file: Annotated[UploadFile, File(...)]):
         raw = await file.read(10 * 1024 * 1024 + 1)
@@ -259,6 +309,8 @@ def create_real_app(config: RealConfig | None = None,
                    "created_at": time.time(), "simulation": False, "gpu_connected": gpu_connected,
                    "progress": None, "comfy_prompt_id": None, "local_path": None,
                    "output_sha256": None, "output_bytes": None, "video_metadata": None,
+                   "source_local_path": None, "source_sha256": None, "source_bytes": None,
+                   "source_video_metadata": None, "postprocess": bundle.get("postprocess"),
                    "verified": False, "elapsed_seconds": None, "peak_vram_mb": None,
                    "actual_cost_usd": None, "video_download_path": None, "error": None}
             cx.execute("INSERT INTO jobs VALUES (?,?,?,?)", (job["id"], task.idempotency_key,
@@ -319,6 +371,6 @@ def create_real_app(config: RealConfig | None = None,
     # Reuse only read-only presentation routes; do not expose mock creation on this service.
     mock = create_mock_app(data_dir=base / "unused-mock")
     for route in mock.routes:
-        if getattr(route, "path", None) in {"/", "/images/logo.png", "/api/studio/cloud/preflight"}:
+        if getattr(route, "path", None) in {"/", "/images/logo.png"}:
             app.router.routes.append(route)
     return app

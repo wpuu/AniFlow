@@ -16,8 +16,28 @@ interface ServerJob {
 export interface ServiceHealth {
   mode: StudioMode | null;
   ready: boolean;
-  connected: boolean;
+  tunnelConnected: boolean;
+  gpuConnected: boolean;
   reasons: string[];
+}
+
+export function realServiceHealth(body: unknown, mode: StudioMode): ServiceHealth {
+  if (!body || typeof body !== "object" || !("mode" in body) || body.mode !== "REAL_H3"
+      || !("simulation" in body) || body.simulation !== false
+      || !("provider" in body) || body.provider !== "minimax-h3"
+      || !("tunnel_connected" in body) || typeof body.tunnel_connected !== "boolean"
+      || !("gpu_connected" in body) || typeof body.gpu_connected !== "boolean") {
+    throw new Error("真实服务身份或隧道/GPU状态不符");
+  }
+  return {
+    mode:"real",
+    ready:mode === "real" && "ready" in body && body.ready === true
+      && body.tunnel_connected && body.gpu_connected,
+    tunnelConnected:body.tunnel_connected,
+    gpuConnected:body.gpu_connected,
+    reasons:"blocked_reasons" in body && Array.isArray(body.blocked_reasons)
+      ? body.blocked_reasons.filter((reason):reason is string=>typeof reason === "string") : [],
+  };
 }
 
 export interface PendingSubmission {
@@ -86,7 +106,7 @@ export function useTaskEngine(mode: StudioMode) {
   const API = "/api/studio/" + mode;
   const HIDDEN_KEY = "aniflow." + mode + ".hidden_ids.v1";
   const PENDING_KEY = "aniflow." + mode + ".pending_submission.v1";
-  const [service, setService] = useState<ServiceHealth>({mode:null, ready:false, connected:false, reasons:[]});
+  const [service, setService] = useState<ServiceHealth>({mode:null, ready:false, tunnelConnected:false, gpuConnected:false, reasons:[]});
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [hidden, setHidden] = useState<Set<string>>(() => {
     try {
@@ -114,14 +134,10 @@ export function useTaskEngine(mode: StudioMode) {
     if (realResponse.status === 404) {
       const mock = await jsonOrError(await fetch("/api/studio/mock/health", {cache:"no-store"}));
       if (mock.mode !== "MOCK_ONLY" || mock.provider !== "mock-h3") throw new Error("未知本机服务");
-      next = {mode:"mock", ready:mode === "mock", connected:false, reasons:[]};
+      next = {mode:"mock", ready:mode === "mock", tunnelConnected:false, gpuConnected:false, reasons:[]};
     } else {
       const real = await jsonOrError(realResponse);
-      if (real.mode !== "REAL_H3" || real.simulation !== false || real.provider !== "minimax-h3") {
-        throw new Error("真实服务身份不符");
-      }
-      next = {mode:"real", ready:mode === "real" && real.ready === true,
-        connected:real.gpu_connected === true, reasons:Array.isArray(real.blocked_reasons) ? real.blocked_reasons : []};
+      next = realServiceHealth(real, mode);
     }
     setService(next);
     return next;
@@ -162,7 +178,10 @@ export function useTaskEngine(mode: StudioMode) {
   }, [API, mode, refresh, persistPending]);
 
   useEffect(() => {
-    const failed = (e:unknown) => { setError(String(e)); setService(prev=>({...prev, ready:false})); };
+    const failed = (e:unknown) => {
+      setError(String(e));
+      setService(prev=>({...prev, ready:false, tunnelConnected:false, gpuConnected:false}));
+    };
     void refresh().catch(failed);
     if (pendingRef.current) {
       void recoverPending().catch(e=>setError(

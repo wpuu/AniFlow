@@ -12,6 +12,10 @@
 
 服务仅允许 ComfyUI 的 loopback HTTP 地址；默认 `http://127.0.0.1:8188`，未来由用户已有 SSM 会话转发。健康字段 `tunnel_connected` 只说明 ComfyUI HTTP 服务可达；`gpu_connected` 必须另有 `/system_stats` 报告 CUDA 设备且显存大于零。CPU-only 服务即使隧道连通，仍为 `gpu_connected=false`、`ready=false`，禁止上传上游和提交模型任务。GPU 设备信息本身不证明许可证、预算、目标实例型号或停机措施已经核验。
 
+REAL 的 `GET /api/studio/cloud/preflight` 使用独立接口，`mode=LOCAL_AUDIT_PROJECTION`，不再复用 Mock 的 EC2 占位结果。它只投影通过完整 workflow/gate 校验的本地审计，不查询 AWS；`aws_queries=0`、`aws_writes=0`。没有有效 gate 时，默认展示 WorkSpaces 东京候选的预期规格（Graphics.g6.4xlarge、NVIDIA L4、24GiB 显存、64GiB 内存），十项检查全部 `null`，账户计划 `unknown`，余额/价格/余额核验时间均 `null`，且 `launch_allowed=false`。预期规格不表示资源已创建或已观察到该型号。
+
+有效审计中的 `account_plan`、`estimated_credit_remaining_usd`、`credit_settled_remaining_usd`、`credit_observed_at_utc`、`hourly_price_usd` 只有明确记录才返回，缺失字段保持未知；估计余额与结算余额分开。过期、workflow 哈希不符或缺少必要检查时，整份预检审计退回未知，不能沿用旧的通过状态。`real_gpu_connected`、`tunnel_connected` 只来自当前 ComfyUI 设备观察；即使本地审计通过，GPU/隧道有阻塞也不能 `launch_allowed=true`。旧 EC2 gate 保留 `service=ec2` 与对应 EC2 检查，不会转换为 WorkSpaces 通过。8767 Mock 预检保持原行为。
+
 ## 未来启用前的人工审计要求
 
 运行配置使用 `ANIFLOW_REAL_DATA_DIR`、`ANIFLOW_COMFY_URL`、`ANIFLOW_REAL_GATE`、`ANIFLOW_H3_WORKFLOW`。此次没有生成可通过的 gate，也没有假造官方 H3 workflow。
@@ -44,9 +48,21 @@
 - MP4 写入 `.partial`；检查响应长度、容器、ffprobe、约 5 秒、短边至少 768、竖屏 9:16，以及 ffmpeg 全帧解码后才原子改名并显示完成。返回本机绝对路径、字节数、视频信息及 SHA256。再次下载时重新核对哈希。
 - 显存峰值和 AWS 实际费用尚未接入可信采集源，均返回 `null`。`elapsed_seconds` 是 Bridge 提交至本地校验完成的端到端时间，不能当纯 GPU 推理时长。
 
+## 已审计原生 H3 的固定 5 秒后处理
+
+已审计的 workflow bundle 明确包含 `postprocess`，且其唯一字段为 `preset: h3_native_5s_portrait_v1` 时，使用本段更严格流程。**本次 `service=workspaces` 的固定 H3 实验必须带该配置，否则门禁拒绝**。未知、空或附带额外参数的配置在提交前拒绝；没有 `postprocess` 的既有 EC2/旧路径保持上述原行为。增加此配置会改变 bundle 哈希，必须重新人工审计，不能沿用旧的 gate SHA256。提交时将配置存入本机任务；断网或重启后的结果处理使用这份既有配置，不再次提交模型任务。
+
+1. 将下载到的原始文件完整校验为 MP4、800×1376、24fps、至少 124 个可读取帧，并完整解码；保存为 `<job>.source.mp4`。记录 `source_local_path`、`source_sha256`、`source_bytes`、`source_video_metadata`。此时任务尚未完成，原始片只作为生成证据保留。
+2. 固定截取源帧 0–119，裁为 774×1376，起点 x=12、y=0（左裁 12、右裁 14），设置 SAR=1。没有缩放、补帧、插帧或帧率转换。有音轨时同步截取前 5 秒，重新编码为 AAC 192kbps；无音轨时不添加音轨。`audio_present` 记录真实音轨存在情况。
+3. 本地 FFmpeg 将视频重新编码为 H.264 CRF18、yuv420p；这是高质量有损编码，不能称为位级无损。最终片必须再次通过 ffprobe：774×1376、24fps、恰好 120 帧、视频与容器均恰好 5 秒、SAR=1，音轨不得超过 5 秒；视频及现存音轨均需完整解码。最后计算 SHA256、原子改名为 `<job>.mp4`，才在 SQLite 标记 `completed/verified=true` 并开放下载。
+
+后处理失败仍保留已校验的原始文件与哈希，任务不会显示完成。`local_path`、`output_sha256`、`output_bytes`、`video_metadata` 和前端下载始终指向最终片；源文件使用独立字段，不把 5.1667 秒、124 帧的原始片当作严格 5 秒最终成片。默认 REAL 仍禁用；本流程不启动 GPU、不创建停机保护，也不修改模型工作流节点。
+
 ## 本轮验证边界
 
 `tests/test_studio_real_api.py` 使用 `httpx.MockTransport` 模拟 ComfyUI，并用本机 ffmpeg 创建明确命名为 `LOCAL_CONTRACT_NOT_H3.mp4` 的蓝色测试片。测试验证默认禁用、审计过期、工作流哈希变化、跨域拒绝、并发防重、响应丢失与重启恢复、下载断网、坏视频拒绝和本地文件被篡改后拒绝服务；另验证 WorkSpaces 专属赠金与配额检查、账户资格、现金与赠金预算分开、资源/区域匹配，以及缺少 SSM 或任一停机核验时拒绝。所有通过门禁的测试数据只存在于临时目录，并连接本地模拟接口。它只证明接口与持久化逻辑，不证明 H3 推理成功、画面质量、真实显存、云端费用或停机措施有效。
+
+后处理新增测试使用 800×1376、124 帧、24fps 的本机合成测试图视频，分别带合成音轨和不带音轨；验证断网恢复后仅提交一次、保留原始文件及哈希、严格 120 帧最终文件及哈希、无临时残留，并拒绝错误画幅/帧率/不足帧数与未知 preset。模拟后处理失败时保留 source 证据且拒绝下载最终片。这些视频均不是 H3 输出。
 
 官方接口依据：
 
