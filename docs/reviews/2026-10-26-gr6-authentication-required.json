@@ -1,0 +1,9 @@
+{
+  "title": "Amazon Web Services Sign-In",
+  "requires_email_signin": true,
+  "observed_at_utc": "2026-10-26T14:40:14.124Z",
+  "cli_error": "ExpiredTokenException",
+  "space_id": 10,
+  "gpu_created": false,
+  "real_video_count": 0
+}
