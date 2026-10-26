@@ -12,6 +12,8 @@
 - 本机Bridge已最小兼容WorkSpaces gate，服务赠金与配额核验不再沿用EC2字段；账户服务资格、未升级计划分别核验。赠金实验预算至多USD20，自付上限USD0–1；东京、私有SSM、主/备停止、最长4小时、workflow SHA及真实CUDA仍必需。默认REAL禁用，未生成可通过真实gate。相关REAL/Mock契约共41项通过，ruff及差异检查通过。所有测试用模拟接口，**不是H3真实推理**。[Bridge运行说明](../runbooks/2026-10-25-local-real-h3-bridge.md)。
 - 本机没有既有AWS CLI/SSM插件。已从官方包在工作区解包，版本检查分别为AWS CLI2.38.5、插件1.2.896.0，下载包/插件Amazon Authenticode签名有效；未运行全局安装、未修改全局PATH。MSI解包运行已通过本机版本检查，不称AWS正式认证的portable安装方式。官方支持`aws login --remote`以控制台身份获取短期会话，不需长期AK；本轮短期登录未完成，未创建密钥，也未把认证URL/授权码/缓存上传Git。
 
+- [原生Windows只读诊断与锁定清单](2026-10-26-windows-h3-bootstrap-readiness.md)已准备：ComfyUI v0.42.1固定提交/资产哈希、四个H3权重修订及哈希、驱动/RAM/SSM/loopback检查；PowerShell AST解析零语法错误。脚本未执行，不安装、不下载、不更新驱动、不生成视频，DeploymentReady始终false；实际GPU兼容仍待实机。
+
 ## 费用口径与剩余门槛
 
 本次Personal Windows许可包含报价不另加Pools的USD4.19用户费。目录按常规两台Managed AD Standard合计USD0.146/h估算，不自动假设一次性30天试用资格。公网IPv4为USD0.005/IP/h。SSM取消Advanced Tier的日期应为2026-06-30；2026-09-30起hybrid会话USD0.05/session、RunCommand USD0.002/次，无每节点注册小时费。
