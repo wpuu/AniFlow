@@ -1,0 +1,30 @@
+{
+  "status": "UPSTREAM_LICENSE_METADATA_RETAINED",
+  "comfyui_source_excerpts": {
+    "files": [
+      "node-schema-evidence.json"
+    ],
+    "upstream_commit": "63be2f9b82ad0dac88a7ceaa28a9cf3154125a18",
+    "license_document": "GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007",
+    "license_url": "https://github.com/Comfy-Org/ComfyUI/blob/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/LICENSE",
+    "included_license_file": "LICENSE.ComfyUI",
+    "note": "Preserves the upstream GPLv3 license text and exact source links for schema excerpts; does not relabel excerpts as project-owned code."
+  },
+  "official_workflow_json": {
+    "files": [
+      "video_minimax_h3_i2v.json"
+    ],
+    "distribution": "comfyui-workflow-templates-json",
+    "version": "0.1.115",
+    "declared_license_expression_in_wheel_metadata": "MIT",
+    "metadata_url": "https://pypi.org/pypi/comfyui-workflow-templates-json/0.1.115/json",
+    "upstream_repository": "https://github.com/Comfy-Org/workflow_templates",
+    "note": "MIT is the exact License-Expression field observed in the official wheel METADATA; the wheel is not copied here."
+  },
+  "model_weights": {
+    "included": false,
+    "downloaded_by_this_preparation": false,
+    "license_grant_from_workflow": false,
+    "note": "ComfyUI and workflow source licenses do not grant or replace the MiniMax H3 model/output license."
+  }
+}

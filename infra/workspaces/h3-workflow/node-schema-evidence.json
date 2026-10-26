@@ -1,0 +1,134 @@
+{
+  "status": "SOURCE_DERIVED_NOT_RUNTIME_VALIDATED",
+  "comfy_commit": "63be2f9b82ad0dac88a7ceaa28a9cf3154125a18",
+  "nodes": {
+    "VAEDecode": {
+      "source_file": "nodes.py",
+      "source_url": "https://github.com/Comfy-Org/ComfyUI/blob/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/nodes.py#L323",
+      "class_line": 321,
+      "schema_start_line": 323,
+      "schema_end_line": 329,
+      "schema_source": "    def INPUT_TYPES(s):\n        return {\n            \"required\": {\n                \"samples\": (\"LATENT\", {\"tooltip\": \"The latent to be decoded.\"}),\n                \"vae\": (\"VAE\", {\"tooltip\": \"The VAE model used for decoding the latent.\"})\n            }\n        }"
+    },
+    "VAELoader": {
+      "source_file": "nodes.py",
+      "source_url": "https://github.com/Comfy-Org/ComfyUI/blob/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/nodes.py#L836",
+      "class_line": 776,
+      "schema_start_line": 836,
+      "schema_end_line": 837,
+      "schema_source": "    def INPUT_TYPES(s):\n        return {\"required\": { \"vae_name\": (s.vae_list(s), )}}"
+    },
+    "UNETLoader": {
+      "source_file": "nodes.py",
+      "source_url": "https://github.com/Comfy-Org/ComfyUI/blob/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/nodes.py#L994",
+      "class_line": 992,
+      "schema_start_line": 994,
+      "schema_end_line": 997,
+      "schema_source": "    def INPUT_TYPES(s):\n        return {\"required\": { \"unet_name\": (folder_paths.get_filename_list(\"diffusion_models\"), ),\n                              \"weight_dtype\": ([\"default\", \"fp8_e4m3fn\", \"fp8_e4m3fn_fast\", \"fp8_e5m2\"], {\"advanced\": True})\n                             }}"
+    },
+    "CLIPLoader": {
+      "source_file": "nodes.py",
+      "source_url": "https://github.com/Comfy-Org/ComfyUI/blob/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/nodes.py#L1019",
+      "class_line": 1017,
+      "schema_start_line": 1019,
+      "schema_end_line": 1025,
+      "schema_source": "    def INPUT_TYPES(s):\n        return {\"required\": { \"clip_name\": (folder_paths.get_filename_list(\"text_encoders\"), ),\n                              \"type\": ([\"stable_diffusion\", \"stable_cascade\", \"sd3\", \"stable_audio\", \"mochi\", \"ltxv\", \"pixart\", \"cosmos\", \"lumina2\", \"wan\", \"hidream\", \"chroma\", \"ace\", \"omnigen2\", \"qwen_image\", \"hunyuan_image\", \"flux2\", \"ovis\", \"longcat_image\", \"cogvideox\", \"lens\", \"pixeldit\", \"ideogram4\", \"boogu\", \"krea2\", \"joyimage\", \"mage\", \"minimax\", \"yue2\", \"flux3\", \"moss_image\"], ),\n                              },\n                \"optional\": {\n                              \"device\": ([\"default\", \"cpu\"], {\"advanced\": True}),\n                             }}"
+    },
+    "LoadImage": {
+      "source_file": "nodes.py",
+      "source_url": "https://github.com/Comfy-Org/ComfyUI/blob/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/nodes.py#L1749",
+      "class_line": 1747,
+      "schema_start_line": 1749,
+      "schema_end_line": 1755,
+      "schema_source": "    def INPUT_TYPES(s):\n        input_dir = folder_paths.get_input_directory()\n        files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]\n        files = folder_paths.filter_files_content_types(files, [\"image\"])\n        return {\"required\":\n                    {\"image\": (sorted(files), {\"image_upload\": True})},\n                }"
+    },
+    "MiniMaxH3ImageToVideo": {
+      "source_file": "nodes_minimax_h3.py",
+      "source_url": "https://github.com/Comfy-Org/ComfyUI/blob/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/comfy_extras/nodes_minimax_h3.py#L120",
+      "class_line": 116,
+      "schema_start_line": 120,
+      "schema_end_line": 136,
+      "schema_source": "    def define_schema(cls):\n        return io.Schema(\n            node_id=\"MiniMaxH3ImageToVideo\",\n            display_name=\"MiniMax H3 Image to Video\",\n            category=\"model/conditioning/minimax\",\n            inputs=[\n                io.Clip.Input(\"clip\"),\n                io.Vae.Input(\"vae\"),\n                io.String.Input(\"prompt\", multiline=True, dynamic_prompts=True),\n                io.Int.Input(\"width\", default=1344, min=32, max=nodes.MAX_RESOLUTION, step=32),\n                io.Int.Input(\"height\", default=768, min=32, max=nodes.MAX_RESOLUTION, step=32),\n                io.Int.Input(\"length\", default=124, min=5, max=3600, step=17, tooltip=\"Frame count at 24 fps, snapped up to the model's 17k+5 grid (124 = ~5s; trained range is ~124-362, longer is untested)\"),\n                io.Image.Input(\"first_frame\", optional=True),\n                io.Image.Input(\"last_frame\", optional=True),\n            ],\n            outputs=[io.Conditioning.Output(display_name=\"positive\"), io.Latent.Output()],\n        )"
+    },
+    "BasicScheduler": {
+      "source_file": "nodes_custom_sampler.py",
+      "source_url": "https://github.com/Comfy-Org/ComfyUI/blob/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/comfy_extras/nodes_custom_sampler.py#L19",
+      "class_line": 17,
+      "schema_start_line": 19,
+      "schema_end_line": 30,
+      "schema_source": "    def define_schema(cls):\n        return io.Schema(\n            node_id=\"BasicScheduler\",\n            category=\"model/sampling/schedulers\",\n            inputs=[\n                io.Model.Input(\"model\"),\n                io.Combo.Input(\"scheduler\", options=comfy.samplers.SCHEDULER_NAMES),\n                io.Int.Input(\"steps\", default=20, min=1, max=10000),\n                io.Float.Input(\"denoise\", default=1.0, min=0.0, max=1.0, step=0.01),\n            ],\n            outputs=[io.Sigmas.Output()]\n        )"
+    },
+    "KSamplerSelect": {
+      "source_file": "nodes_custom_sampler.py",
+      "source_url": "https://github.com/Comfy-Org/ComfyUI/blob/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/comfy_extras/nodes_custom_sampler.py#L381",
+      "class_line": 379,
+      "schema_start_line": 381,
+      "schema_end_line": 387,
+      "schema_source": "    def define_schema(cls):\n        return io.Schema(\n            node_id=\"KSamplerSelect\",\n            category=\"model/sampling/samplers\",\n            inputs=[io.Combo.Input(\"sampler_name\", options=comfy.samplers.SAMPLER_NAMES)],\n            outputs=[io.Sampler.Output()]\n        )"
+    },
+    "BasicGuider": {
+      "source_file": "nodes_custom_sampler.py",
+      "source_url": "https://github.com/Comfy-Org/ComfyUI/blob/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/comfy_extras/nodes_custom_sampler.py#L803",
+      "class_line": 801,
+      "schema_start_line": 803,
+      "schema_end_line": 813,
+      "schema_source": "    def define_schema(cls):\n        return io.Schema(\n            node_id=\"BasicGuider\",\n            display_name=\"Basic Guider\",\n            category=\"model/sampling/guiders\",\n            inputs=[\n                io.Model.Input(\"model\"),\n                io.Conditioning.Input(\"conditioning\"),\n            ],\n            outputs=[io.Guider.Output()]\n        )"
+    },
+    "RandomNoise": {
+      "source_file": "nodes_custom_sampler.py",
+      "source_url": "https://github.com/Comfy-Org/ComfyUI/blob/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/comfy_extras/nodes_custom_sampler.py#L1005",
+      "class_line": 1003,
+      "schema_start_line": 1005,
+      "schema_end_line": 1011,
+      "schema_source": "    def define_schema(cls):\n        return io.Schema(\n            node_id=\"RandomNoise\",\n            category=\"model/sampling/noise\",\n            inputs=[io.Int.Input(\"noise_seed\", default=0, min=0, max=0xffffffffffffffff, control_after_generate=True)],\n            outputs=[io.Noise.Output()]\n        )"
+    },
+    "SamplerCustomAdvanced": {
+      "source_file": "nodes_custom_sampler.py",
+      "source_url": "https://github.com/Comfy-Org/ComfyUI/blob/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/comfy_extras/nodes_custom_sampler.py#L1022",
+      "class_line": 1020,
+      "schema_start_line": 1022,
+      "schema_end_line": 1037,
+      "schema_source": "    def define_schema(cls):\n        return io.Schema(\n            node_id=\"SamplerCustomAdvanced\",\n            category=\"model/sampling/custom\",\n            inputs=[\n                io.Noise.Input(\"noise\"),\n                io.Guider.Input(\"guider\"),\n                io.Sampler.Input(\"sampler\"),\n                io.Sigmas.Input(\"sigmas\"),\n                io.Latent.Input(\"latent_image\"),\n            ],\n            outputs=[\n                io.Latent.Output(display_name=\"output\"),\n                io.Latent.Output(display_name=\"denoised_output\"),\n            ]\n        )"
+    },
+    "VAEDecodeAudio": {
+      "source_file": "nodes_audio.py",
+      "source_url": "https://github.com/Comfy-Org/ComfyUI/blob/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/comfy_extras/nodes_audio.py#L118",
+      "class_line": 116,
+      "schema_start_line": 118,
+      "schema_end_line": 129,
+      "schema_source": "    def define_schema(cls):\n        return IO.Schema(\n            node_id=\"VAEDecodeAudio\",\n            search_aliases=[\"latent to audio\"],\n            display_name=\"VAE Decode Audio\",\n            category=\"model/latent\",\n            inputs=[\n                IO.Latent.Input(\"samples\"),\n                IO.Vae.Input(\"vae\"),\n            ],\n            outputs=[IO.Audio.Output()],\n        )"
+    },
+    "SaveVideo": {
+      "source_file": "nodes_video.py",
+      "source_url": "https://github.com/Comfy-Org/ComfyUI/blob/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/comfy_extras/nodes_video.py#L137",
+      "class_line": 135,
+      "schema_start_line": 137,
+      "schema_end_line": 163,
+      "schema_source": "    def define_schema(cls):\n        return io.Schema(\n            node_id=\"SaveVideo\",\n            search_aliases=[\"export video\"],\n            display_name=\"Save Video\",\n            category=\"video\",\n            essentials_category=\"Basics\",\n            description=\"Saves the input videos to your ComfyUI output directory.\",\n            inputs=[\n                io.Video.Input(\"video\", tooltip=\"The video to save.\"),\n                io.String.Input(\"filename_prefix\", default=\"video/ComfyUI\", tooltip=\"The prefix for the file to save. This may include formatting information such as %date:yyyy-MM-dd% or %Empty Latent Image.width% to include values from nodes.\"),\n                io.DynamicCombo.Input(\n                    \"format\",\n                    options=[\n                        io.DynamicCombo.Option(\"auto\", [_save_video_codec_input([\"auto\", \"h264\", \"av1\"])]),\n                        io.DynamicCombo.Option(\"mp4\", [_save_video_codec_input([\"auto\", \"h264\", \"av1\"])]),\n                        io.DynamicCombo.Option(\"mkv\", [_save_video_codec_input([\"auto\", \"h264\", \"av1\"])]),\n                        io.DynamicCombo.Option(\"webm\", [_save_video_codec_input([\"auto\", \"av1\"])]),\n                    ],\n                    tooltip=\"The output container. Auto uses MP4 for Auto/H.264 and WebM for AV1. MP4, MKV, and WebM select a specific container.\",\n                ),\n                _save_video_codec_input([\"auto\", \"h264\", \"av1\"], optional=True, hidden=True),\n            ],\n            hidden=[io.Hidden.prompt, io.Hidden.extra_pnginfo],\n            is_output_node=True,\n            outputs=[io.Video.Output(\"video\", tooltip=\"The input video, unchanged.\")],\n        )"
+    },
+    "CreateVideo": {
+      "source_file": "nodes_video.py",
+      "source_url": "https://github.com/Comfy-Org/ComfyUI/blob/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/comfy_extras/nodes_video.py#L208",
+      "class_line": 206,
+      "schema_start_line": 208,
+      "schema_end_line": 246,
+      "schema_source": "    def define_schema(cls):\n        return io.Schema(\n            node_id=\"CreateVideo\",\n            search_aliases=[\"images to video\"],\n            display_name=\"Create Video\",\n            category=\"video\",\n            essentials_category=\"Video Tools\",\n            description=\"Create a video from images.\",\n            inputs=[\n                io.Image.Input(\"images\", tooltip=\"The images to create a video from.\"),\n                io.Float.Input(\"fps\", default=30.0, min=1.0, max=120.0, step=1.0),\n                io.Audio.Input(\"audio\", optional=True, tooltip=\"The audio to add to the video.\"),\n                io.Combo.Input(\n                    \"bit_depth\",\n                    options=[\"auto\", 8, 10],\n                    default=\"auto\",\n                    tooltip=\"Auto uses 8-bit for sRGB and 10-bit for HDR. Explicit 8-bit and 10-bit choices are independent of colorspace.\",\n                    optional=True,\n                ),\n                io.Combo.Input(\n                    \"color_space\",\n                    options=[\"sRGB\", \"HDR\", \"HDR PQ\"],\n                    default=\"sRGB\",\n                    optional=True,\n                    tooltip=\"Colorspace of the input images. HDR selects BT.2020/HLG and HDR PQ selects BT.2020/PQ.\",\n                ),\n                io.Combo.Input(\n                    \"codec\",\n                    options=[\"none\", *Types.VideoCodec.as_input()],\n                    default=\"none\",\n                    advanced=True,\n                    optional=True,\n                    tooltip=\"Optionally encode the video immediately. None keeps the images in tensor form; Auto uses H.264.\",\n                ),\n            ],\n            outputs=[\n                io.Video.Output(),\n            ],\n        )"
+    },
+    "ImageScale": {
+      "source_file": "nodes.py",
+      "source_url": "https://github.com/Comfy-Org/ComfyUI/blob/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/nodes.py#L1897",
+      "class_line": 1892,
+      "schema_start_line": 1897,
+      "schema_end_line": 1901,
+      "schema_source": "    def INPUT_TYPES(s):\n        return {\"required\": { \"image\": (\"IMAGE\",), \"upscale_method\": (s.upscale_methods,),\n                              \"width\": (\"INT\", {\"default\": 512, \"min\": 0, \"max\": MAX_RESOLUTION, \"step\": 1}),\n                              \"height\": (\"INT\", {\"default\": 512, \"min\": 0, \"max\": MAX_RESOLUTION, \"step\": 1}),\n                              \"crop\": (s.crop_methods,)}}",
+      "behavior_source": "https://github.com/Comfy-Org/ComfyUI/blob/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/comfy/utils.py#L1107",
+      "selected_inputs": {
+        "upscale_method": "lanczos",
+        "width": 800,
+        "height": 1376,
+        "crop": "center"
+      }
+    }
+  },
+  "note": "File and sampler choices require live object_info. No server prompt validation or inference was performed."
+}

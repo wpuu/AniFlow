@@ -1,5 +1,7 @@
 # AniFlow AWS东京H3｜Work模式执行交接｜2026-10-25
 
+> **2026-10-26 最新执行结果：东京 WorkSpaces G6 单次创建被 AWS 实际上限 0 拒绝，GPU 与真实视频均为 0；已知本轮目录、保护栈、激活及模板对象清理已确认。** 控制台 Applied=1 与实际创建限制矛盾，原因未知；不重试、不提额、不联系支持、不升级计划。最新预算为赠金另计、抵扣后自付最多 USD1，最终辅助费用与税仍待结算。请先读[真实执行记录](../reviews/2026-10-26-workspaces-live-execution.md)与[创建拒绝证据](../reviews/2026-10-26-workspaces-create-rejection.md)。以下原交接保留为历史，不代表当前资源或登录状态。
+
 ## 目标与边界
 
 用户已授权：先核实本人AWS赠金能否支付东京g6e.2xlarge，再在资格与实际费用明确时创建单台受控实验GPU，用安全连接部署MiniMax H3图生视频，最后接入AniFlow Grok Studio前端，并能把真实MP4保存到本人Windows磁盘。

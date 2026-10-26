@@ -1,0 +1,62 @@
+{
+  "status": "PLAN_ONLY_NOT_EXECUTED",
+  "source_requirements": {
+    "width": 800,
+    "height": 1376,
+    "frame_rate": "24/1",
+    "minimum_decoded_frames": 124,
+    "audio_required": true
+  },
+  "expected_final": {
+    "width": 774,
+    "height": 1376,
+    "display_aspect_ratio": "9:16",
+    "sample_aspect_ratio": "1:1",
+    "frame_rate": "24/1",
+    "decoded_frames": 120,
+    "duration_seconds": 5
+  },
+  "crop": {
+    "left": 12,
+    "right": 14,
+    "top": 0,
+    "bottom": 0
+  },
+  "ffmpeg_filter_complex": "[0:v]trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS,crop=774:1376:12:0,setsar=1[v];[0:a]atrim=start=0:end=5,asetpts=PTS-STARTPTS[a]",
+  "ffmpeg_argument_array": [
+    "-n",
+    "-i",
+    "__REAL_SOURCE_MP4__",
+    "-filter_complex",
+    "[0:v]trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS,crop=774:1376:12:0,setsar=1[v];[0:a]atrim=start=0:end=5,asetpts=PTS-STARTPTS[a]",
+    "-map",
+    "[v]",
+    "-map",
+    "[a]",
+    "-c:v",
+    "libx264",
+    "-crf",
+    "18",
+    "-preset",
+    "medium",
+    "-pix_fmt",
+    "yuv420p",
+    "-fps_mode",
+    "passthrough",
+    "-c:a",
+    "aac",
+    "-b:a",
+    "192k",
+    "-t",
+    "5",
+    "-movflags",
+    "+faststart",
+    "__NEW_FINAL_MP4__"
+  ],
+  "notes": [
+    "No resizing or frame interpolation; keeps original generated frames 0..119.",
+    "Spatial crop requires encoding again; CRF18 is a high-quality lossy encode, not a pixel-bitwise-lossless claim.",
+    "Refuse overwrite; validate the real source before processing, then ffprobe and fully decode/hash the result.",
+    "No actual source/output files exist in this preparation."
+  ]
+}

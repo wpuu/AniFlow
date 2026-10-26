@@ -116,7 +116,7 @@ export function AwsPreflightPanel({ onClose, mode }: { onClose: () => void; mode
   useEffect(() => { void refresh(); }, [refresh]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/75 px-3 py-6 sm:items-center"
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/75 px-3 py-6"
       role="dialog" aria-modal="true" aria-label="AWS 东京部署预检" data-testid="aws-preflight-panel">
       <section className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#131319] text-zinc-200 shadow-2xl">
         <header className="flex items-center justify-between border-b border-white/10 px-5 py-4">
