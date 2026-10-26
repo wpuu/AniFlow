@@ -35,6 +35,7 @@ WORKSPACES_CHECKS = ("credit_workspaces_eligible", "credit_expiry_confirmed",
                      "ssm_private_connectivity", "h3_license_territory",
                      "gpu_stop_safeguard", "independent_stop_safeguard",
                      "account_plan_unchanged", "workspaces_account_eligible")
+WORKSPACES_RAM_GIB = {"Graphics.g6.4xlarge": 64, "Graphics.gr6.4xlarge": 128}
 GAMELIFT_CHECKS = ("credit_gamelift_eligible", "credit_expiry_confirmed", "tokyo_gamelift_quota",
                   "tokyo_capacity_and_price", "private_s3_connectivity", "h3_license_territory",
                   "gpu_stop_safeguard", "independent_stop_safeguard",
@@ -86,7 +87,7 @@ class RealConfig:
                                   and bool(self.s3_session_key) and bool(self.s3_bucket))
                 required_checks = GAMELIFT_CHECKS
             elif service == "workspaces":
-                resource_valid = (gate.get("instance_type") == "Graphics.g6.4xlarge"
+                resource_valid = (gate.get("instance_type") in WORKSPACES_RAM_GIB
                                   and 0 <= gate.get("cash_cap_usd", -1) <= 1
                                   and 0 < gate.get("credit_budget_usd", 0) <= 20)
                 required_checks = WORKSPACES_CHECKS
@@ -130,13 +131,16 @@ class RealConfig:
                 return {}
             audit = json.loads(self.gate_path.read_text(encoding="utf-8"))
             checks = audit.get("checks", {})
+            workspaces = audit.get("service") == "workspaces"
+            required = WORKSPACES_CHECKS if workspaces else GAMELIFT_CHECKS
+            target = (audit.get("instance_type") in WORKSPACES_RAM_GIB if workspaces else
+                      audit.get("service") == "gameliftstreams" and audit.get("instance_type") == "gen6n_pro")
             valid = (audit.get("snapshot_only") is True and audit.get("launch_allowed") is False
-                     and audit.get("service") == "gameliftstreams"
+                     and target
                      and audit.get("region") == "ap-northeast-1"
-                     and audit.get("instance_type") == "gen6n_pro"
                      and isinstance(checks, dict)
                      and all(name in checks and (checks[name] is None or type(checks[name]) is bool)
-                             for name in GAMELIFT_CHECKS))
+                             for name in required))
             return audit if valid else {}
         except (OSError, ValueError, TypeError, AttributeError):
             return {}
@@ -290,11 +294,13 @@ def create_real_app(config: RealConfig | None = None,
             return value if type(value) in (int, float) and math.isfinite(value) else None
 
         checks = GAMELIFT_CHECKS if gamelift else (WORKSPACES_CHECKS if workspaces else CHECKS)
+        instance_type = (audit.get("instance_type", "Graphics.g6.4xlarge") if workspaces else
+                         "gen6n_pro" if gamelift else "g6e.2xlarge")
         return {"mode": "LOCAL_AUDIT_PROJECTION", "service": service, "region": "ap-northeast-1",
-                "instance_type": "gen6n_pro" if gamelift else ("Graphics.g6.4xlarge" if workspaces else "g6e.2xlarge"),
+                "instance_type": instance_type,
                 "expected_gpu": "NVIDIA L4" if workspaces or gamelift else None,
                 "expected_gpu_vram_gib": 24 if workspaces or gamelift else None,
-                "expected_ram_gib": 64 if workspaces or gamelift else None,
+                "expected_ram_gib": WORKSPACES_RAM_GIB[instance_type] if workspaces else 64 if gamelift else None,
                 "account_plan": audit.get("account_plan") if isinstance(audit.get("account_plan"), str)
                                 and audit["account_plan"] else "unknown",
                 "estimated_credit_remaining_usd": number("estimated_credit_remaining_usd"),

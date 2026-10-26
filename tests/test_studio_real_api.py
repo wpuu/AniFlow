@@ -462,3 +462,30 @@ def test_snapshot_only_never_authorizes_launch_even_with_other_valid_fields(tmp_
     cfg.gate_path.write_text(json.dumps(gate))
     reasons, workflow = cfg.audited_workflow()
     assert reasons and workflow is None
+
+
+def test_gr6_requires_full_audit_and_projects_its_actual_target_ram(tmp_path):
+    cfg = workspaces_config(tmp_path)
+    gate = json.loads(cfg.gate_path.read_text())
+    gate["instance_type"] = "Graphics.gr6.4xlarge"
+    cfg.gate_path.write_text(json.dumps(gate))
+    with TestClient(create_real_app(cfg, httpx.MockTransport(LocalComfyContract()))) as client:
+        projection = client.get("/api/studio/cloud/preflight").json()
+    assert projection["instance_type"] == "Graphics.gr6.4xlarge"
+    assert projection["expected_ram_gib"] == 128
+
+
+def test_blocked_gr6_snapshot_never_borrows_an_unrelated_local_gpu(tmp_path):
+    cfg = workspaces_config(tmp_path)
+    gate = json.loads(cfg.gate_path.read_text())
+    gate.update(instance_type="Graphics.gr6.4xlarge", snapshot_only=True, launch_allowed=False)
+    gate["checks"]["workspaces_account_eligible"] = None
+    cfg.gate_path.write_text(json.dumps(gate))
+    with TestClient(create_real_app(cfg, httpx.MockTransport(LocalComfyContract()))) as client:
+        projection = client.get("/api/studio/cloud/preflight").json()
+        health = client.get("/api/studio/real/health").json()
+    assert projection["instance_type"] == "Graphics.gr6.4xlarge"
+    assert projection["expected_ram_gib"] == 128
+    assert projection["checks"]["workspaces_account_eligible"] is None
+    assert not projection["launch_allowed"] and not projection["real_gpu_connected"]
+    assert not health["ready"] and not health["gpu_connected"]
