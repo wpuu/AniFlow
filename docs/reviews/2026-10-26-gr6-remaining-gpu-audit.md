@@ -84,3 +84,13 @@ CloudShell实际提示“无法创建环境”“正在验证您的账户”，�
 [本机真实HTTP复查](2026-10-26-gr6-local-http-after-rejection.json)确认gr6/128GiB目标、实际配额及账户准入均失败、launch_allowed=false、GPU未连接、AWS读写0；不会让本机其他GPU冒充AWS成功。模型及环境保持D盘，未覆盖原ZIP、未合并main。
 
 最终仍为真实视频0、真实GPU预检0、驱动/CUDA/显存/耗时未知。目录、保护和请求辅助费用及赠金抵扣/税需要等待实际账单，不把资源清理当费用已结算。在用户不提额、不升级、不降低画质、不联系支持的约束下，本次已核查的GPU路径受阻，停止继续云端创建。
+
+## 2026-10-27 用户询问解决办法：仅公开资料复核
+
+本轮未重新接管已结束的AWS浏览器空间，未登录CLI、未创建资源或改变模型。官方[WorkSpaces配额说明](https://docs.aws.amazon.com/workspaces/latest/adminguide/workspaces-limits.html)没有提供从项目代码绕过实际限制的办法；不能把旧Graphics额度当成G6/GR6的共同父配额，也不能把CloudShell账户验证提示直接定为本次GPU拒绝的根因。
+
+最值得继续只读核查的独立路径是俄亥俄州EC2 g7e.2xlarge：26日实读G/VT额度8vCPU，仍须刷新；官方当前[区域清单](https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-instance-regions.html)列Ohio支持G7e，[机型页](https://aws.amazon.com/ec2/instance-types/g7e/)列该型号8vCPU/64GiB主存/96GB显存。此为历史账户额度加当前公开规格，不是实时库存、实际准入或已获准创建。
+
+H3[当前官方许可证](https://huggingface.co/MiniMaxAI/MiniMax-H3/raw/main/LICENSE)仍将美国列为排除地域，限制境外使用/复制等活动；没有仅因操作者和展示在大陆即可批准美国服务器部署的明确条款，本项目不能把Ohio H3标许可通过。Wan2.2-I2V-A14B为可征求用户同意的换模型候选；[官方单卡示例](https://github.com/Wan-Video/Wan2.2)要求至少80GB显存、官方说明支持480P/720P，并不证明原短边至少768目标或与H3视觉效果相当。目标原生分辨率、5秒、双停机、赠金抵扣后自付不超过1美元均须保留为验证条件；不能悄悄以720P放大或低质量替代。
+
+结论：接受换模型后，先只读复核Ohio实时额度、准确机型供应及完整费用，条件满足再准备隔离部署与单次GPU预检；本次未获得换模型授权，未执行。若H3也必须保持，则当前已有证据下没有满足全部限制的可执行方案，不承诺30日前成片。
