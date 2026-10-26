@@ -1,5 +1,5 @@
 {
-  "state": "S3_PACKAGE_VERIFIED_NOT_GPU_VALIDATED",
+  "state": "LOCAL_ARCHIVE_VERIFIED_CLOUD_CLEANED_NOT_GPU_VALIDATED",
   "source_bytes": 47406154264,
   "source_files": 9,
   "runtime_bytes": 7332311040,
@@ -31,5 +31,9 @@
     ]
   },
   "gpu_allocation_requested": false,
-  "real_video_count": 0
+  "real_video_count": 0,
+  "local_directory": "D:\\AniFlow-H3-Archive-20261026",
+  "local_source_files_verified": 9,
+  "independent_full_hash_recheck_files": 9,
+  "all_named_experiment_resources_absent": true
 }

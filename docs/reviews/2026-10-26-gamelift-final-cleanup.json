@@ -1,0 +1,44 @@
+{
+  "observed_at_utc": "2026-10-26T12:45:58.277055+00:00",
+  "resources": [
+    {
+      "type": "stream_group",
+      "id": "sg-W1YCvpPIm",
+      "absent": true
+    },
+    {
+      "type": "application",
+      "id": "a-VcfYE4Fel",
+      "absent": true
+    },
+    {
+      "type": "s3_bucket",
+      "name": "aniflow-h3-tokyo-20261026-8d2f5c",
+      "absent": true
+    },
+    {
+      "type": "stack",
+      "name": "aniflow-h3-gamelift-primary-20261026",
+      "absent": true
+    },
+    {
+      "type": "stack",
+      "name": "aniflow-h3-gamelift-backup-20261026",
+      "absent": true
+    },
+    {
+      "type": "stack",
+      "name": "aniflow-h3-gamelift-fetch-20261026",
+      "absent": true
+    },
+    {
+      "type": "stack",
+      "name": "aniflow-h3-gamelift-storage-20261026",
+      "absent": true
+    }
+  ],
+  "all_named_experiment_resources_absent": true,
+  "scope": "Named resources created for this experiment only; unrelated account resources preserved",
+  "gpu_sessions_created": 0,
+  "real_video_count": 0
+}
