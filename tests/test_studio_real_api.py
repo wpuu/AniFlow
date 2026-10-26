@@ -12,7 +12,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from aniflow.studio.comfy_provider import ComfyProvider
-from aniflow.studio.real_api import CHECKS, RealConfig, create_real_app
+from aniflow.studio.real_api import CHECKS, WORKSPACES_CHECKS, RealConfig, create_real_app
 
 PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO/6G7cAAAAASUVORK5CYII=")
 
@@ -95,6 +95,57 @@ def test_default_real_is_blocked_and_rejects_cross_origin(tmp_path):
         assert client.post("/api/studio/mock/jobs", json=p).status_code == 404
         assert client.get("/api/studio/real/jobs").json()["jobs"] == []
         assert upstream.posts == 0
+
+
+def workspaces_config(tmp_path):
+    cfg = config(tmp_path)
+    gate = json.loads(cfg.gate_path.read_text())
+    gate.update(service="workspaces", instance_type="Graphics.g6.4xlarge",
+                cash_cap_usd=1, credit_budget_usd=20,
+                checks=dict.fromkeys(WORKSPACES_CHECKS, True))
+    del gate["experiment_budget_usd"]
+    cfg.gate_path.write_text(json.dumps(gate))
+    return cfg
+
+
+@pytest.mark.parametrize("cash_cap", [0, 1])
+def test_workspaces_gate_has_separate_credit_and_cash_budgets(tmp_path, cash_cap):
+    upstream, cfg = LocalComfyContract(), workspaces_config(tmp_path)
+    gate = json.loads(cfg.gate_path.read_text())
+    gate["cash_cap_usd"] = cash_cap
+    cfg.gate_path.write_text(json.dumps(gate))
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        assert client.get("/api/studio/real/health").json()["ready"] is True
+        assert client.post("/api/studio/real/jobs", json=payload(client)).status_code == 202
+        assert upstream.posts == 1
+
+
+@pytest.mark.parametrize(("field", "value"), [
+    ("service", "unknown"), ("service", "ec2"), ("instance_type", "g6e.2xlarge"),
+    ("region", "us-east-1"), ("cash_cap_usd", 1.01), ("cash_cap_usd", -1),
+    ("cash_cap_usd", None), ("credit_budget_usd", 20.01),
+    ("credit_budget_usd", 0), ("credit_budget_usd", None),
+    ("max_runtime_seconds", 14401), ("launch_allowed", False)])
+def test_workspaces_gate_rejects_resource_and_budget_mismatch(tmp_path, field, value):
+    upstream, cfg = LocalComfyContract(), workspaces_config(tmp_path)
+    gate = json.loads(cfg.gate_path.read_text())
+    gate[field] = value
+    cfg.gate_path.write_text(json.dumps(gate))
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        assert client.get("/api/studio/real/health").json()["ready"] is False
+        assert client.post("/api/studio/real/jobs", json=payload(client)).status_code == 403
+        assert upstream.posts == 0 and upstream.uploads == 0
+
+
+@pytest.mark.parametrize("check", WORKSPACES_CHECKS)
+def test_workspaces_gate_requires_each_service_specific_audit_check(tmp_path, check):
+    cfg = workspaces_config(tmp_path)
+    gate = json.loads(cfg.gate_path.read_text())
+    # EC2 eligibility cannot substitute for WorkSpaces credit/quota/account audits.
+    gate["checks"].update(dict.fromkeys(CHECKS, True))
+    gate["checks"].pop(check)
+    cfg.gate_path.write_text(json.dumps(gate))
+    assert cfg.audited_workflow()[0]
 
 
 def test_lost_submit_response_recovers_without_post_across_restart(tmp_path):

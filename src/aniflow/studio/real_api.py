@@ -28,6 +28,11 @@ from aniflow.studio.mock_api import JobRequest, create_mock_app
 CHECKS = ("credit_ec2_eligible", "credit_expiry_confirmed", "tokyo_gpu_quota",
           "tokyo_capacity_and_price", "ssm_private_connectivity", "h3_license_territory",
           "gpu_stop_safeguard", "independent_stop_safeguard")
+WORKSPACES_CHECKS = ("credit_workspaces_eligible", "credit_expiry_confirmed",
+                     "tokyo_workspaces_quota", "tokyo_capacity_and_price",
+                     "ssm_private_connectivity", "h3_license_territory",
+                     "gpu_stop_safeguard", "independent_stop_safeguard",
+                     "account_plan_unchanged", "workspaces_account_eligible")
 KEY = re.compile(r"^[A-Za-z0-9_-]{8,128}$")
 SHA = re.compile(r"^[a-f0-9]{64}$")
 
@@ -61,12 +66,21 @@ class RealConfig:
                 "https://github.com/Comfy-Org/", "https://raw.githubusercontent.com/Comfy-Org/"))
             remaining = float(gate.get("expires_at_unix", 0)) - time.time()
             checks = gate.get("checks", {})
+            service = gate.get("service", "ec2")
+            if service == "workspaces":
+                resource_valid = (gate.get("instance_type") == "Graphics.g6.4xlarge"
+                                  and 0 <= gate.get("cash_cap_usd", -1) <= 1
+                                  and 0 < gate.get("credit_budget_usd", 0) <= 20)
+                required_checks = WORKSPACES_CHECKS
+            else:
+                resource_valid = (service == "ec2" and gate.get("instance_type") == "g6e.2xlarge"
+                                  and 0 < gate.get("experiment_budget_usd", 0) <= 20)
+                required_checks = CHECKS
             valid = (gate.get("launch_allowed") is True and 0 < remaining <= 4 * 3600
                      and gate.get("region") == "ap-northeast-1"
-                     and gate.get("instance_type") == "g6e.2xlarge"
-                     and isinstance(checks, dict) and all(checks.get(name) is True for name in CHECKS)
+                     and resource_valid and isinstance(checks, dict)
+                     and all(checks.get(name) is True for name in required_checks)
                      and gate.get("max_runtime_seconds", 0) in range(1, 14401)
-                     and 0 < gate.get("experiment_budget_usd", 0) <= 20
                      and gate.get("workflow_sha256") == hashlib.sha256(raw).hexdigest()
                      and allowed_source and isinstance(bundle.get("prompt"), dict)
                      and bundle.get("bindings") and shutil.which("ffprobe")

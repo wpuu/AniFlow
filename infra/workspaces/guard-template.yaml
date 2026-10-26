@@ -1,0 +1,475 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AniFlow WorkSpaces fixed-deadline guards only. Deploy Primary in Tokyo and Backup in Singapore, then manually START Backup Automation BEFORE creating the tagged Tokyo AutoStop WorkSpace. JSON is a valid YAML subset. No desktop, directory, GPU, VPC, credential, or subscription resources.",
+  "Parameters": {
+    "GuardMode": {
+      "Type": "String",
+      "AllowedValues": [
+        "Primary",
+        "Backup"
+      ],
+      "Description": "Primary: Tokyo Scheduler/Lambda. Backup: Singapore SSM Automation, manually started before desktop creation."
+    },
+    "ExperimentId": {
+      "Type": "String",
+      "MinLength": 8,
+      "MaxLength": 80,
+      "AllowedPattern": "[a-zA-Z0-9][a-zA-Z0-9_.-]{7,79}",
+      "Description": "Exact ExperimentId tag that MUST be attached in the CreateWorkspaces request."
+    },
+    "DeadlineUtc": {
+      "Type": "String",
+      "AllowedPattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z",
+      "Description": "Immutable primary UTC stop deadline, normally about 1h40 after pre-create T0."
+    },
+    "BackupDeadlineUtc": {
+      "Type": "String",
+      "AllowedPattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z",
+      "Description": "Immutable backup UTC deadline, normally about 1h45 after pre-create T0; later than DeadlineUtc."
+    }
+  },
+  "Rules": {
+    "GuardRegionMatchesMode": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Or": [
+              {
+                "Fn::And": [
+                  {
+                    "Fn::Equals": [
+                      {
+                        "Ref": "GuardMode"
+                      },
+                      "Primary"
+                    ]
+                  },
+                  {
+                    "Fn::Equals": [
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      "ap-northeast-1"
+                    ]
+                  }
+                ]
+              },
+              {
+                "Fn::And": [
+                  {
+                    "Fn::Equals": [
+                      {
+                        "Ref": "GuardMode"
+                      },
+                      "Backup"
+                    ]
+                  },
+                  {
+                    "Fn::Equals": [
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      "ap-southeast-1"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "AssertDescription": "Deploy Primary only in Tokyo ap-northeast-1 and Backup only in Singapore ap-southeast-1."
+        }
+      ]
+    }
+  },
+  "Conditions": {
+    "IsPrimary": {
+      "Fn::Equals": [
+        {
+          "Ref": "GuardMode"
+        },
+        "Primary"
+      ]
+    },
+    "IsBackup": {
+      "Fn::Equals": [
+        {
+          "Ref": "GuardMode"
+        },
+        "Backup"
+      ]
+    }
+  },
+  "Resources": {
+    "PrimaryRole": {
+      "Type": "AWS::IAM::Role",
+      "Condition": "IsPrimary",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "StopOnlyTaggedTokyoExperiment",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "workspaces:DescribeWorkspaces",
+                    "workspaces:DescribeTags"
+                  ],
+                  "Resource": "*",
+                  "Condition": {
+                    "StringEquals": {
+                      "aws:RequestedRegion": "ap-northeast-1"
+                    }
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "workspaces:StopWorkspaces",
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:workspaces:ap-northeast-1:${AWS::AccountId}:workspace/*"
+                  },
+                  "Condition": {
+                    "StringEquals": {
+                      "aws:ResourceTag/ExperimentId": {
+                        "Ref": "ExperimentId"
+                      },
+                      "aws:RequestedRegion": "ap-northeast-1"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "PolicyName": "WritePrimaryGuardLogs",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aniflow/workspaces-guard/${AWS::StackName}:*"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "PrimaryFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Condition": "IsPrimary",
+      "Properties": {
+        "Runtime": "python3.12",
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "PrimaryRole",
+            "Arn"
+          ]
+        },
+        "Timeout": 60,
+        "MemorySize": 128,
+        "Environment": {
+          "Variables": {
+            "EXPERIMENT_ID": {
+              "Ref": "ExperimentId"
+            },
+            "DEADLINE_UTC": {
+              "Ref": "DeadlineUtc"
+            }
+          }
+        },
+        "Code": {
+          "ZipFile": "import json\nimport os\nfrom datetime import datetime, timezone\nimport boto3\nfrom botocore.config import Config\n\n\ndef handler(event, context):\n    deadline = datetime.strptime(os.environ['DEADLINE_UTC'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)\n    experiment = os.environ['EXPERIMENT_ID']\n    client = boto3.client('workspaces', region_name='ap-northeast-1', config=Config(connect_timeout=5, read_timeout=10, retries={'mode': 'standard', 'total_max_attempts': 3}))\n    due = datetime.now(timezone.utc) >= deadline\n    matched = []\n    for page in client.get_paginator('describe_workspaces').paginate():\n        for workspace in page.get('Workspaces', []):\n            tags = client.describe_tags(ResourceId=workspace['WorkspaceId'])['TagList']\n            if any(tag['Key'] == 'ExperimentId' and tag.get('Value') == experiment for tag in tags):\n                matched.append(workspace)\n    failures = []\n    if due:\n        requests = [{'WorkspaceId': workspace['WorkspaceId']} for workspace in matched if workspace['State'] in {'AVAILABLE', 'IMPAIRED', 'UNHEALTHY', 'ERROR'} and workspace.get('WorkspaceProperties', {}).get('RunningMode') == 'AUTO_STOP']\n        for offset in range(0, len(requests), 25):\n            result = client.stop_workspaces(StopWorkspaceRequests=requests[offset:offset + 25])\n            failures.extend(result.get('FailedRequests', []))\n    states = {}\n    for workspace in matched:\n        state = workspace['State']\n        states[state] = states.get(state, 0) + 1\n    summary = {'deadline_due': due, 'matched': len(matched), 'observed_states': states, 'stop_failure_codes': [item.get('ErrorCode', 'Unknown') for item in failures], 'all_stopped': bool(matched) and all(item['State'] == 'STOPPED' for item in matched)}\n    print(json.dumps(summary))\n    if failures:\n        raise RuntimeError('StopWorkspaces returned FailedRequests; inspect failure codes and next scheduled verification')\n    if due and matched and not summary['all_stopped']:\n        print('STOPPED not yet confirmed; the next minute performs another independent scan')\n    return summary\n"
+        },
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "PrimaryLogGroup"
+          }
+        }
+      }
+    },
+    "PrimaryLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Condition": "IsPrimary",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aniflow/workspaces-guard/${AWS::StackName}"
+        },
+        "RetentionInDays": 1
+      }
+    },
+    "SchedulerRole": {
+      "Type": "AWS::IAM::Role",
+      "Condition": "IsPrimary",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "scheduler.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                },
+                "ArnLike": {
+                  "aws:SourceArn": {
+                    "Fn::Sub": "arn:${AWS::Partition}:scheduler:${AWS::Region}:${AWS::AccountId}:schedule-group/default"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "InvokeOnlyPrimaryGuard",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "lambda:InvokeFunction",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "PrimaryFunction",
+                      "Arn"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "PrimarySchedule": {
+      "Type": "AWS::Scheduler::Schedule",
+      "Condition": "IsPrimary",
+      "DependsOn": "PrimaryLogGroup",
+      "Properties": {
+        "Description": "Every-minute discovery and fixed-deadline stop for one tagged Tokyo experiment; remains active until stack deletion",
+        "ScheduleExpression": "rate(1 minute)",
+        "FlexibleTimeWindow": {
+          "Mode": "OFF"
+        },
+        "State": "ENABLED",
+        "Target": {
+          "Arn": {
+            "Fn::GetAtt": [
+              "PrimaryFunction",
+              "Arn"
+            ]
+          },
+          "RoleArn": {
+            "Fn::GetAtt": [
+              "SchedulerRole",
+              "Arn"
+            ]
+          },
+          "Input": "{}",
+          "RetryPolicy": {
+            "MaximumEventAgeInSeconds": 60,
+            "MaximumRetryAttempts": 2
+          }
+        }
+      }
+    },
+    "BackupRole": {
+      "Type": "AWS::IAM::Role",
+      "Condition": "IsBackup",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ssm.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                },
+                "ArnLike": {
+                  "aws:SourceArn": {
+                    "Fn::Sub": "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:automation-execution/*"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "StopOnlyTaggedTokyoExperiment",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "workspaces:DescribeWorkspaces",
+                    "workspaces:DescribeTags"
+                  ],
+                  "Resource": "*",
+                  "Condition": {
+                    "StringEquals": {
+                      "aws:RequestedRegion": "ap-northeast-1"
+                    }
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "workspaces:StopWorkspaces",
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:workspaces:ap-northeast-1:${AWS::AccountId}:workspace/*"
+                  },
+                  "Condition": {
+                    "StringEquals": {
+                      "aws:ResourceTag/ExperimentId": {
+                        "Ref": "ExperimentId"
+                      },
+                      "aws:RequestedRegion": "ap-northeast-1"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "BackupDocument": {
+      "Type": "AWS::SSM::Document",
+      "Condition": "IsBackup",
+      "Properties": {
+        "DocumentType": "Automation",
+        "DocumentFormat": "JSON",
+        "UpdateMethod": "NewVersion",
+        "Content": {
+          "schemaVersion": "0.3",
+          "description": "Manually start before creating the WorkSpace. Wait for a fixed UTC deadline, independently discover and stop tagged Tokyo AutoStop WorkSpaces. No guest SSM agent required.",
+          "assumeRole": {
+            "Fn::GetAtt": [
+              "BackupRole",
+              "Arn"
+            ]
+          },
+          "mainSteps": [
+            {
+              "name": "WaitForFixedBackupDeadline",
+              "action": "aws:sleep",
+              "timeoutSeconds": 604800,
+              "inputs": {
+                "Timestamp": {
+                  "Ref": "BackupDeadlineUtc"
+                }
+              }
+            },
+            {
+              "name": "IndependentlyStopAndConfirm",
+              "action": "aws:executeScript",
+              "timeoutSeconds": 600,
+              "isEnd": true,
+              "inputs": {
+                "Runtime": "python3.11",
+                "Handler": "stop_experiment",
+                "InputPayload": {
+                  "ExperimentId": {
+                    "Ref": "ExperimentId"
+                  },
+                  "DeadlineUtc": {
+                    "Ref": "BackupDeadlineUtc"
+                  }
+                },
+                "Script": "import json\nimport time\nfrom datetime import datetime, timezone\nimport boto3\nfrom botocore.config import Config\n\n\ndef stop_experiment(events, context):\n    deadline = datetime.strptime(events['DeadlineUtc'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)\n    if datetime.now(timezone.utc) < deadline:\n        raise RuntimeError('Refusing to stop before the fixed backup deadline')\n    client = boto3.client('workspaces', region_name='ap-northeast-1', config=Config(connect_timeout=5, read_timeout=10, retries={'mode': 'standard', 'total_max_attempts': 2}))\n    expires = time.monotonic() + 550\n    last_summary = {'matched': 0, 'all_stopped': False}\n    while time.monotonic() < expires:\n        try:\n            workspaces = []\n            token = None\n            while True:\n                page = client.describe_workspaces(**({'NextToken': token} if token else {}))\n                workspaces.extend(page.get('Workspaces', []))\n                token = page.get('NextToken')\n                if not token:\n                    break\n            selected = []\n            for workspace in workspaces:\n                tags = {item['Key']: item.get('Value', '') for item in client.describe_tags(ResourceId=workspace['WorkspaceId'])['TagList']}\n                if tags.get('ExperimentId') == events['ExperimentId']:\n                    selected.append(workspace)\n            failed_codes = []\n            for workspace in selected:\n                if workspace['State'] in ('AVAILABLE', 'IMPAIRED', 'UNHEALTHY', 'ERROR') and workspace.get('WorkspaceProperties', {}).get('RunningMode') == 'AUTO_STOP':\n                    response = client.stop_workspaces(StopWorkspaceRequests=[{'WorkspaceId': workspace['WorkspaceId']}])\n                    failed_codes.extend(item.get('ErrorCode', 'Unknown') for item in response.get('FailedRequests', []))\n            last_summary = {'matched': len(selected), 'observed_states': [item['State'] for item in selected], 'stop_failure_codes': failed_codes, 'all_stopped': bool(selected) and all(item['State'] == 'STOPPED' for item in selected)}\n            print(json.dumps(last_summary))\n        except Exception as error:\n            last_summary = {'matched': 0, 'all_stopped': False, 'scan_failed': True}\n            print(json.dumps({'api_error_type': type(error).__name__, 'retrying': True}))\n        time.sleep(15)\n    if not last_summary['all_stopped']:\n        raise RuntimeError('Backup could not confirm STOPPED before its execution limit; primary guard remains active')\n    return last_summary\n"
+              },
+              "outputs": [
+                {
+                  "Name": "AllStopped",
+                  "Selector": "$.Payload.all_stopped",
+                  "Type": "Boolean"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "Mode": {
+      "Value": {
+        "Ref": "GuardMode"
+      }
+    },
+    "ExperimentId": {
+      "Value": {
+        "Ref": "ExperimentId"
+      }
+    },
+    "DeadlineUtc": {
+      "Value": {
+        "Ref": "DeadlineUtc"
+      }
+    },
+    "BackupDeadlineUtc": {
+      "Value": {
+        "Ref": "BackupDeadlineUtc"
+      }
+    },
+    "PrimaryFunctionName": {
+      "Condition": "IsPrimary",
+      "Value": {
+        "Ref": "PrimaryFunction"
+      }
+    },
+    "PrimaryScheduleName": {
+      "Condition": "IsPrimary",
+      "Value": {
+        "Ref": "PrimarySchedule"
+      }
+    },
+    "PrimaryLogGroupName": {
+      "Condition": "IsPrimary",
+      "Value": {
+        "Ref": "PrimaryLogGroup"
+      }
+    },
+    "BackupAutomationDocumentName": {
+      "Condition": "IsBackup",
+      "Value": {
+        "Ref": "BackupDocument"
+      }
+    }
+  }
+}

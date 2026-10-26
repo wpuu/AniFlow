@@ -1,6 +1,6 @@
 # 东京WorkSpaces能否跑H3、赠金能否全抵
 
-> 当前执行门槛：用户最新总费用上限为USD1。官方不足一小时按一小时收费，Graphics.g6.4xlarge仅最低小时费USD4.83已超上限；不创建资源。此前USD20窗口仅为历史分析。见[USD1预算复核](2026-10-25-workspaces-one-dollar-gate.md)。
+> 预算已澄清：用户允许消耗赠金，自付最多USD1。此前“总服务费USD1不可创建”仅为澄清前记录，不再作为当前费用否决。最新执行状态与剩余门槛见[10月26日WorkSpaces进度](2026-10-26-workspaces-progress.md)。
 
 > 最新税务核查：已读到税务设置地址国家CN、卖家AWS Inc.及当期税费$0；预计不因选择东京而自动加日本10%税，无需修改税务资料。详见[税务所在地与处理建议](2026-10-25-aws-tax-jurisdiction-assessment.md)，不作永久免税保证。
 
