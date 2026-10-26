@@ -78,7 +78,7 @@ function Workspace({mode, onMode}: {mode:StudioMode; onMode:(mode:StudioMode)=>v
         className="border-b border-amber-600/40 bg-amber-950/60 px-4 py-2 text-center text-xs font-semibold text-amber-200">
         {mode === "mock"
           ? "本机模拟模式 · 未连接 AWS / ComfyUI / Agnes · 费用 $0 · 结果仅为蓝色测试 MP4"
-          : "真实 H3 模式 · 仅通过本机 SSM 隧道 · MP4 自动保存并校验后才算完成 · 费用以实际账单为准"}
+          : "真实 H3 模式 · 私有连接与保存 · MP4 自动下载并校验后才算完成 · 费用以实际账单为准"}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 bg-[#0c0c10] px-4 py-1.5">
         <div className="flex gap-2" aria-label="工作模式">

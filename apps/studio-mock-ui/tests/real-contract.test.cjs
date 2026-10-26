@@ -90,8 +90,8 @@ test("WorkSpaces preflight accepts only its explicit local audit projection", ()
     credit_observed_at_utc:"2026-10-25T03:25:00Z"};
   assert.equal(parseCloudPreflight(projection, "real").checks.credit_workspaces_eligible, null);
   assert.equal(parseCloudPreflight(projection, "real").launch_allowed, false);
-  assert.throws(()=>parseCloudPreflight({...projection, service:"ec2"}, "real"), /WorkSpaces/);
-  assert.throws(()=>parseCloudPreflight({...projection, mode:"UNVERIFIED_PLACEHOLDER"}, "real"), /WorkSpaces/);
+  assert.throws(()=>parseCloudPreflight({...projection, service:"ec2"}, "real"), /本机审计投影/);
+  assert.throws(()=>parseCloudPreflight({...projection, mode:"UNVERIFIED_PLACEHOLDER"}, "real"), /本机审计投影/);
   const missing = {...projection, checks:{...projection.checks}};
   delete missing.checks.independent_stop_safeguard;
   assert.throws(()=>parseCloudPreflight(missing, "real"), /必要安全字段/);
@@ -104,4 +104,18 @@ test("Mock keeps its original seven unknown checks", () => {
   const mock = {mode:"UNVERIFIED_PLACEHOLDER", checks:Object.fromEntries(keys.map(key=>[key,null])),
     launch_allowed:false, real_gpu_connected:false};
   assert.equal(parseCloudPreflight(mock, "mock").mode, "UNVERIFIED_PLACEHOLDER");
+});
+
+test("GameLift preflight requires its private S3, CUDA and both release safeguards", () => {
+  const keys = ["credit_gamelift_eligible", "credit_expiry_confirmed", "tokyo_gamelift_quota",
+    "tokyo_capacity_and_price", "private_s3_connectivity", "h3_license_territory",
+    "gpu_stop_safeguard", "independent_stop_safeguard", "account_plan_unchanged", "runtime_cuda_verified"];
+  const projection = {mode:"LOCAL_AUDIT_PROJECTION", service:"gameliftstreams",
+    checks:Object.fromEntries(keys.map(key=>[key,null])), launch_allowed:false, real_gpu_connected:false};
+  assert.equal(parseCloudPreflight(projection,"real").checks.runtime_cuda_verified,null);
+  for (const required of ["private_s3_connectivity", "independent_stop_safeguard", "runtime_cuda_verified"]) {
+    const broken = {...projection, checks:{...projection.checks}};
+    delete broken.checks[required];
+    assert.throws(()=>parseCloudPreflight(broken,"real"), /必要安全字段/);
+  }
 });

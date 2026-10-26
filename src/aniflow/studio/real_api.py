@@ -19,6 +19,7 @@ from typing import Annotated
 from uuid import uuid4
 
 import httpx
+from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse
@@ -34,6 +35,10 @@ WORKSPACES_CHECKS = ("credit_workspaces_eligible", "credit_expiry_confirmed",
                      "ssm_private_connectivity", "h3_license_territory",
                      "gpu_stop_safeguard", "independent_stop_safeguard",
                      "account_plan_unchanged", "workspaces_account_eligible")
+GAMELIFT_CHECKS = ("credit_gamelift_eligible", "credit_expiry_confirmed", "tokyo_gamelift_quota",
+                  "tokyo_capacity_and_price", "private_s3_connectivity", "h3_license_territory",
+                  "gpu_stop_safeguard", "independent_stop_safeguard",
+                  "account_plan_unchanged", "runtime_cuda_verified")
 KEY = re.compile(r"^[A-Za-z0-9_-]{8,128}$")
 SHA = re.compile(r"^[a-f0-9]{64}$")
 
@@ -44,6 +49,8 @@ class RealConfig:
     comfy_url: str = "http://127.0.0.1:8188"
     gate_path: Path | None = None
     workflow_path: Path | None = None
+    s3_bucket: str | None = None
+    s3_session_key: str = ""
 
     @classmethod
     def from_environment(cls) -> RealConfig:
@@ -51,7 +58,9 @@ class RealConfig:
             return Path(os.environ[name]) if os.environ.get(name) else None
         return cls(Path(os.environ.get("ANIFLOW_REAL_DATA_DIR", "data/runtime/studio-real")),
                    os.environ.get("ANIFLOW_COMFY_URL", "http://127.0.0.1:8188"),
-                   optional("ANIFLOW_REAL_GATE"), optional("ANIFLOW_H3_WORKFLOW"))
+                   optional("ANIFLOW_REAL_GATE"), optional("ANIFLOW_H3_WORKFLOW"),
+                   os.environ.get("ANIFLOW_GAMELIFT_BUCKET"),
+                   os.environ.get("ANIFLOW_GAMELIFT_SESSION_KEY", ""))
 
     def audited_workflow(self) -> tuple[list[str], dict | None]:
         try:
@@ -68,7 +77,15 @@ class RealConfig:
             remaining = float(gate.get("expires_at_unix", 0)) - time.time()
             checks = gate.get("checks", {})
             service = gate.get("service", "ec2")
-            if service == "workspaces":
+            if service == "gameliftstreams":
+                resource_valid = (gate.get("instance_type") == "gen6n_pro"
+                                  and 0 <= gate.get("cash_cap_usd", -1) <= 1
+                                  and 0 < gate.get("credit_budget_usd", 0) <= 20
+                                  and gate.get("s3_bucket") == self.s3_bucket
+                                  and gate.get("session_key") == self.s3_session_key
+                                  and bool(self.s3_session_key) and bool(self.s3_bucket))
+                required_checks = GAMELIFT_CHECKS
+            elif service == "workspaces":
                 resource_valid = (gate.get("instance_type") == "Graphics.g6.4xlarge"
                                   and 0 <= gate.get("cash_cap_usd", -1) <= 1
                                   and 0 < gate.get("credit_budget_usd", 0) <= 20)
@@ -90,8 +107,8 @@ class RealConfig:
                 return ["Real audit is blocked, expired, incomplete, or workflow tools/hash are invalid"], None
             if "postprocess" in bundle and bundle["postprocess"] != {"preset": "h3_native_5s_portrait_v1"}:
                 return ["Unknown or invalid audited postprocess preset"], None
-            if service == "workspaces" and bundle.get("postprocess") != {"preset": "h3_native_5s_portrait_v1"}:
-                return ["This WorkSpaces H3 experiment requires the audited strict 5-second portrait preset"], None
+            if service in {"workspaces", "gameliftstreams"} and bundle.get("postprocess") != {"preset": "h3_native_5s_portrait_v1"}:
+                return ["This H3 experiment requires the audited strict 5-second portrait preset"], None
             prompt = bundle["prompt"]
             if not prompt or not all(isinstance(node, dict) and "class_type" in node
                                      and isinstance(node.get("inputs"), dict)
@@ -109,7 +126,15 @@ class RealConfig:
 def create_real_app(config: RealConfig | None = None,
                     transport: httpx.BaseTransport | None = None) -> FastAPI:
     cfg = config or RealConfig.from_environment()
-    provider = ComfyProvider(cfg.comfy_url, transport)
+    if cfg.s3_bucket:
+        import boto3
+
+        from .s3_provider import S3ComfyProvider
+        session = boto3.Session(profile_name=os.environ.get("AWS_PROFILE"), region_name="ap-northeast-1")
+        provider = S3ComfyProvider(session.client("s3"), cfg.s3_bucket,
+                                  "experiments/h3-20261026", cfg.s3_session_key)
+    else:
+        provider = ComfyProvider(cfg.comfy_url, transport)
     base = cfg.data_dir.resolve()
     base.mkdir(parents=True, exist_ok=True)
     images, videos = base / "images", base / "videos"
@@ -164,7 +189,7 @@ def create_real_app(config: RealConfig | None = None,
                                    video_metadata=metadata, local_path=str(path),
                                    video_download_path=f"/api/studio/real/jobs/{job['id']}/video",
                                    elapsed_seconds=time.time() - job["created_at"])
-                except (httpx.HTTPError, OSError) as exc:
+                except (httpx.HTTPError, OSError, BotoCoreError, ClientError) as exc:
                     job["error"] = f"Read/download verification interrupted: {type(exc).__name__}; no resubmission"
                 except (ValueError, KeyError, TypeError, StopIteration, ZeroDivisionError,
                         subprocess.SubprocessError) as exc:
@@ -211,7 +236,8 @@ def create_real_app(config: RealConfig | None = None,
         reasons, _ = cfg.audited_workflow()
         tunnel_connected, gpu_connected = provider.connection_state()
         if not tunnel_connected:
-            reasons.append("ComfyUI loopback tunnel is unavailable")
+            reasons.append("Private S3 runtime heartbeat is unavailable" if cfg.s3_bucket
+                           else "ComfyUI loopback tunnel is unavailable")
         elif not gpu_connected:
             reasons.append("ComfyUI system stats do not report a CUDA GPU with positive VRAM")
         return {"mode": "REAL_H3", "provider": "minimax-h3", "simulation": False,
@@ -223,11 +249,14 @@ def create_real_app(config: RealConfig | None = None,
     def preflight():
         reasons, bundle = cfg.audited_workflow()
         audit = bundle["_local_audit"] if bundle else {}
-        service = audit.get("service", "ec2") if audit else "workspaces"
+        service = audit.get("service", "ec2") if audit else (
+            "gameliftstreams" if cfg.s3_bucket else "workspaces")
         workspaces = service == "workspaces"
+        gamelift = service == "gameliftstreams"
         tunnel_connected, gpu_connected = provider.connection_state()
         if not tunnel_connected:
-            reasons.append("ComfyUI loopback tunnel is unavailable")
+            reasons.append("Private S3 runtime heartbeat is unavailable" if gamelift
+                           else "ComfyUI loopback tunnel is unavailable")
         elif not gpu_connected:
             reasons.append("ComfyUI system stats do not report a CUDA GPU with positive VRAM")
 
@@ -235,12 +264,12 @@ def create_real_app(config: RealConfig | None = None,
             value = audit.get(name)
             return value if type(value) in (int, float) and math.isfinite(value) else None
 
-        checks = WORKSPACES_CHECKS if workspaces else CHECKS
+        checks = GAMELIFT_CHECKS if gamelift else (WORKSPACES_CHECKS if workspaces else CHECKS)
         return {"mode": "LOCAL_AUDIT_PROJECTION", "service": service, "region": "ap-northeast-1",
-                "instance_type": "Graphics.g6.4xlarge" if workspaces else "g6e.2xlarge",
-                "expected_gpu": "NVIDIA L4" if workspaces else None,
-                "expected_gpu_vram_gib": 24 if workspaces else None,
-                "expected_ram_gib": 64 if workspaces else None,
+                "instance_type": "gen6n_pro" if gamelift else ("Graphics.g6.4xlarge" if workspaces else "g6e.2xlarge"),
+                "expected_gpu": "NVIDIA L4" if workspaces or gamelift else None,
+                "expected_gpu_vram_gib": 24 if workspaces or gamelift else None,
+                "expected_ram_gib": 64 if workspaces or gamelift else None,
                 "account_plan": audit.get("account_plan") if isinstance(audit.get("account_plan"), str)
                                 and audit["account_plan"] else "unknown",
                 "estimated_credit_remaining_usd": number("estimated_credit_remaining_usd"),
@@ -250,9 +279,11 @@ def create_real_app(config: RealConfig | None = None,
                 "hourly_price_usd": number("hourly_price_usd"),
                 "checks": {name: audit["checks"][name] if audit else None for name in checks},
                 "launch_allowed": not reasons, "real_gpu_connected": gpu_connected,
-                "tunnel_connected": tunnel_connected, "aws_queries": 0, "aws_writes": 0,
+                "tunnel_connected": tunnel_connected, "aws_queries": 1 if gamelift else 0, "aws_writes": 0,
                 "blocked_reasons": reasons,
-                "note": "Local validated audit projection only; no live AWS query. Expected hardware is not observed hardware. "
+                "note": ("Account checks are a local audit snapshot; connection reads a live private S3 heartbeat. "
+                        if gamelift else "Local validated audit projection only; no live AWS query. ")
+                        + "Expected hardware is not observed hardware. "
                         "ComfyUI connectivity does not establish AWS account, credit, capacity, or shutdown evidence."}
 
     @app.post("/api/studio/real/assets")
@@ -329,7 +360,8 @@ def create_real_app(config: RealConfig | None = None,
                 save(job)
                 prompt_id = provider.submit(prompt, task.idempotency_key)
                 job.update(comfy_prompt_id=prompt_id, status="queued")
-            except (httpx.HTTPError, ValueError, OSError, KeyError, TypeError) as exc:
+            except (httpx.HTTPError, ValueError, OSError, KeyError, TypeError,
+                    BotoCoreError, ClientError) as exc:
                 job["error"] = f"Submission outcome uncertain: {type(exc).__name__}; no automatic resubmission"
                 job["status"] = "submission_unknown"
             save(job)

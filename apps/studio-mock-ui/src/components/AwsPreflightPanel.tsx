@@ -15,6 +15,10 @@ type CheckKey =
   | "tokyo_workspaces_quota"
   | "independent_stop_safeguard"
   | "account_plan_unchanged"
+  | "credit_gamelift_eligible"
+  | "tokyo_gamelift_quota"
+  | "private_s3_connectivity"
+  | "runtime_cuda_verified"
   | "workspaces_account_eligible";
 
 interface CloudPreflight {
@@ -63,19 +67,36 @@ const WORKSPACES_CHECKS: { key: CheckKey; label: string; detail: string }[] = [
   { key: "workspaces_account_eligible", label: "WorkSpaces 账户资格", detail: "核对本账户使用目标桌面的资格" },
 ];
 
+const GAMELIFT_CHECKS: { key: CheckKey; label: string; detail: string }[] = [
+  { key: "credit_gamelift_eligible", label: "赠金适用 GameLift Streams", detail: "核对赠金服务清单及实验费用" },
+  { key: "credit_expiry_confirmed", label: "到期日与预计余额", detail: "账单估算快照，不是实时余额" },
+  { key: "tokyo_gamelift_quota", label: "东京 Gen6n GPU 配额", detail: "配额显示值还需真实容量分配验证" },
+  { key: "tokyo_capacity_and_price", label: "容量与费用", detail: "东京 gen6n_pro；释放分配容量后结束 GPU 计费" },
+  { key: "private_s3_connectivity", label: "私有 S3 保存与恢复", detail: "结果私有保存，本机按字节数和 SHA256 恢复下载" },
+  { key: "h3_license_territory", label: "H3 使用地域与许可", detail: "东京运行，中国大陆使用和展示" },
+  { key: "gpu_stop_safeguard", label: "东京定时释放", detail: "固定截止时间删除目标流组并核验释放" },
+  { key: "independent_stop_safeguard", label: "新加坡独立备用释放", detail: "SSM 独立执行，不依赖本机在线" },
+  { key: "account_plan_unchanged", label: "账户计划保持不变", detail: "不升级计划，不申请增加配额" },
+  { key: "runtime_cuda_verified", label: "真实 CUDA 与运行环境", detail: "需实际 GPU、量化内核和工作流节点核验" },
+];
+
+function checklist(service: string | undefined, mode: StudioMode) {
+  return mode === "real" ? (service === "gameliftstreams" ? GAMELIFT_CHECKS : WORKSPACES_CHECKS) : MOCK_CHECKS;
+}
+
 export function parseCloudPreflight(body: unknown, mode: StudioMode): CloudPreflight {
   if (!body || typeof body !== "object" || !("checks" in body)) {
     throw new Error("无效的 AWS 预检返回");
   }
   const value = body as CloudPreflight;
-  const checks = mode === "real" ? WORKSPACES_CHECKS : MOCK_CHECKS;
+  const checks = checklist(value.service, mode);
   if (typeof value.launch_allowed !== "boolean" || typeof value.real_gpu_connected !== "boolean"
       || !value.checks || !checks.every(c => Object.prototype.hasOwnProperty.call(value.checks, c.key)
         && (value.checks[c.key] === true || value.checks[c.key] === false || value.checks[c.key] === null))) {
     throw new Error("AWS 预检返回缺少必要安全字段");
   }
-  if (mode === "real" && (value.mode !== "LOCAL_AUDIT_PROJECTION" || value.service !== "workspaces")) {
-    throw new Error("真实预检必须返回 WorkSpaces 本机审计投影");
+  if (mode === "real" && (value.mode !== "LOCAL_AUDIT_PROJECTION" || !["workspaces", "gameliftstreams"].includes(value.service ?? ""))) {
+    throw new Error("真实预检必须返回已支持服务的本机审计投影");
   }
   if (mode === "real") {
     for (const amount of [value.estimated_credit_remaining_usd, value.credit_settled_remaining_usd]) {
@@ -139,7 +160,7 @@ export function AwsPreflightPanel({ onClose, mode }: { onClose: () => void; mode
               {data?.mode === "UNVERIFIED_PLACEHOLDER"
                 ? "当前连接的是本机模拟 Bridge，并未读取你的 AWS 账户。所有资格、赠金余额及实例价格均为未知，不能据此开机。"
                 : mode === "real"
-                  ? "本机审计投影：只展示已保存的 WorkSpaces 核验结果，不实时查询 AWS。目标硬件不是实测设备；是否允许生成仍需通过账户资格与双重停机保护。"
+                  ? "账户资格与余额来自已保存的核验结果。目标规格不代表实测设备；真实生成仍需当前 GPU 连接和双重停机保护。"
                   : "只有 AWS 账户核验并落实定时停机与独立备用措施后，才可创建 GPU 实例。"}
             </p>
           </div>
@@ -155,7 +176,7 @@ export function AwsPreflightPanel({ onClose, mode }: { onClose: () => void; mode
             </>}
           </div>
           <div className="space-y-1" data-testid="aws-preflight-checklist">
-            {(mode === "real" ? WORKSPACES_CHECKS : MOCK_CHECKS).map((c) => (
+            {checklist(data?.service, mode).map((c) => (
               <div key={c.key} className="flex justify-between gap-3 border-b border-white/5 py-2.5">
                 <div>
                   <p className="text-xs font-medium">{c.label}</p>
@@ -172,7 +193,7 @@ export function AwsPreflightPanel({ onClose, mode }: { onClose: () => void; mode
           </ul>}
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] text-zinc-500">
-              {mode === "real" ? "此面板只读；WorkSpaces 资格、预算与停机保护未通过时禁止真实生成。" : "EC2 控制保持关闭；本机 Studio 只执行不收费的模拟任务。"}
+              {mode === "real" ? "此面板只读；资格、预算与停机保护未通过时禁止真实生成。" : "EC2 控制保持关闭；本机 Studio 只执行不收费的模拟任务。"}
             </p>
             <button type="button" onClick={() => void refresh()} disabled={loading}
               className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-white/15 px-3 py-2 text-xs hover:bg-white/5 disabled:opacity-50">
