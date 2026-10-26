@@ -94,7 +94,8 @@ class RealConfig:
                 resource_valid = (service == "ec2" and gate.get("instance_type") == "g6e.2xlarge"
                                   and 0 < gate.get("experiment_budget_usd", 0) <= 20)
                 required_checks = CHECKS
-            valid = (gate.get("launch_allowed") is True and 0 < remaining <= 4 * 3600
+            valid = (gate.get("launch_allowed") is True and gate.get("snapshot_only") is not True
+                     and 0 < remaining <= 4 * 3600
                      and gate.get("region") == "ap-northeast-1"
                      and resource_valid and isinstance(checks, dict)
                      and all(checks.get(name) is True for name in required_checks)
@@ -122,6 +123,24 @@ class RealConfig:
         except (OSError, ValueError, TypeError, KeyError):
             return ["Real audit/workflow could not be validated"], None
 
+    def blocked_projection(self) -> dict:
+        """Display a saved failed audit without granting any launch permission."""
+        try:
+            if not self.gate_path:
+                return {}
+            audit = json.loads(self.gate_path.read_text(encoding="utf-8"))
+            checks = audit.get("checks", {})
+            valid = (audit.get("snapshot_only") is True and audit.get("launch_allowed") is False
+                     and audit.get("service") == "gameliftstreams"
+                     and audit.get("region") == "ap-northeast-1"
+                     and audit.get("instance_type") == "gen6n_pro"
+                     and isinstance(checks, dict)
+                     and all(name in checks and (checks[name] is None or type(checks[name]) is bool)
+                             for name in GAMELIFT_CHECKS))
+            return audit if valid else {}
+        except (OSError, ValueError, TypeError, AttributeError):
+            return {}
+
 
 def create_real_app(config: RealConfig | None = None,
                     transport: httpx.BaseTransport | None = None) -> FastAPI:
@@ -135,6 +154,12 @@ def create_real_app(config: RealConfig | None = None,
                                   "experiments/h3-20261026", cfg.s3_session_key)
     else:
         provider = ComfyProvider(cfg.comfy_url, transport)
+
+    def connection_state():
+        if cfg.blocked_projection() and not cfg.s3_bucket:
+            return False, False
+        return provider.connection_state()
+
     base = cfg.data_dir.resolve()
     base.mkdir(parents=True, exist_ok=True)
     images, videos = base / "images", base / "videos"
@@ -234,9 +259,9 @@ def create_real_app(config: RealConfig | None = None,
     @app.get("/api/studio/real/health")
     def health():
         reasons, _ = cfg.audited_workflow()
-        tunnel_connected, gpu_connected = provider.connection_state()
+        tunnel_connected, gpu_connected = connection_state()
         if not tunnel_connected:
-            reasons.append("Private S3 runtime heartbeat is unavailable" if cfg.s3_bucket
+            reasons.append("Private S3 runtime heartbeat is unavailable" if cfg.s3_bucket or cfg.blocked_projection()
                            else "ComfyUI loopback tunnel is unavailable")
         elif not gpu_connected:
             reasons.append("ComfyUI system stats do not report a CUDA GPU with positive VRAM")
@@ -248,12 +273,12 @@ def create_real_app(config: RealConfig | None = None,
     @app.get("/api/studio/cloud/preflight")
     def preflight():
         reasons, bundle = cfg.audited_workflow()
-        audit = bundle["_local_audit"] if bundle else {}
+        audit = bundle["_local_audit"] if bundle else cfg.blocked_projection()
         service = audit.get("service", "ec2") if audit else (
             "gameliftstreams" if cfg.s3_bucket else "workspaces")
         workspaces = service == "workspaces"
         gamelift = service == "gameliftstreams"
-        tunnel_connected, gpu_connected = provider.connection_state()
+        tunnel_connected, gpu_connected = connection_state()
         if not tunnel_connected:
             reasons.append("Private S3 runtime heartbeat is unavailable" if gamelift
                            else "ComfyUI loopback tunnel is unavailable")
@@ -279,10 +304,10 @@ def create_real_app(config: RealConfig | None = None,
                 "hourly_price_usd": number("hourly_price_usd"),
                 "checks": {name: audit["checks"][name] if audit else None for name in checks},
                 "launch_allowed": not reasons, "real_gpu_connected": gpu_connected,
-                "tunnel_connected": tunnel_connected, "aws_queries": 1 if gamelift else 0, "aws_writes": 0,
+                "tunnel_connected": tunnel_connected, "aws_queries": 1 if gamelift and cfg.s3_bucket else 0, "aws_writes": 0,
                 "blocked_reasons": reasons,
                 "note": ("Account checks are a local audit snapshot; connection reads a live private S3 heartbeat. "
-                        if gamelift else "Local validated audit projection only; no live AWS query. ")
+                        if gamelift and cfg.s3_bucket else "Local audit snapshot only; no live AWS query. ")
                         + "Expected hardware is not observed hardware. "
                         "ComfyUI connectivity does not establish AWS account, credit, capacity, or shutdown evidence."}
 

@@ -1,0 +1,188 @@
+{
+  "observed_at_utc": "2026-10-26T11:28:51.292221+00:00",
+  "quotas": [
+    {
+      "query_region": "ap-northeast-1",
+      "applied": {
+        "ServiceCode": "gameliftstreams",
+        "ServiceName": "Amazon GameLift Streams",
+        "QuotaArn": "arn:aws:servicequotas:ap-northeast-1:[ACCOUNT]:gameliftstreams/L-9F99CEA2",
+        "QuotaCode": "L-9F99CEA2",
+        "QuotaName": "Gen6n GPUs, ap-northeast-1",
+        "Value": 0.0,
+        "Unit": "None",
+        "Adjustable": true,
+        "GlobalQuota": false,
+        "UsageMetric": {
+          "MetricNamespace": "AWS/Usage",
+          "MetricName": "ResourceCount",
+          "MetricDimensions": {
+            "Class": "None",
+            "Resource": "Gen6nGPU-AP-Northeast-1",
+            "Service": "GameLift Streams",
+            "Type": "Resource"
+          },
+          "MetricStatisticRecommendation": "Maximum"
+        },
+        "Period": {
+          "PeriodValue": 5,
+          "PeriodUnit": "MINUTE"
+        },
+        "QuotaAppliedAtLevel": "ACCOUNT",
+        "Description": "The maximum number of Gen6n GPUs you can configure for streaming in the ap-northeast-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6n_high\", support streaming more than one session per GPU."
+      },
+      "default": {
+        "ServiceCode": "gameliftstreams",
+        "ServiceName": "Amazon GameLift Streams",
+        "QuotaArn": "arn:aws:servicequotas:ap-northeast-1::gameliftstreams/L-9F99CEA2",
+        "QuotaCode": "L-9F99CEA2",
+        "QuotaName": "Gen6n GPUs, ap-northeast-1",
+        "Value": 0.0,
+        "Unit": "None",
+        "Adjustable": true,
+        "GlobalQuota": false,
+        "UsageMetric": {
+          "MetricNamespace": "AWS/Usage",
+          "MetricName": "ResourceCount",
+          "MetricDimensions": {
+            "Class": "None",
+            "Resource": "Gen6nGPU-AP-Northeast-1",
+            "Service": "GameLift Streams",
+            "Type": "Resource"
+          },
+          "MetricStatisticRecommendation": "Maximum"
+        },
+        "Period": {
+          "PeriodValue": 5,
+          "PeriodUnit": "MINUTE"
+        },
+        "Description": "The maximum number of Gen6n GPUs you can configure for streaming in the ap-northeast-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6n_high\", support streaming more than one session per GPU."
+      }
+    },
+    {
+      "query_region": "us-west-2",
+      "applied": {
+        "ServiceCode": "gameliftstreams",
+        "ServiceName": "Amazon GameLift Streams",
+        "QuotaArn": "arn:aws:servicequotas:us-west-2:[ACCOUNT]:gameliftstreams/L-9F99CEA2",
+        "QuotaCode": "L-9F99CEA2",
+        "QuotaName": "Gen6n GPUs, ap-northeast-1",
+        "Value": 0.0,
+        "Unit": "None",
+        "Adjustable": true,
+        "GlobalQuota": false,
+        "UsageMetric": {
+          "MetricNamespace": "AWS/Usage",
+          "MetricName": "ResourceCount",
+          "MetricDimensions": {
+            "Class": "None",
+            "Resource": "Gen6nGPU-AP-Northeast-1",
+            "Service": "GameLift Streams",
+            "Type": "Resource"
+          },
+          "MetricStatisticRecommendation": "Maximum"
+        },
+        "Period": {
+          "PeriodValue": 5,
+          "PeriodUnit": "MINUTE"
+        },
+        "QuotaAppliedAtLevel": "ACCOUNT",
+        "Description": "The maximum number of Gen6n GPUs you can configure for streaming in the ap-northeast-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6n_high\", support streaming more than one session per GPU."
+      },
+      "default": {
+        "ServiceCode": "gameliftstreams",
+        "ServiceName": "Amazon GameLift Streams",
+        "QuotaArn": "arn:aws:servicequotas:us-west-2::gameliftstreams/L-9F99CEA2",
+        "QuotaCode": "L-9F99CEA2",
+        "QuotaName": "Gen6n GPUs, ap-northeast-1",
+        "Value": 0.0,
+        "Unit": "None",
+        "Adjustable": true,
+        "GlobalQuota": false,
+        "UsageMetric": {
+          "MetricNamespace": "AWS/Usage",
+          "MetricName": "ResourceCount",
+          "MetricDimensions": {
+            "Class": "None",
+            "Resource": "Gen6nGPU-AP-Northeast-1",
+            "Service": "GameLift Streams",
+            "Type": "Resource"
+          },
+          "MetricStatisticRecommendation": "Maximum"
+        },
+        "Period": {
+          "PeriodValue": 5,
+          "PeriodUnit": "MINUTE"
+        },
+        "Description": "The maximum number of Gen6n GPUs you can configure for streaming in the ap-northeast-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6n_high\", support streaming more than one session per GPU."
+      }
+    },
+    {
+      "query_region": "us-east-2",
+      "applied": {
+        "ServiceCode": "gameliftstreams",
+        "ServiceName": "Amazon GameLift Streams",
+        "QuotaArn": "arn:aws:servicequotas:us-east-2:[ACCOUNT]:gameliftstreams/L-9F99CEA2",
+        "QuotaCode": "L-9F99CEA2",
+        "QuotaName": "Gen6n GPUs, ap-northeast-1",
+        "Value": 0.0,
+        "Unit": "None",
+        "Adjustable": true,
+        "GlobalQuota": false,
+        "UsageMetric": {
+          "MetricNamespace": "AWS/Usage",
+          "MetricName": "ResourceCount",
+          "MetricDimensions": {
+            "Class": "None",
+            "Resource": "Gen6nGPU-AP-Northeast-1",
+            "Service": "GameLift Streams",
+            "Type": "Resource"
+          },
+          "MetricStatisticRecommendation": "Maximum"
+        },
+        "Period": {
+          "PeriodValue": 5,
+          "PeriodUnit": "MINUTE"
+        },
+        "QuotaAppliedAtLevel": "ACCOUNT",
+        "Description": "The maximum number of Gen6n GPUs you can configure for streaming in the ap-northeast-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6n_high\", support streaming more than one session per GPU."
+      },
+      "default": {
+        "ServiceCode": "gameliftstreams",
+        "ServiceName": "Amazon GameLift Streams",
+        "QuotaArn": "arn:aws:servicequotas:us-east-2::gameliftstreams/L-9F99CEA2",
+        "QuotaCode": "L-9F99CEA2",
+        "QuotaName": "Gen6n GPUs, ap-northeast-1",
+        "Value": 0.0,
+        "Unit": "None",
+        "Adjustable": true,
+        "GlobalQuota": false,
+        "UsageMetric": {
+          "MetricNamespace": "AWS/Usage",
+          "MetricName": "ResourceCount",
+          "MetricDimensions": {
+            "Class": "None",
+            "Resource": "Gen6nGPU-AP-Northeast-1",
+            "Service": "GameLift Streams",
+            "Type": "Resource"
+          },
+          "MetricStatisticRecommendation": "Maximum"
+        },
+        "Period": {
+          "PeriodValue": 5,
+          "PeriodUnit": "MINUTE"
+        },
+        "Description": "The maximum number of Gen6n GPUs you can configure for streaming in the ap-northeast-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6n_high\", support streaming more than one session per GPU."
+      }
+    },
+    {
+      "query_region": "us-east-1",
+      "applied": {
+        "error_code": "NoSuchResourceException"
+      },
+      "default": {
+        "error_code": "NoSuchResourceException"
+      }
+    }
+  ]
+}

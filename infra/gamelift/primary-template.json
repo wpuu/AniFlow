@@ -5,9 +5,28 @@
       "Type": "String",
       "AllowedPattern": "sg-[a-zA-Z0-9]+"
     },
+    "ApplicationId": {
+      "Type": "String",
+      "Default": "",
+      "AllowedPattern": "(|a-[a-zA-Z0-9]+)"
+    },
     "DeadlineUtc": {
       "Type": "String",
       "AllowedPattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"
+    }
+  },
+  "Conditions": {
+    "HasApplication": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "ApplicationId"
+            },
+            ""
+          ]
+        }
+      ]
     }
   },
   "Resources": {
@@ -41,6 +60,24 @@
                   "Resource": {
                     "Fn::Sub": "arn:${AWS::Partition}:gameliftstreams:ap-northeast-1:${AWS::AccountId}:streamgroup/${GroupId}"
                   }
+                },
+                {
+                  "Fn::If": [
+                    "HasApplication",
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "gameliftstreams:GetApplication",
+                        "gameliftstreams:DeleteApplication"
+                      ],
+                      "Resource": {
+                        "Fn::Sub": "arn:${AWS::Partition}:gameliftstreams:ap-northeast-1:${AWS::AccountId}:application/${ApplicationId}"
+                      }
+                    },
+                    {
+                      "Ref": "AWS::NoValue"
+                    }
+                  ]
                 }
               ]
             }
@@ -67,11 +104,14 @@
             },
             "DEADLINE_UTC": {
               "Ref": "DeadlineUtc"
+            },
+            "APPLICATION_ID": {
+              "Ref": "ApplicationId"
             }
           }
         },
         "Code": {
-          "ZipFile": "\"\"\"Fixed-deadline, exact-resource GameLift guard. Never allocates capacity.\"\"\"\nimport os\nfrom datetime import UTC, datetime\n\nimport boto3\nfrom botocore.exceptions import ClientError\n\n\ndef handler(event, context):\n    deadline = datetime.fromisoformat(os.environ[\"DEADLINE_UTC\"])\n    if datetime.now(UTC) < deadline:\n        return {\"state\": \"armed\", \"deadline_utc\": deadline.isoformat()}\n    group = os.environ[\"GROUP_ID\"]\n    client = boto3.client(\"gameliftstreams\", region_name=\"ap-northeast-1\")\n    try:\n        current = client.get_stream_group(Identifier=group)\n        if current[\"Status\"] != \"DELETING\":\n            client.delete_stream_group(Identifier=group)\n        # A successful delete response does not prove capacity release.\n        current = client.get_stream_group(Identifier=group)\n        return {\"state\": \"deletion_pending\", \"status\": current[\"Status\"]}\n    except ClientError as exc:\n        if exc.response[\"Error\"][\"Code\"] == \"ResourceNotFoundException\":\n            return {\"state\": \"released\", \"group_id\": group}\n        raise\n"
+          "ZipFile": "\"\"\"Fixed-deadline, exact-resource GameLift guard. Never allocates capacity.\"\"\"\nimport os\nfrom datetime import UTC, datetime\n\nimport boto3\nfrom botocore.exceptions import ClientError\n\n\ndef release_application(client):\n    application = os.environ.get(\"APPLICATION_ID\")\n    if not application:\n        return {\"state\": \"released\"}\n    try:\n        current = client.get_application(Identifier=application)\n        if current[\"Status\"] != \"DELETING\":\n            client.delete_application(Identifier=application)\n        return {\"state\": \"application_deletion_pending\"}\n    except ClientError as exc:\n        if exc.response[\"Error\"][\"Code\"] == \"ResourceNotFoundException\":\n            return {\"state\": \"released\", \"application_id\": application}\n        raise\n\n\ndef handler(event, context):\n    deadline = datetime.fromisoformat(os.environ[\"DEADLINE_UTC\"])\n    if datetime.now(UTC) < deadline:\n        return {\"state\": \"armed\", \"deadline_utc\": deadline.isoformat()}\n    group = os.environ[\"GROUP_ID\"]\n    client = boto3.client(\"gameliftstreams\", region_name=\"ap-northeast-1\")\n    try:\n        current = client.get_stream_group(Identifier=group)\n        if current[\"Status\"] != \"DELETING\":\n            client.delete_stream_group(Identifier=group)\n        # A successful delete response does not prove capacity release.\n        current = client.get_stream_group(Identifier=group)\n        return {\"state\": \"deletion_pending\", \"status\": current[\"Status\"]}\n    except ClientError as exc:\n        if exc.response[\"Error\"][\"Code\"] == \"ResourceNotFoundException\":\n            return {**release_application(client), \"group_id\": group}\n        raise\n"
         }
       }
     },

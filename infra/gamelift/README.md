@@ -4,7 +4,7 @@
 
 - `guard.py` / `primary-template.json`：东京每分钟检查固定 UTC 截止时间，删除唯一目标流组；删除返回成功不作为释放证明，后续查询必须 NotFound。
 - `backup.py` / `backup-template.json`：新加坡 SSM Automation 独立等待固定截止时间，再直接删除同一东京流组并查询直至 NotFound。不依赖东京 Lambda、本机或浏览器。部署文档后还必须启动执行；仅有文档不算已保护。
-- `storage-template.json`：东京私有 S3、四项 Block Public Access、BucketOwnerEnforced、AES256、强制 TLS，以及仅能访问实验数据前缀的临时会话角色。模型源包与运行结果均不公开，不建立公网 ComfyUI 端口。
+- `storage-template.json`：东京私有 S3、四项 Block Public Access、BucketOwnerEnforced、AES256、强制 TLS，以及只可读写实验数据前缀的临时会话角色。角色可列举本实验专用桶的对象名称，以正确区分“对象不存在”和权限错误；不可读取其他前缀内容。模型源包与运行结果均不公开，不建立公网 ComfyUI 端口。
 - `models.json`：原始四个量化权重的固定官方版本、完整字节数与 SHA256。没有替换模型、减步数或降低画质。
 - `launch.sh`：应用根目录本身是未压缩的 S3 文件夹，包含启动脚本、原始模型文件、`runtime.tar` 和哈希清单。脚本验证环境包后在用户目录展开，模型只建立到应用源文件的链接。应用自行读取支持资源包，不依赖 GameLift 自动解压整个应用。完整环境超过三万文件，故封装成单个支持文件。
 - `runtime.py`：启动实际 CUDA/INT8 ConvRot/ComfyUI schema 检查。生成模式只读取当前会话的一条私有请求，在 ComfyUI POST 之前写不可重复取得的 S3 claim；不确定提交只查询原任务。完成后完整解码原始 MP4 并立即上传私有 S3。

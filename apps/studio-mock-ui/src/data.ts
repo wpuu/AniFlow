@@ -9,7 +9,7 @@ export const MODELS: Model[] = [{
 }];
 export const REAL_MODEL: Model = {
   id: "minimax-h3", name: "MiniMax H3 · 真实节点", shortName: "H3 REAL",
-  backend: "minimax", backendLabel: "SSM · ComfyUI",
+  backend: "minimax", backendLabel: "AWS 私有连接 · ComfyUI",
   status: "offline", latencyMs: 0, costPerSecond: 0, maxDuration: 5,
   description: "真实图生视频；资格与停机保护未通过时禁止提交。",
   queue: 0, tags: ["真实", "5秒", "9:16"],

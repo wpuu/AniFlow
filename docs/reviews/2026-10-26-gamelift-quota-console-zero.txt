@@ -1,0 +1,311 @@
+[p1 "配额详细信息 – Gen6n GPUs, ap-northeast-1 | AWS Service Quotas" | space "AniFlow Tokyo GameLift execution 20261026"(7): 1 managed, 0 untracked — p1* "配额详细信息 – Gen6n GPUs, ap-northeast-1 | AWS Service Quotas"]
+root
+  container
+    navigation
+      container
+        image "账户颜色: 绿色"
+        container "全球"
+          container
+            anchor [ref=1, loc=href:/servicequotas/home/services/gameliftstreams/quotas/L-9F99CEA2#c, url=https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/gameliftstreams/quotas/L-9F99CEA2#c]
+              text "跳转至主要内容"
+            container
+              anchor [ref=2, url=https://ap-northeast-1.console.aws.amazon.com/console/home?region=ap-northeast-1]
+                svg_root
+              button "Amazon Q" [ref=3, loc=css:button[aria-label="Amazon Q"]]
+                svg_root
+              button [ref=4]
+                svg_root
+            container
+              image "搜索"
+                svg_root
+              container
+                searchbox [ref=5]
+                comboboxgrouping "搜索" [ref=6, loc=css:input[placeholder="搜索"]]
+                  text "搜索"
+              button "询问 Amazon Q" [ref=40, loc=css:button[aria-label="询问 Amazon Q"]]
+                svg_root
+              text "[Alt+S]"
+            container
+              anchor "CloudShell" [ref=7, loc=css:a[aria-label="CloudShell"], url=https://ap-northeast-1.console.aws.amazon.com/cloudshell/home?region=ap-northeast-1]
+                svg_root
+              container
+                button "通知（无可用通知）" [ref=8, loc=css:button[aria-label="通知（无可用通知）"]]
+                  image "通知"
+                    svg_root
+                image "通知"
+                  svg_root
+              unordered_list
+                list_item
+                  button "帮助和支持" [ref=9, loc=css:button[aria-label="帮助和支持"]]
+                    image "支持"
+                      svg_root
+                list_item
+                  button "设置" [ref=10, loc=css:button[aria-label="设置"]]
+                    svg_root
+                list_item
+                  comboboxgrouping "Regions (亚太地区 (东京))" [ref=11, loc=css:button[aria-label="Regions (亚太地区 (东京))"]]
+                    text "亚太地区 (东京)"
+                    svg_root
+                list_item
+                  button "[ACCOUNT]" [ref=12, loc=css:button[aria-label="[ACCOUNT]"]]
+                    container
+                      text "[ACCOUNT] ([REDACTED])"
+                      svg_root
+                    text "[ACCOUNT]"
+          ordered_list
+            list_item
+              button [ref=13, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1]
+                image
+                text "EC2"
+        unordered_list
+    container
+      container
+        button "打开导航抽屉" [ref=14, loc=css:button[aria-label="打开导航抽屉"]]
+          svg_root
+        container "导航痕迹"
+          ordered_list
+            list_item
+              anchor [ref=15, url=https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/dashboard]
+                text "服务配额"
+              svg_root
+            list_item
+              anchor [ref=16, url=https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services]
+                text "AWS 服务"
+              svg_root
+            list_item
+              anchor [ref=17, url=https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/gameliftstreams/quotas]
+                text "Amazon GameLift Streams"
+              svg_root
+            list_item
+              link [ref=18]
+                text "Gen6n GPUs, ap-northeast-1"
+          ordered_list
+            list_item
+              anchor [ref=19, url=https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/dashboard]
+                text "服务配额"
+              svg_root
+            list_item
+              anchor [ref=20, url=https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services]
+                text "AWS 服务"
+              svg_root
+            list_item
+              anchor [ref=21, url=https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/gameliftstreams/quotas]
+                text "Amazon GameLift Streams"
+              svg_root
+            list_item
+              text "Gen6n GPUs, ap-northeast-1"
+        region "抽屉"
+          toolbar "抽屉"
+            button "打开帮助面板" [ref=22, loc=css:button[aria-label="打开帮助面板"]]
+              svg_root
+      container "导航抽屉"
+        button "关闭导航抽屉" [ref=23, loc=css:button[aria-label="关闭导航抽屉"]]
+          svg_root
+        container
+          heading
+            anchor [ref=24, loc=href:/servicequotas/home/, url=https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/]
+              text "服务配额"
+          unordered_list
+            list_item
+              anchor [ref=25, url=https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/dashboard]
+                text "控制面板"
+            list_item
+              anchor [ref=26, url=https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services]
+                text "AWS 服务"
+            list_item
+              anchor [ref=27, loc=href:/servicequotas/home/requests, url=https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/requests]
+                text "配额请求历史记录"
+            list_item
+              button [ref=28]
+                svg_root
+                text "组织"
+              group "组织"
+                unordered_list
+                  list_item
+                    anchor [ref=29, loc=href:/servicequotas/home/template, url=https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/template]
+                      text "配额请求模板"
+            list_item
+              anchor [ref=30, loc=href:/servicequotas/home/amSettings, url=https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/amSettings]
+                text "自动管理"
+              button [ref=31]
+                text "全新"
+      region "通知"
+        unordered_list "通知"
+      container
+        container
+          heading [ref=32]
+            text "Gen6n GPUs, ap-northeast-1"
+          button [ref=41]
+            text "请求在账户级别增加"
+        container
+          container
+            heading
+              text "详细信息"
+            container
+              container
+                text "描述"
+                text "The maximum number of Gen6n GPUs you can configure for streaming in the ap-northeast-1 location across all stream groups in this account. Multi-tenant stream classes, such as "Gen6n_high", support str..."
+              container
+                container
+                  text "配额代码"
+                  text "L-9F99CEA2"
+                container
+                  text "配额 ARN"
+                  container
+                    button "将 ARN 复制到剪贴板" [ref=42, loc=css:button[aria-label="将 ARN 复制到剪贴板"]]
+                      svg_root
+                    text "arn:aws:servicequotas:ap-northeast-1:[REDACTED]:gameliftstreams/L-9F99CEA2"
+            container
+              container
+                text "利用率"
+                button [ref=43]
+                  text "0"
+              container
+                text "应用的账户级别配额值"
+                text "0"
+              container
+                text "AWS 默认配额值"
+                text "0"
+              container
+                text "可否调整"
+                text "账户级别"
+          container
+            tablist
+              list_item
+                tab [ref=44]
+                  text "监控"
+              list_item
+                tab [ref=45]
+                  text "请求历史记录"
+              list_item
+                tab [ref=46]
+                  text "警报"
+              list_item
+                tab [ref=47]
+                  text "标签"
+            tabpanel "监控" [ref=48, loc=role:tabpanel[name="监控"]]
+              container
+                heading
+                  text "监控"
+                paragraph
+                  text "这将显示一个可自定义的 CloudWatch 嵌入式图表。"
+                  anchor [ref=49, url=https://docs.aws.amazon.com/zh_cn/servicequotas/latest/userguide/configure-cloudwatch.html]
+                    container "了解有关 CloudWatch 警报的更多信息"
+                      text "了解更多"
+                    image "在新选项卡中打开"
+                      svg_root
+              iframe [ref=50]
+                root
+                  navigation
+                  container [ref=51]
+                    unordered_list
+                    container
+                      button [ref=52]
+                        image "信息"
+                          svg_root
+                        container
+                          text "使用人工智能进行调查"
+                          text "- 新"
+                      container
+                        radiogroup "日期时间范围"
+                          unordered_list
+                            list_item
+                              button "1小时 (1 小时)" [ref=53, loc=css:button[aria-label="1小时 (1 小时)"]]
+                                text "1小时"
+                            list_item
+                              button "3小时 (3 小时)" [ref=54, loc=css:button[aria-label="3小时 (3 小时)"]]
+                                text "3小时"
+                            list_item
+                              button "12小时 (12 小时)" [ref=55, loc=css:button[aria-label="12小时 (12 小时)"]]
+                                text "12小时"
+                            list_item
+                              button "1天 (1 天)" [ref=56, loc=css:button[aria-label="1天 (1 天)"]]
+                                text "1天"
+                            list_item
+                              button "3天 (3 天)" [ref=57, loc=css:button[aria-label="3天 (3 天)"]]
+                                text "3天"
+                            list_item
+                              button "1周 (1 周)" [ref=58, loc=css:button[aria-label="1周 (1 周)"]]
+                                text "1周"
+                            button "自定义" [ref=59, loc=css:button[aria-label="自定义"]]
+                              text "自定义"
+                              svg_root
+                        button "时区 UTC 时区" [ref=60]
+                          text "UTC 时区"
+                          svg_root
+                      group "刷新间隔"
+                        button "刷新" [ref=61, loc=css:button[aria-label="刷新"]]
+                          svg_root
+                        button "刷新间隔" [ref=62, loc=css:button[aria-label="刷新间隔"]]
+                          svg_root
+                      button "探索相关内容" [ref=63, loc=css:button[aria-label="探索相关内容"]]
+                        svg_root
+                        text "探索相关内容"
+                      button "更多小组件操作" [ref=64, loc=css:button[aria-label="更多小组件操作"]]
+                        svg_root
+                    container
+                      heading
+                        text "Gen6n GPUs, ap-northeast-1 - (利用率 %)"
+                      button "Gen6n GPUs, ap-northeast-1 - (利用率 %) 小部件选项" [ref=65, loc=css:button[aria-label="Gen6n GPUs, ap-northeast-1 - (利用率 %) 小部件选项"]]
+                        svg_root
+                      container
+                        container
+                          image "08:30 08:45 09:00 09:15 09:30 09:45 10:00 10:15 10:30 10:45 11:00 11:15"
+                            text "08:30"
+                            text "08:45"
+                            text "09:00"
+                            text "09:15"
+                            text "09:30"
+                            text "09:45"
+                            text "10:00"
+                            text "10:15"
+                            text "10:30"
+                            text "10:45"
+                            text "11:00"
+                            text "11:15"
+                          container
+                            text "无可用数据。"
+                            paragraph
+                              text "尝试调整控制面板的时间范围。"
+                        container [ref=66]
+                          button [ref=67]
+                            svg_root
+                            text "% 利用率"
+                  contentinfo
+                  text "无可用数据。 尝试调整控制面板的时间范围。"
+    contentinfo
+      container
+        container
+          button [ref=33]
+            svg_root
+            text "CloudShell"
+          button [ref=34]
+            svg_root
+            text "Agent Toolkit for AWS"
+          button [ref=35]
+            text "反馈"
+          button [ref=36]
+            svg_root
+            text "控制台移动应用程序"
+        container
+          text "©"
+          text "2026"
+          text ","
+          text "Amazon Web Services, Inc."
+          text "或其关联公司。"
+        unordered_list
+          list_item
+            anchor [ref=37, loc=href:https://aws.amazon.com/privacy/, url=https://aws.amazon.com/privacy/]
+              text "隐私"
+          list_item
+            anchor [ref=38, loc=href:https://aws.amazon.com/terms/, url=https://aws.amazon.com/terms/]
+              text "条款"
+          list_item
+            button [ref=39]
+              text "Cookie 首选项"
+  svg_root
+  svg_root
+  svg_root
+  svg_root
+  svg_root
+  svg_root

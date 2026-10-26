@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+exec > "${HOME}/aniflow-h3-launch.log" 2>&1
 source_root="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 runtime_root="${HOME}/aniflow-h3-runtime"
 mkdir -p "$runtime_root"

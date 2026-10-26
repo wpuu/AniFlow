@@ -64,9 +64,9 @@ export function Header({ queued, running, todayCost, clock, mode, ready, tunnelC
         <div className="ml-4 hidden items-center gap-2 rounded-full border border-white/6 bg-white/[0.03] px-3 py-1 lg:flex">
           <Activity className="h-3.5 w-3.5 text-cyan-300" />
           <span className="text-[11px] text-zinc-300">{mode === "mock" ? "本机模拟 · 无真实GPU"
-            : !tunnelConnected ? "真实 H3 · 隧道未确认连通"
-            : gpuConnected ? "隧道连通 · CUDA设备已观察（H3显存峰值仍待测）"
-            : "隧道连通 · 尚未观察到CUDA设备"}</span>
+            : !tunnelConnected ? "真实 H3 · 私有连接未确认连通"
+            : gpuConnected ? "私有连接连通 · CUDA设备已观察（H3显存峰值仍待测）"
+            : "私有连接连通 · 尚未观察到CUDA设备"}</span>
           <span className="text-zinc-700">·</span>
           <span className="font-mono text-[11px] text-zinc-500">{formatClock(clock)}</span>
         </div>

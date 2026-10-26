@@ -1,0 +1,31 @@
+{
+  "observed_at_utc": "2026-10-26T11:43:16.941179+00:00",
+  "resources": [
+    {
+      "type": "group",
+      "id": "sg-W1YCvpPIm",
+      "error": "ResourceNotFoundException"
+    },
+    {
+      "type": "application",
+      "id": "a-VcfYE4Fel",
+      "error": "ResourceNotFoundException"
+    }
+  ],
+  "backup": {
+    "id": "7b058ed8-a30c-4b2e-a7f4-6e94dd5a0296",
+    "status": "Success",
+    "steps": [
+      {
+        "name": "WaitUntilDeadline",
+        "status": "Success",
+        "failure": ""
+      },
+      {
+        "name": "DeleteAndVerify",
+        "status": "Success",
+        "failure": ""
+      }
+    ]
+  }
+}

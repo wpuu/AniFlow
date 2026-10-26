@@ -12,7 +12,13 @@ import pytest
 from fastapi.testclient import TestClient
 
 from aniflow.studio.comfy_provider import ComfyProvider, verify_mp4
-from aniflow.studio.real_api import CHECKS, WORKSPACES_CHECKS, RealConfig, create_real_app
+from aniflow.studio.real_api import (
+    CHECKS,
+    GAMELIFT_CHECKS,
+    WORKSPACES_CHECKS,
+    RealConfig,
+    create_real_app,
+)
 
 PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO/6G7cAAAAASUVORK5CYII=")
 
@@ -428,3 +434,31 @@ def test_bad_output_never_completes(tmp_path):
 def test_remote_comfy_urls_are_forbidden(url):
     with pytest.raises(ValueError):
         ComfyProvider(url)
+
+
+def test_blocked_gamelift_snapshot_cannot_borrow_an_unrelated_loopback_gpu(tmp_path):
+    snapshot = tmp_path / "blocked.json"
+    snapshot.write_text(json.dumps({"service": "gameliftstreams", "region": "ap-northeast-1",
+        "instance_type": "gen6n_pro", "snapshot_only": True, "launch_allowed": False,
+        "account_plan": "PAID / ACTIVE", "estimated_credit_remaining_usd": 47.25,
+        "checks": {name: False for name in GAMELIFT_CHECKS}}))
+    cfg = RealConfig(tmp_path / "local", gate_path=snapshot)
+    local = LocalComfyContract()
+    with TestClient(create_real_app(cfg, httpx.MockTransport(local))) as client:
+        health = client.get("/api/studio/real/health").json()
+        projection = client.get("/api/studio/cloud/preflight").json()
+    assert health["ready"] is False and health["gpu_connected"] is False
+    assert projection["service"] == "gameliftstreams"
+    assert projection["instance_type"] == "gen6n_pro"
+    assert projection["checks"]["tokyo_gamelift_quota"] is False
+    assert projection["launch_allowed"] is False and projection["aws_queries"] == 0
+    assert projection["real_gpu_connected"] is False
+
+
+def test_snapshot_only_never_authorizes_launch_even_with_other_valid_fields(tmp_path):
+    cfg = config(tmp_path)
+    gate = json.loads(cfg.gate_path.read_text())
+    gate["snapshot_only"] = True
+    cfg.gate_path.write_text(json.dumps(gate))
+    reasons, workflow = cfg.audited_workflow()
+    assert reasons and workflow is None

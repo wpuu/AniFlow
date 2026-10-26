@@ -6,6 +6,21 @@ import boto3
 from botocore.exceptions import ClientError
 
 
+def release_application(client):
+    application = os.environ.get("APPLICATION_ID")
+    if not application:
+        return {"state": "released"}
+    try:
+        current = client.get_application(Identifier=application)
+        if current["Status"] != "DELETING":
+            client.delete_application(Identifier=application)
+        return {"state": "application_deletion_pending"}
+    except ClientError as exc:
+        if exc.response["Error"]["Code"] == "ResourceNotFoundException":
+            return {"state": "released", "application_id": application}
+        raise
+
+
 def handler(event, context):
     deadline = datetime.fromisoformat(os.environ["DEADLINE_UTC"])
     if datetime.now(UTC) < deadline:
@@ -21,5 +36,5 @@ def handler(event, context):
         return {"state": "deletion_pending", "status": current["Status"]}
     except ClientError as exc:
         if exc.response["Error"]["Code"] == "ResourceNotFoundException":
-            return {"state": "released", "group_id": group}
+            return {**release_application(client), "group_id": group}
         raise
