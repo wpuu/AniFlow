@@ -12,4 +12,6 @@
 
 19:46终态核验三栈、IAM角色/Profile、Lambda、EventBridge、日志、安全组、SSM文档及S3桶均不存在，实验实例/卷/ENI/EIP为0。[清理证据](2026-10-27-l40s-d-cleanup.json)。19:47官方CLI退出并确认本轮缓存0，未改全局AWS配置及浏览器登录。[退出证据](2026-10-27-l40s-d-auth-cleanup.json)。
 
+补查Ohio的Spot G/VT与按需P配额，控制台列表行应用值、默认值、利用率均为0。[Ohio补查证据](2026-10-27-ohio-spot-p-quotas.json)。此结论仅限Ohio，不外推其他区域；未启动Spot/P，也未为补查重新建立CLI登录。当前已核实的按需路径仍需等待Ohio容量恢复，没有可承诺10月30日前开机成功的证据。
+
 Ego和AWS由显式指定的gpt-6-luna/high代理单独操作，主负责人仅本地审阅与Git记录。本轮未启动模型下载、模型部署或视频生成；G盘未完成文件及D盘原H3归档、两个ZIP保持原样。PR #7保留Draft，main未合并。

@@ -1,0 +1,23 @@
+{
+  "observed_at_utc": "2026-10-27T11:51:31Z",
+  "source": "AWS Service Quotas console, EC2 quota list, Ohio (us-east-2)",
+  "read_only": true,
+  "resource_created": false,
+  "quotas": [
+    {
+      "name": "All G and VT Spot Instance Requests",
+      "quota_code": "L-3819A6DF",
+      "applied_account_quota": 0,
+      "aws_default_quota": 0,
+      "utilization": 0
+    },
+    {
+      "name": "Running On-Demand P instances",
+      "quota_code": "L-417A185B",
+      "applied_account_quota": 0,
+      "aws_default_quota": 0,
+      "utilization": 0
+    }
+  ],
+  "capacity_verified": false
+}
