@@ -45,6 +45,10 @@ GAMELIFT_CHECKS = ("credit_gamelift_eligible", "credit_expiry_confirmed", "tokyo
                   "gpu_stop_safeguard", "independent_stop_safeguard",
                   "account_plan_unchanged", "runtime_cuda_verified")
 WAN_PROVIDER = "wan2.2-i2v-a14b"
+WAN_HARDWARE = {
+    "g7e.2xlarge": {"gpu": "NVIDIA RTX PRO Server 6000", "vram_gib": 96, "ram_gib": 64},
+    "g6e.2xlarge": {"gpu": "NVIDIA L40S", "vram_gib": 45776 / 1024, "ram_gib": 64},
+}
 WAN_CHECKS = ("credit_ec2_eligible", "credit_expiry_confirmed", "ohio_gpu_quota",
               "ohio_capacity_and_price", "ssm_private_connectivity", "wan_license_verified",
               "gpu_stop_safeguard", "independent_stop_safeguard", "account_plan_unchanged",
@@ -90,7 +94,7 @@ class RealConfig:
             service = gate.get("service", "ec2")
             wan = gate.get("provider") == WAN_PROVIDER
             if wan:
-                resource_valid = (service == "ec2" and gate.get("instance_type") == "g7e.2xlarge"
+                resource_valid = (service == "ec2" and gate.get("instance_type") in WAN_HARDWARE
                                   and bundle.get("provider") == WAN_PROVIDER and not self.s3_bucket
                                   and type(gate.get("cash_cap_usd")) in (int, float)
                                   and 0 <= gate["cash_cap_usd"] <= 1
@@ -159,7 +163,7 @@ class RealConfig:
             workspaces = audit.get("service") == "workspaces"
             wan = audit.get("provider") == WAN_PROVIDER
             required = WAN_CHECKS if wan else WORKSPACES_CHECKS if workspaces else GAMELIFT_CHECKS
-            target = ((audit.get("service") == "ec2" and audit.get("instance_type") == "g7e.2xlarge"
+            target = ((audit.get("service") == "ec2" and audit.get("instance_type") in WAN_HARDWARE
                        and not self.s3_bucket) if wan else
                       audit.get("instance_type") in WORKSPACES_RAM_GIB if workspaces else
                       audit.get("service") == "gameliftstreams" and audit.get("instance_type") == "gen6n_pro")
@@ -341,14 +345,16 @@ def create_real_app(config: RealConfig | None = None,
 
         checks = WAN_CHECKS if wan else GAMELIFT_CHECKS if gamelift else (WORKSPACES_CHECKS if workspaces else CHECKS)
         instance_type = (audit.get("instance_type", "Graphics.g6.4xlarge") if workspaces else
-                         "gen6n_pro" if gamelift else "g7e.2xlarge" if wan else "g6e.2xlarge")
+                         "gen6n_pro" if gamelift else audit["instance_type"] if wan else "g6e.2xlarge")
+        wan_hardware = WAN_HARDWARE[instance_type] if wan else {}
         return {"mode": "LOCAL_AUDIT_PROJECTION", "service": service,
                 "region": "us-east-2" if wan else "ap-northeast-1",
                 "provider": WAN_PROVIDER if wan else "minimax-h3",
                 "instance_type": instance_type,
-                "expected_gpu": "NVIDIA RTX PRO Server 6000" if wan else "NVIDIA L4" if workspaces or gamelift else None,
-                "expected_gpu_vram_gib": 96 if wan else 24 if workspaces or gamelift else None,
-                "expected_ram_gib": WORKSPACES_RAM_GIB[instance_type] if workspaces else 64 if gamelift or wan else None,
+                "expected_gpu": wan_hardware["gpu"] if wan else "NVIDIA L4" if workspaces or gamelift else None,
+                "expected_gpu_vram_gib": wan_hardware["vram_gib"] if wan else 24 if workspaces or gamelift else None,
+                "expected_ram_gib": (wan_hardware["ram_gib"] if wan else
+                                     WORKSPACES_RAM_GIB[instance_type] if workspaces else 64 if gamelift else None),
                 "account_plan": audit.get("account_plan") if isinstance(audit.get("account_plan"), str)
                                 and audit["account_plan"] else "unknown",
                 "estimated_credit_remaining_usd": number("estimated_credit_remaining_usd"),

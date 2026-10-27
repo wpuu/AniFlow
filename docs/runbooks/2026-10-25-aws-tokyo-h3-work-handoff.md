@@ -1,5 +1,7 @@
 # AniFlow AWS东京H3｜Work模式执行交接｜2026-10-25
 
+> **2026-10-27 15:44当前：用户已同意L40S，并要求先开出实例再处理模型。g6e.2xlarge本轮4次真实请求（自动、2a、2b、2c）均InsufficientInstanceCapacity，另外2次截止拦截未提交；GPU/预检/模型部署/视频均0。三个L40S实验栈已删除并逐项核查全无残留，CLI已logout/缓存0。** [L40S实际进度](../reviews/2026-10-27-l40s-admission-status.md)、[真实请求](../reviews/2026-10-27-l40s-admission-result.json)、[清理证据](../reviews/2026-10-27-l40s-cleanup-verification.json)。七个其他常用区域G/VT额度实读均0，Ohio仍8核；不提额、不升级、不联系客服。下一阶段先以真实实例ID及Running为门槛，再部署模型；已准备的本地白名单不是实云成功。下面记录均为历史。
+
 > **14:01收尾补充：官方临时CLI已logout、缓存0，浏览器登录未退出；G盘11.14/68.78GB、校验0份，后台下载继续。L40S候选待用户明确选择，未改机型。** [认证退出证据](../reviews/2026-10-27-wan-ohio-auth-cleanup-after-capacity.json)。
 
 > **2026-10-27 13:58当前：g7e.2xlarge三个Ohio可用区＋自动选择共4次真实准入均InsufficientInstanceCapacity；配额仍8核，不是额度0。实际GPU/预检/视频均0。主已取消备用，删除3个实验栈并逐项核查IAM、Lambda、规则、日志、SSM、安全组、S3及实例/卷/ENI/EIP均不存在。G盘权重继续下载、完整校验尚未完成。** [实际准入](../reviews/2026-10-27-wan-ohio-capacity-result.json)、[清理证据](../reviews/2026-10-27-wan-ohio-cleanup-verification.json)、[当前报告](../reviews/2026-10-27-wan-ohio-preparation.md)。同FP16/同规格的g6e L40S方案仅已分析，未改机型或创建，等用户明确选择：[备选方案](../reviews/2026-10-27-wan-l40s-proposal.md)。下方记录为历史，不可把已删除的保护当作仍部署。

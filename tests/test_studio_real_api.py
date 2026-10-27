@@ -497,7 +497,7 @@ def test_blocked_gr6_snapshot_never_borrows_an_unrelated_local_gpu(tmp_path):
     assert not health["ready"] and not health["gpu_connected"]
 
 
-def wan_config(tmp_path):
+def wan_config(tmp_path, instance_type="g7e.2xlarge"):
     cfg = config(tmp_path)
     bundle = json.loads(cfg.workflow_path.read_text())
     bundle["provider"] = WAN_PROVIDER
@@ -506,7 +506,7 @@ def wan_config(tmp_path):
     cfg.workflow_path.write_text(json.dumps(bundle))
     gate = json.loads(cfg.gate_path.read_text())
     gate.update(service="ec2", region="us-east-2", provider=WAN_PROVIDER,
-                instance_type="g7e.2xlarge", cash_cap_usd=1, credit_budget_usd=20,
+                instance_type=instance_type, cash_cap_usd=1, credit_budget_usd=20,
                 checks=dict.fromkeys(WAN_CHECKS, True))
     gate.pop("experiment_budget_usd")
     cfg.gate_path.write_text(json.dumps(gate))
@@ -514,8 +514,13 @@ def wan_config(tmp_path):
     return cfg
 
 
-def test_wan_identity_is_separate_and_repeated_submission_posts_once(tmp_path):
-    upstream, cfg = LocalComfyContract(), wan_config(tmp_path)
+@pytest.mark.parametrize(("instance_type", "gpu", "vram_gib"), [
+    ("g7e.2xlarge", "NVIDIA RTX PRO Server 6000", 96),
+    ("g6e.2xlarge", "NVIDIA L40S", 44.703125)])
+def test_wan_identity_is_separate_and_repeated_submission_posts_once(
+        tmp_path, instance_type, gpu, vram_gib):
+    upstream, cfg = LocalComfyContract(), wan_config(tmp_path, instance_type)
+    upstream.devices = [{"type": "cuda", "name": gpu, "vram_total": int(vram_gib * 1024**3)}]
     upstream.lost_response, upstream.visible = True, False
     with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
         health = client.get("/api/studio/real/health").json()
@@ -523,9 +528,9 @@ def test_wan_identity_is_separate_and_repeated_submission_posts_once(tmp_path):
         assert health["mode"] == "REAL_WAN" and health["provider"] == WAN_PROVIDER
         assert health["ready"] is True and health["simulation"] is False
         assert projection["provider"] == WAN_PROVIDER and projection["service"] == "ec2"
-        assert projection["region"] == "us-east-2" and projection["instance_type"] == "g7e.2xlarge"
-        assert projection["expected_ram_gib"] == 64 and projection["expected_gpu_vram_gib"] == 96
-        assert projection["expected_gpu"] == "NVIDIA RTX PRO Server 6000"
+        assert projection["region"] == "us-east-2" and projection["instance_type"] == instance_type
+        assert projection["expected_ram_gib"] == 64 and projection["expected_gpu_vram_gib"] == vram_gib
+        assert projection["expected_gpu"] == gpu
         assert projection["checks"] == dict.fromkeys(WAN_CHECKS, True)
         assert projection["aws_queries"] == 0 and projection["aws_writes"] == 0
         p = {**payload(client), "provider": WAN_PROVIDER, "negative_prompt": "Avoid synthetic blur"}
@@ -541,17 +546,19 @@ def test_wan_identity_is_separate_and_repeated_submission_posts_once(tmp_path):
     assert upstream.posts == 1
 
 
+@pytest.mark.parametrize("instance_type", ["g7e.2xlarge", "g6e.2xlarge"])
 @pytest.mark.parametrize(("field", "value"), [
     ("service", "workspaces"), ("service", "gameliftstreams"),
     ("region", "ap-northeast-1"), ("region", "us-east-1"),
-    ("instance_type", "g6e.2xlarge"), ("provider", "minimax-h3"), ("provider", "unknown"),
+    ("instance_type", "g6e.xlarge"), ("instance_type", "g6e.4xlarge"),
+    ("provider", "minimax-h3"), ("provider", "unknown"),
     ("cash_cap_usd", 1.01), ("cash_cap_usd", True), ("credit_budget_usd", 20.01),
     ("credit_budget_usd", False), ("max_runtime_seconds", 14401),
     ("max_runtime_seconds", True), ("snapshot_only", True),
     ("expires_at_unix", 0), ("expires_at_unix", time.time() + 15000),
     ("workflow_sha256", "0" * 64)])
-def test_wan_gate_mismatches_cannot_submit(tmp_path, field, value):
-    cfg, upstream = wan_config(tmp_path), LocalComfyContract()
+def test_wan_gate_mismatches_cannot_submit(tmp_path, instance_type, field, value):
+    cfg, upstream = wan_config(tmp_path, instance_type), LocalComfyContract()
     gate = json.loads(cfg.gate_path.read_text())
     gate[field] = value
     cfg.gate_path.write_text(json.dumps(gate))
@@ -561,9 +568,10 @@ def test_wan_gate_mismatches_cannot_submit(tmp_path, field, value):
     assert upstream.posts == 0 and upstream.uploads == 0
 
 
+@pytest.mark.parametrize("instance_type", ["g7e.2xlarge", "g6e.2xlarge"])
 @pytest.mark.parametrize("check", WAN_CHECKS)
-def test_wan_requires_every_separate_audit_check(tmp_path, check):
-    cfg = wan_config(tmp_path)
+def test_wan_requires_every_separate_audit_check(tmp_path, instance_type, check):
+    cfg = wan_config(tmp_path, instance_type)
     gate = json.loads(cfg.gate_path.read_text())
     gate["checks"].update(dict.fromkeys(CHECKS, True))
     gate["checks"].pop(check)
@@ -571,10 +579,11 @@ def test_wan_requires_every_separate_audit_check(tmp_path, check):
     assert cfg.audited_workflow()[0]
 
 
+@pytest.mark.parametrize("instance_type", ["g7e.2xlarge", "g6e.2xlarge"])
 @pytest.mark.parametrize("preset", [None, {"preset": "h3_native_5s_portrait_v1"},
                                     {"preset": "wan_native_5s_portrait_v1", "fps": 16}])
-def test_wan_cannot_borrow_h3_or_unverified_postprocess(tmp_path, preset):
-    cfg = wan_config(tmp_path)
+def test_wan_cannot_borrow_h3_or_unverified_postprocess(tmp_path, instance_type, preset):
+    cfg = wan_config(tmp_path, instance_type)
     add_postprocess(cfg, preset)
     assert cfg.audited_workflow()[0]
 
@@ -608,8 +617,12 @@ def test_optional_negative_binding_must_point_to_an_existing_input(tmp_path):
     assert not cfg.audited_workflow()[0]
 
 
-def test_wan_blocked_snapshot_cannot_use_a_local_gpu_or_claim_h3(tmp_path):
-    cfg, upstream = wan_config(tmp_path), LocalComfyContract()
+@pytest.mark.parametrize(("instance_type", "gpu", "vram_gib"), [
+    ("g7e.2xlarge", "NVIDIA RTX PRO Server 6000", 96),
+    ("g6e.2xlarge", "NVIDIA L40S", 44.703125)])
+def test_wan_blocked_snapshot_cannot_use_a_local_gpu_or_claim_h3(
+        tmp_path, instance_type, gpu, vram_gib):
+    cfg, upstream = wan_config(tmp_path, instance_type), LocalComfyContract()
     gate = json.loads(cfg.gate_path.read_text())
     gate.update(snapshot_only=True, launch_allowed=False)
     gate["checks"]["ssm_private_connectivity"] = None
@@ -619,7 +632,9 @@ def test_wan_blocked_snapshot_cannot_use_a_local_gpu_or_claim_h3(tmp_path):
         projection = client.get("/api/studio/cloud/preflight").json()
         assert health["mode"] == "REAL_WAN" and health["provider"] == WAN_PROVIDER
         assert not health["ready"] and not health["gpu_connected"]
-        assert projection["region"] == "us-east-2" and projection["instance_type"] == "g7e.2xlarge"
+        assert projection["region"] == "us-east-2" and projection["instance_type"] == instance_type
+        assert projection["expected_gpu"] == gpu and projection["expected_gpu_vram_gib"] == vram_gib
+        assert projection["expected_ram_gib"] == 64
         assert projection["checks"]["ssm_private_connectivity"] is None
         assert not projection["launch_allowed"] and not projection["real_gpu_connected"]
         assert "ComfyUI loopback tunnel is unavailable" in projection["blocked_reasons"]
@@ -628,7 +643,7 @@ def test_wan_blocked_snapshot_cannot_use_a_local_gpu_or_claim_h3(tmp_path):
 
 
 @pytest.mark.parametrize(("field", "value"), [("region", "ap-northeast-1"),
-                                             ("instance_type", "g6e.2xlarge"),
+                                             ("instance_type", "g6e.4xlarge"),
                                              ("provider", "unknown")])
 def test_invalid_wan_snapshot_still_never_queries_an_unrelated_gpu(tmp_path, field, value):
     cfg = wan_config(tmp_path)
@@ -645,8 +660,9 @@ def test_invalid_wan_snapshot_still_never_queries_an_unrelated_gpu(tmp_path, fie
         assert not health["ready"] and not health["gpu_connected"]
 
 
-def test_wan_121_frame_source_is_not_accepted_as_h3_and_final_is_strict(tmp_path):
-    upstream, cfg = LocalComfyContract(), wan_config(tmp_path)
+@pytest.mark.parametrize("instance_type", ["g7e.2xlarge", "g6e.2xlarge"])
+def test_wan_121_frame_source_is_not_accepted_as_h3_and_final_is_strict(tmp_path, instance_type):
+    upstream, cfg = LocalComfyContract(), wan_config(tmp_path, instance_type)
     source = tmp_path / "LOCAL_SYNTHETIC_NOT_WAN.mp4"
     subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "color=c=blue:s=800x1376:r=24",
                     "-frames:v", "121", "-c:v", "libx264", "-preset", "ultrafast", str(source)],
