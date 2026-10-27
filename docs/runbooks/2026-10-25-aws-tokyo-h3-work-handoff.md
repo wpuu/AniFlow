@@ -1,5 +1,7 @@
 # AniFlow AWS东京H3｜Work模式执行交接｜2026-10-25
 
+> **14:01收尾补充：官方临时CLI已logout、缓存0，浏览器登录未退出；G盘11.14/68.78GB、校验0份，后台下载继续。L40S候选待用户明确选择，未改机型。** [认证退出证据](../reviews/2026-10-27-wan-ohio-auth-cleanup-after-capacity.json)。
+
 > **2026-10-27 13:58当前：g7e.2xlarge三个Ohio可用区＋自动选择共4次真实准入均InsufficientInstanceCapacity；配额仍8核，不是额度0。实际GPU/预检/视频均0。主已取消备用，删除3个实验栈并逐项核查IAM、Lambda、规则、日志、SSM、安全组、S3及实例/卷/ENI/EIP均不存在。G盘权重继续下载、完整校验尚未完成。** [实际准入](../reviews/2026-10-27-wan-ohio-capacity-result.json)、[清理证据](../reviews/2026-10-27-wan-ohio-cleanup-verification.json)、[当前报告](../reviews/2026-10-27-wan-ohio-preparation.md)。同FP16/同规格的g6e L40S方案仅已分析，未改机型或创建，等用户明确选择：[备选方案](../reviews/2026-10-27-wan-l40s-proposal.md)。下方记录为历史，不可把已删除的保护当作仍部署。
 
 > **2026-10-27 13:36恢复：用户已确认AWS登录及G盘Wan归档。五笔赠金完整服务范围全部核实，估算余额45.84美元；Ohio配额8核、实例0、免费官方DLAMI/网络已实读。主/备用及私有资产三个栈已部署，实际无目标执行和IAM正反例通过；正在确认未来固定截止的备用真实等待，GPU仍未创建、视频0。G盘权重下载进行中、0份完整校验；本地Linux导出及每次开机固定关机已新增并测试。** [当前进展](../reviews/2026-10-27-wan-ohio-preparation.md)、[脱敏证据](../reviews/2026-10-27-wan-ohio-resumed-checkpoint.json)、[完整预算](../reviews/2026-10-27-wan-ohio-budget.json)。原D盘H3及两个ZIP保留。下面12:49及更早记录仅供历史追溯。主负责人唯一操作AWS，不延长运行中截止；未知创建先按请求键核对。Singapore更新连接超时已核对旧实际参数，再用原截止与原请求键补交。
