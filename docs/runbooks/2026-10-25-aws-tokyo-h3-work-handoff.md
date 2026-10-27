@@ -1,5 +1,7 @@
 # AniFlow AWS东京H3｜Work模式执行交接｜2026-10-25
 
+> **剩余方案核查补充：** 本地重新检查同日05:15Z保存的五笔完整可抵扣服务原文，全部明确含Amazon SageMaker、Amazon Bedrock及AmazonBedrockFoundationModels；不是此次重新读取控制台，也不代表模型调用、GPU配额或所有产品费用已获准。[历史清单脱敏证据及原文哈希](../reviews/2026-10-27-sagemaker-credit-scope.json)。SageMaker为独立配额候选，官方已确认[Studio支持G7e](https://aws.amazon.com/about-aws/whats-new/2026/02/g7e-new-launch-sagemaker-studio-notebooks/)及[Notebook支持G6e](https://aws.amazon.com/about-aws/whats-new/2026/03/g6e-new-launch-sagemaker-notebook-instances/)；[10月15日公告](https://aws.amazon.com/about-aws/whats-new/2026/10/sagemaker-studio-new-sign-in-options/)描述验证客户默认GPU访问，但不能据此断言本账户已适用。Luna只读查询Ohio实际配额时页面导航及frame读取超时，按时限停止，当前值为unknown、不是0。[未读到的准确记录](../reviews/2026-10-27-sagemaker-quota-unknown.json)。本轮未创建SageMaker/其他资源、未下载模型；其他区域Spot/P尚未补查，不能将Ohio的0外推。
+
 > **19:51只读补查：** Ohio的G/VT Spot及按需P配额均为0，[证据](../reviews/2026-10-27-ohio-spot-p-quotas.json)。该结论不外推其他区域；没有新增创建或重新建立CLI连接。当前已核实按需路径需等待Ohio容量恢复，未承诺到期前可用。模型下载继续暂停。
 
 > **2026-10-27 19:47本轮最终：** 全20个启用区域G/VT按需配额仅Ohio8、其余19区0；本轮新L40S实验d在双保护实际验证/备用实际等待后，auto+2a/2b/2c四次真实请求全部容量不足，无实例ID。所有实验资源终态已核实不存在，官方CLI退出/缓存0；GPU/机上预检/模型部署/视频均0，模型下载保持暂停。[本轮实际结果与完整证据](../reviews/2026-10-27-l40s-d-instance-result.md)。下方“正在部署/登录/创建”均为历史，不得当作当前状态。
