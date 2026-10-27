@@ -1,0 +1,97 @@
+{
+  "observed_at_utc": "2026-10-27T05:59:07.994312+00:00",
+  "quota_applied_vcpus": 8,
+  "quota_increased": false,
+  "account_plan_changed": false,
+  "aws_support_contacted": false,
+  "attempts": [
+    {
+      "attempt": 1,
+      "region": "us-east-2",
+      "zone": "us-east-2a",
+      "instance_type": "g7e.2xlarge",
+      "submitted_at_utc": "2026-10-27T05:39:34.339445+00:00",
+      "error_code": "InsufficientInstanceCapacity",
+      "message": null,
+      "request_count": 1,
+      "client_token_preserved_privately": true,
+      "no_blind_resubmission_on_unknown_result": true
+    },
+    {
+      "attempt": 2,
+      "region": "us-east-2",
+      "zone": "us-east-2b",
+      "instance_type": "g7e.2xlarge",
+      "submitted_at_utc": "2026-10-27T05:45:36.162244+00:00",
+      "error_code": "InsufficientInstanceCapacity",
+      "message": "We currently do not have sufficient g7e.2xlarge capacity in the Availability Zone you requested (us-east-2b). Our system will be working on provisioning additional capacity. You can currently get g7e.2xlarge capacity by not specifying an Availability Zone in your request or choosing us-east-2a, us-east-2c.",
+      "request_count": 1,
+      "client_token_preserved_privately": true,
+      "no_blind_resubmission_on_unknown_result": true
+    },
+    {
+      "attempt": 3,
+      "region": "us-east-2",
+      "zone": "us-east-2c",
+      "instance_type": "g7e.2xlarge",
+      "submitted_at_utc": "2026-10-27T05:46:44.003338+00:00",
+      "error_code": "InsufficientInstanceCapacity",
+      "message": "We currently do not have sufficient g7e.2xlarge capacity in the Availability Zone you requested (us-east-2c). Our system will be working on provisioning additional capacity. You can currently get g7e.2xlarge capacity by not specifying an Availability Zone in your request or choosing us-east-2a, us-east-2b.",
+      "request_count": 1,
+      "client_token_preserved_privately": true,
+      "no_blind_resubmission_on_unknown_result": true
+    },
+    {
+      "attempt": 4,
+      "region": "us-east-2",
+      "zone": "auto",
+      "instance_type": "g7e.2xlarge",
+      "submitted_at_utc": "2026-10-27T05:48:28.282487+00:00",
+      "error_code": "InsufficientInstanceCapacity",
+      "message": "Insufficient capacity.",
+      "request_count": 1,
+      "client_token_preserved_privately": true,
+      "no_blind_resubmission_on_unknown_result": true
+    }
+  ],
+  "created_gpu_count": 0,
+  "real_gpu_preflight_count": 0,
+  "real_video_count": 0,
+  "ec2_compute_duration_observed_seconds": 0,
+  "actual_total_auxiliary_cost_usd": null,
+  "actual_net_cash_invoice_usd": null,
+  "billing_delay_note": "Final service charges and credits are not yet invoiced",
+  "cleanup_verified": true,
+  "quality_fallback_performed": false,
+  "cpu_inference_performed": false,
+  "current_archive": {
+    "state": "DOWNLOADING",
+    "expected_total_bytes": 68776044287,
+    "downloaded_bytes": 10689301839,
+    "verified_files": 0,
+    "observed_at_utc": "2026-10-27T05:59:03.140503+00:00"
+  },
+  "local_bridge": {
+    "identity": "REAL_WAN",
+    "provider": "wan2.2-i2v-a14b",
+    "ready": false,
+    "launch_allowed": false,
+    "gpu_connected": false,
+    "aws_queries": 0,
+    "aws_writes": 0,
+    "actual_http_rechecked": true
+  },
+  "browser_validation": {
+    "actual_local_real_view_opened": true,
+    "model_identity": "Wan2.2 I2V A14B",
+    "generate_button_disabled": true,
+    "queue_count": 0,
+    "new_requests_submitted": 0,
+    "screenshot": "2026-10-27-wan-ohio-real-blocked-ui.png"
+  },
+  "next_candidate_only": "g6e.2xlarge FP16 GPU inference with CPU weight residency; awaiting explicit owner decision",
+  "sources": [
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/troubleshooting-launch.html",
+    "https://docs.aws.amazon.com/cli/latest/reference/ec2/run-instances.html"
+  ]
+}
