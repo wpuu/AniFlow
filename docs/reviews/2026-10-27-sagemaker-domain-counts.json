@@ -1,0 +1,16 @@
+{
+  "captured_at_utc": "2026-10-27T14:34:31.017253+00:00",
+  "read_only": true,
+  "source": "SageMaker ListDomains",
+  "regions": {
+    "ap-northeast-1": {
+      "status": "complete",
+      "domain_count": 0
+    },
+    "us-east-2": {
+      "status": "complete",
+      "domain_count": 0
+    }
+  },
+  "completed_at_utc": "2026-10-27T14:34:38.037611+00:00"
+}

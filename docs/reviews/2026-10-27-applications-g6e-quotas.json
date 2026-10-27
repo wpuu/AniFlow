@@ -1,0 +1,62 @@
+{
+  "read_only": true,
+  "source": "Ego browser, existing signed-in session, Service Quotas UI",
+  "service": "Amazon WorkSpaces Applications",
+  "service_quota_route": "appstream2",
+  "regions": {
+    "ap-northeast-1": {
+      "session_valid": true,
+      "g6e_search_rows": 16,
+      "g6e_quota_groups": [
+        "Accelerated.g6e.xlarge streaming instances for fleets",
+        "Accelerated.g6e.xlarge streaming instances for image builders",
+        "Accelerated.g6e.2xlarge streaming instances for fleets",
+        "Accelerated.g6e.2xlarge streaming instances for image builders",
+        "Accelerated.g6e.4xlarge streaming instances for fleets",
+        "Accelerated.g6e.4xlarge streaming instances for image builders",
+        "Accelerated.g6e.8xlarge streaming instances for fleets",
+        "Accelerated.g6e.8xlarge streaming instances for image builders",
+        "Accelerated.g6e.12xlarge streaming instances for fleets",
+        "Accelerated.g6e.12xlarge streaming instances for image builders",
+        "Accelerated.g6e.16xlarge streaming instances for fleets",
+        "Accelerated.g6e.16xlarge streaming instances for image builders",
+        "Accelerated.g6e.24xlarge streaming instances for fleets",
+        "Accelerated.g6e.24xlarge streaming instances for image builders",
+        "Accelerated.g6e.48xlarge streaming instances for fleets",
+        "Accelerated.g6e.48xlarge streaming instances for image builders"
+      ],
+      "g6e_applied_account_quota_value": 0,
+      "g6e_aws_default_quota_value": 0,
+      "graphics_search_visible_rows_checked": 25,
+      "graphics_visible_rows_applied_and_default_values": 0,
+      "graphics_search_exhaustive": false
+    },
+    "us-east-2": {
+      "session_valid": true,
+      "g6e_search_rows": 16,
+      "g6e_quota_groups": [
+        "Accelerated.g6e.xlarge streaming instances for fleets",
+        "Accelerated.g6e.xlarge streaming instances for image builders",
+        "Accelerated.g6e.2xlarge streaming instances for fleets",
+        "Accelerated.g6e.2xlarge streaming instances for image builders",
+        "Accelerated.g6e.4xlarge streaming instances for fleets",
+        "Accelerated.g6e.4xlarge streaming instances for image builders",
+        "Accelerated.g6e.8xlarge streaming instances for fleets",
+        "Accelerated.g6e.8xlarge streaming instances for image builders",
+        "Accelerated.g6e.12xlarge streaming instances for fleets",
+        "Accelerated.g6e.12xlarge streaming instances for image builders",
+        "Accelerated.g6e.16xlarge streaming instances for fleets",
+        "Accelerated.g6e.16xlarge streaming instances for image builders",
+        "Accelerated.g6e.24xlarge streaming instances for fleets",
+        "Accelerated.g6e.24xlarge streaming instances for image builders",
+        "Accelerated.g6e.48xlarge streaming instances for fleets",
+        "Accelerated.g6e.48xlarge streaming instances for image builders"
+      ],
+      "g6e_applied_account_quota_value": 0,
+      "g6e_aws_default_quota_value": 0,
+      "graphics_search": "not checked"
+    }
+  },
+  "scope_note": "Ohio was reached by a previously committed navigation on the existing agent-owned tab; no further navigation, login, CLI or API calls were made.",
+  "cloud_resource_mutations": 0
+}
