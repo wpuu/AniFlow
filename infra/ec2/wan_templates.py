@@ -56,12 +56,11 @@ def templates():
             "Resource": {"Fn::GetAtt": ["Logs", "Arn"]}}]}})
     steps = [{"name": "WaitUntilCleanup", "action": "aws:sleep",
               "inputs": {"Timestamp": {"Ref": "CleanupUtc"}}}]
-    for index in range(3):
-        steps.append({"name": f"IndependentCleanup{index + 1}", "action": "aws:executeScript",
-            "timeoutSeconds": 600, **({"onFailure": "Continue"} if index < 2 else {"isEnd": True}),
-            "inputs": {"Runtime": "python3.11", "Handler": "backup", "Script": source,
-                "InputPayload": {"ExperimentId": {"Ref": "ExperimentId"},
-                                 "CleanupUtc": {"Ref": "CleanupUtc"}}}})
+    steps.append({"name": "IndependentCleanup", "action": "aws:executeScript",
+        "timeoutSeconds": 600, "maxAttempts": 3, "isEnd": True,
+        "inputs": {"Runtime": "python3.11", "Handler": "backup", "Script": source,
+            "InputPayload": {"ExperimentId": {"Ref": "ExperimentId"},
+                             "CleanupUtc": {"Ref": "CleanupUtc"}}}})
     backup = {"AWSTemplateFormatVersion": "2010-09-09",
         "Description": "Independent fixed-deadline Ohio EC2 termination; no primary Lambda dependency.",
         "Rules": region_rule("ap-southeast-1"),

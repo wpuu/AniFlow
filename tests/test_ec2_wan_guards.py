@@ -150,6 +150,8 @@ def test_primary_and_backup_have_independent_services_and_fixed_deadlines():
     steps = backup["Resources"]["Document"]["Properties"]["Content"]["mainSteps"]
     assert steps[0] == {"name": "WaitUntilCleanup", "action": "aws:sleep",
                         "inputs": {"Timestamp": {"Ref": "CleanupUtc"}}}
-    assert len(steps[1:]) == 3
+    assert len(steps[1:]) == 1
+    assert steps[1]["maxAttempts"] == 3 and steps[1]["isEnd"] is True
+    assert "onFailure" not in steps[1]
     assert all(s["action"] == "aws:executeScript" and s["timeoutSeconds"] == 600 for s in steps[1:])
     assert all("time.monotonic() + 540" in s["inputs"]["Script"] for s in steps[1:])

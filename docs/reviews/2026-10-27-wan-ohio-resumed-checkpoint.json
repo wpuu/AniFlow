@@ -1,0 +1,275 @@
+{
+  "observed_at_utc": "2026-10-27T05:36:03.488930+00:00",
+  "owner_confirmed_aws_login": true,
+  "owner_confirmed_archive_drive": "G",
+  "gpu_created": false,
+  "real_video_count": 0,
+  "original_archives_unchanged": true,
+  "credit_summary": {
+    "observed_at_utc": "2026-10-27T05:15:58.787Z",
+    "estimated_remaining_usd": 45.84,
+    "expiry_date": "2026-10-30",
+    "exact_expiry_time_confirmed": false,
+    "estimated_balance_update_hours": 24
+  },
+  "all_credit_service_lists": {
+    "observed_at_utc": "2026-10-27T05:15:58.790Z",
+    "all_credit_lists_rechecked": true,
+    "credits": [
+      {
+        "credit_index": 0,
+        "products": {
+          "ec2": true,
+          "ssm": true,
+          "lambda": true,
+          "events": true,
+          "cloudwatch": true,
+          "kms": true,
+          "s3": true,
+          "transfer": true,
+          "vpc": true
+        }
+      },
+      {
+        "credit_index": 1,
+        "products": {
+          "ec2": true,
+          "ssm": true,
+          "lambda": true,
+          "events": true,
+          "cloudwatch": true,
+          "kms": true,
+          "s3": true,
+          "transfer": true,
+          "vpc": true
+        }
+      },
+      {
+        "credit_index": 2,
+        "products": {
+          "ec2": true,
+          "ssm": true,
+          "lambda": true,
+          "events": true,
+          "cloudwatch": true,
+          "kms": true,
+          "s3": true,
+          "transfer": true,
+          "vpc": true
+        }
+      },
+      {
+        "credit_index": 3,
+        "products": {
+          "ec2": true,
+          "ssm": true,
+          "lambda": true,
+          "events": true,
+          "cloudwatch": true,
+          "kms": true,
+          "s3": true,
+          "transfer": true,
+          "vpc": true
+        }
+      },
+      {
+        "credit_index": 4,
+        "products": {
+          "ec2": true,
+          "ssm": true,
+          "lambda": true,
+          "events": true,
+          "cloudwatch": true,
+          "kms": true,
+          "s3": true,
+          "transfer": true,
+          "vpc": true
+        }
+      }
+    ]
+  },
+  "eligibility": {
+    "observed_at_utc": "2026-10-27T05:18:47.326734+00:00",
+    "quota": {
+      "QuotaCode": "L-DB2E81BA",
+      "QuotaName": "Running On-Demand G and VT instances",
+      "Value": 8.0,
+      "GlobalQuota": false
+    },
+    "inventory": {
+      "nonterminated_instances_count": 0,
+      "states": [],
+      "running_or_pending_g_vt_vcpus": 0
+    },
+    "account": {
+      "accountPlanType": "PAID",
+      "accountPlanStatus": "ACTIVE",
+      "accountPlanRemainingCredits": {
+        "amount": 45.84,
+        "unit": "USD"
+      }
+    },
+    "price": [
+      {
+        "sku": "84MJTJ2X73HAYM9Q",
+        "effective_date": "2026-10-01T00:00:00Z",
+        "unit": "Hrs",
+        "usd": "3.3631200000",
+        "description": "$3.36312 per On Demand Linux g7e.2xlarge Instance Hour"
+      }
+    ],
+    "gp3_price": [
+      {
+        "sku": "M6UGCCQ3CDJQAA37",
+        "unit": "GB-Mo",
+        "usd": "0.0800000000",
+        "description": "$0.08 per GB-month of General Purpose (gp3) provisioned storage - US East (Ohio)"
+      }
+    ],
+    "image": {
+      "parameter_source": "/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.11-ubuntu-24.04/latest/ami-id",
+      "amazon_owner_verified": true,
+      "ImageId": "ami-0698f85d0713011e7",
+      "Name": "Deep Learning OSS Nvidia Driver AMI GPU PyTorch 2.11 (Ubuntu 24.04) 20261024",
+      "CreationDate": "2026-10-24T15:25:51.000Z",
+      "State": "available",
+      "Architecture": "x86_64",
+      "PlatformDetails": "Linux/UNIX",
+      "UsageOperation": "RunInstances",
+      "RootDeviceName": "/dev/sda1",
+      "BlockDeviceMappings": [
+        {
+          "Ebs": {
+            "DeleteOnTermination": true,
+            "Iops": 3000,
+            "SnapshotId": "snap-02ebc3fece88209f0",
+            "VolumeSize": 30,
+            "VolumeType": "gp3",
+            "Throughput": 125,
+            "Encrypted": false
+          },
+          "DeviceName": "/dev/sda1"
+        },
+        {
+          "DeviceName": "/dev/sdb",
+          "VirtualName": "ephemeral0"
+        },
+        {
+          "DeviceName": "/dev/sdc",
+          "VirtualName": "ephemeral1"
+        }
+      ],
+      "ProductCodes": null
+    }
+  },
+  "network": {
+    "default_vpc_exists": true,
+    "subnet_count": 3,
+    "dns": {
+      "enableDnsSupport": true,
+      "enableDnsHostnames": true
+    },
+    "active_internet_gateway": true
+  },
+  "tax": {
+    "observed_at_utc": "2026-10-27T05:22:32.271Z",
+    "source": "AWS tax settings console",
+    "tax_page": true,
+    "country_code": "CN",
+    "seller": "Amazon Web Services, Inc.",
+    "settings_changed": false,
+    "future_invoice_tax_guaranteed": false
+  },
+  "protection_stacks": {
+    "primary": {
+      "region": "us-east-2",
+      "status": "UPDATE_COMPLETE"
+    },
+    "backup": {
+      "region": "ap-southeast-1",
+      "status": "CREATE_COMPLETE"
+    },
+    "assets": {
+      "region": "us-east-2",
+      "status": "CREATE_COMPLETE"
+    }
+  },
+  "actual_primary_no_target_proof": true,
+  "policy_simulations": {
+    "primary": {
+      "owned": {
+        "ec2:StopInstances": "allowed",
+        "ec2:TerminateInstances": "allowed",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      },
+      "wrong_tag": {
+        "ec2:StopInstances": "implicitDeny",
+        "ec2:TerminateInstances": "implicitDeny",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      },
+      "wrong_region": {
+        "ec2:StopInstances": "implicitDeny",
+        "ec2:TerminateInstances": "implicitDeny",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      }
+    },
+    "backup": {
+      "owned": {
+        "ec2:StopInstances": "allowed",
+        "ec2:TerminateInstances": "allowed",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      },
+      "wrong_tag": {
+        "ec2:StopInstances": "implicitDeny",
+        "ec2:TerminateInstances": "implicitDeny",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      },
+      "wrong_region": {
+        "ec2:StopInstances": "implicitDeny",
+        "ec2:TerminateInstances": "implicitDeny",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      }
+    }
+  },
+  "actual_backup_no_target_proof": {
+    "status": "Success",
+    "steps": [
+      {
+        "name": "WaitUntilCleanup",
+        "status": "Success"
+      },
+      {
+        "name": "IndependentCleanup",
+        "status": "Success"
+      }
+    ]
+  },
+  "real_instance_stop_or_terminate_proven": false,
+  "archive": {
+    "state": "DOWNLOADING",
+    "expected_total_bytes": 68776044287,
+    "downloaded_bytes": 5932961103,
+    "verified_files": 0,
+    "observed_at_utc": "2026-10-27T05:35:58.988189+00:00"
+  },
+  "new_local_validation": {
+    "python_passed": 65,
+    "skipped_windows_symlink_permission": 1,
+    "ruff": "passed",
+    "real_gpu_or_video_evidence": false
+  },
+  "remaining": [
+    "Future-deadline backup actually waiting",
+    "Single EC2 admission",
+    "Real CUDA/SSM/S3 preflight and actual STOPPED",
+    "Owner input image and motion",
+    "Actual model load and one real video",
+    "Complete G archive hashes and cloud cleanup"
+  ]
+}
