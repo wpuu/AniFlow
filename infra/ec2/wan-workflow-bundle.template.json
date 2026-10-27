@@ -1,0 +1,126 @@
+{
+  "provider": "wan2.2-i2v-a14b",
+  "source_url": "https://github.com/Comfy-Org/ComfyUI/blob/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/comfy_extras/nodes_wan.py",
+  "prompt": {
+    "1": {
+      "class_type": "LoadImage",
+      "inputs": {"image": "__REPLACE_WITH_UPLOADED_INPUT_FILENAME__"}
+    },
+    "2": {
+      "class_type": "ImageScale",
+      "inputs": {"image": ["1", 0], "upscale_method": "lanczos", "width": 800, "height": 1376, "crop": "center"}
+    },
+    "3": {
+      "class_type": "UNETLoader",
+      "inputs": {"unet_name": "wan2.2_i2v_high_noise_14B_fp16.safetensors", "weight_dtype": "default"}
+    },
+    "4": {
+      "class_type": "UNETLoader",
+      "inputs": {"unet_name": "wan2.2_i2v_low_noise_14B_fp16.safetensors", "weight_dtype": "default"}
+    },
+    "5": {
+      "class_type": "CLIPLoader",
+      "inputs": {"clip_name": "umt5_xxl_fp16.safetensors", "type": "wan", "device": "default"}
+    },
+    "6": {
+      "class_type": "VAELoader",
+      "inputs": {"vae_name": "wan_2.1_vae.safetensors"}
+    },
+    "7": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {"clip": ["5", 0], "text": "__REPLACE_WITH_OWNER_APPROVED_IMAGE_MOTION_PROMPT__"}
+    },
+    "8": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": ["5", 0],
+        "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走"
+      }
+    },
+    "9": {
+      "class_type": "ModelSamplingSD3",
+      "inputs": {"model": ["3", 0], "shift": 5.0}
+    },
+    "10": {
+      "class_type": "ModelSamplingSD3",
+      "inputs": {"model": ["4", 0], "shift": 5.0}
+    },
+    "11": {
+      "class_type": "WanImageToVideo",
+      "inputs": {
+        "positive": ["7", 0], "negative": ["8", 0], "vae": ["6", 0],
+        "width": 800, "height": 1376, "length": 121, "batch_size": 1, "start_image": ["2", 0]
+      }
+    },
+    "12": {
+      "class_type": "KSamplerAdvanced",
+      "inputs": {
+        "model": ["9", 0], "add_noise": "enable", "noise_seed": 264244520398999,
+        "steps": 20, "cfg": 3.5, "sampler_name": "euler", "scheduler": "simple",
+        "positive": ["11", 0], "negative": ["11", 1], "latent_image": ["11", 2],
+        "start_at_step": 0, "end_at_step": 10, "return_with_leftover_noise": "enable"
+      }
+    },
+    "13": {
+      "class_type": "KSamplerAdvanced",
+      "inputs": {
+        "model": ["10", 0], "add_noise": "disable", "noise_seed": 0,
+        "steps": 20, "cfg": 3.5, "sampler_name": "euler", "scheduler": "simple",
+        "positive": ["11", 0], "negative": ["11", 1], "latent_image": ["12", 0],
+        "start_at_step": 10, "end_at_step": 20, "return_with_leftover_noise": "disable"
+      }
+    },
+    "14": {
+      "class_type": "VAEDecode",
+      "inputs": {"samples": ["13", 0], "vae": ["6", 0]}
+    },
+    "15": {
+      "class_type": "CreateVideo",
+      "inputs": {"images": ["14", 0], "fps": 24, "bit_depth": 8, "color_space": "sRGB", "codec": "none"}
+    },
+    "16": {
+      "class_type": "SaveVideo",
+      "inputs": {
+        "video": ["15", 0], "filename_prefix": "aniflow/wan2_2_fp16/source121",
+        "format": "mp4", "format.codec": "h264", "format.codec.encoding": "auto"
+      }
+    }
+  },
+  "bindings": {"image": ["1", "image"], "prompt": ["7", "text"], "negative_prompt": ["8", "text"]},
+  "postprocess": {"preset": "wan_native_5s_portrait_v1"},
+  "preparation": {
+    "status": "SOURCE_DERIVED_NOT_RUNTIME_VERIFIED",
+    "comfyui_tag": "v0.42.1",
+    "comfyui_commit": "63be2f9b82ad0dac88a7ceaa28a9cf3154125a18",
+    "source_workflow_url": "https://raw.githubusercontent.com/Comfy-Org/workflow_templates/e7cd011d4ded3411c2f481200544f0be6fdc962e/templates/video_wan2_2_14B_i2v.json",
+    "source_sha256": "0bc0bee732181a0f5a5a0807b9e2cef883a1409bca4cdb70eca6b2e2e87e5c19",
+    "source_workflow_commit": "e7cd011d4ded3411c2f481200544f0be6fdc962e",
+    "source_default": {"width": 640, "height": 640, "frames": 81, "fps": 16},
+    "ordinary_branch": "20-step Comfy template with 10/10 expert switch, CFG 3.5, euler/simple and shift 5.0; no 4-step LoRA branch. The original Wan script's 40-step reference is a different configuration.",
+    "negative_prompt_note": "Copied verbatim from CLIPTextEncode node 89 in the pinned official template, preserving its original language; no owner motion prompt is supplied.",
+    "source_negative_prompt_sha256": "ce96e0324e4b54ce4b6e867f669ca520952e1a34cc116543516b1897f0d3c47e",
+    "weight_repository": "Comfy-Org/Wan-2.2",
+    "weight_revision": "ee6f4a40737a995bf5818954cfce6d59443b0f04",
+    "models": [
+      {"relative_path": "diffusion_models/wan2.2_i2v_high_noise_14B_fp16.safetensors", "bytes": 28577914792, "sha256": "c21c21efa368d529a982a7d89dd11d86608b5937cae9a125d0ffe5491918a100"},
+      {"relative_path": "diffusion_models/wan2.2_i2v_low_noise_14B_fp16.safetensors", "bytes": 28577914792, "sha256": "edb89340c8a6fbf1a70e76a839ae01eaf7d289f05ea1ebd6b1a3fc6f533826e9"},
+      {"relative_path": "text_encoders/umt5_xxl_fp16.safetensors", "bytes": 11366399385, "sha256": "7b8850f1961e1cf8a77cca4c964a358d303f490833c6c087d0cff4b2f99db2af"},
+      {"relative_path": "vae/wan_2.1_vae.safetensors", "bytes": 253815318, "sha256": "2fc39d31359a4b0a64f55876d8ff7fa8d780956ae2cb13463b0223e15148976b"}
+    ],
+    "precision": "Official FP16 experts and FP16 UMT5; no automatic quantization or distillation fallback.",
+    "initial_memory_trial": "Pinned Comfy default safetensors mmap with --highvram; target GPU/RAM fit is unverified. Do not combine --highvram with --gpu-only.",
+    "generated_target": {"width": 800, "height": 1376, "frames": 121, "fps": 24},
+    "final_target": {"width": 774, "height": 1376, "frames": 120, "fps": 24, "seconds": 5, "crop_x": 13},
+    "postprocess_note": "Independent Wan preset is required to crop pixels and trim the tail only; this bundle does not implement or attest that processor. No generated-video enlargement or interpolation.",
+    "runtime_todo": {
+      "owner_input": "Replace both bindings with the uploaded owner-approved still and motion prompt before any submission.",
+      "actual_object_info": "Validate this exact API graph and pinned model filenames against the real Comfy service.",
+      "memory_and_time": "Measure target-resolution CUDA VRAM, host RSS and elapsed time under the fixed stop window; official 720P and default 16fps settings are not this target's benchmark.",
+      "video_verification": "Inspect source 121 frames/24fps, then verify the independent crop/tail-trim result is 774x1376, 120 frames, 24fps and exactly 5 seconds.",
+      "audit": "No credit, AWS admission, licence, shutdown or launch authorization is supplied by this template."
+    },
+    "quality_equivalent_to_h3_verified": false,
+    "real_gpu_preflight_passed": false,
+    "real_video_generated": false
+  }
+}

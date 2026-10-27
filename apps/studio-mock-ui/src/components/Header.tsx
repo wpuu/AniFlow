@@ -1,6 +1,6 @@
 import { Activity, Cpu } from "lucide-react";
-import { MODELS, REAL_MODEL } from "../data";
-import type { Model, StudioMode } from "../types";
+import { MODELS, getRealModel } from "../data";
+import type { Model, RealProvider, StudioMode } from "../types";
 import { formatClock, formatCost } from "../utils/format";
 import { ModelDot } from "./StatusBadge";
 
@@ -10,6 +10,7 @@ interface HeaderProps {
   todayCost: number | null;
   clock: number;
   mode: StudioMode;
+  realProvider: RealProvider | null;
   ready: boolean;
   tunnelConnected: boolean;
   gpuConnected: boolean;
@@ -33,8 +34,9 @@ function BackendPill({ model }: { model: Model }) {
   );
 }
 
-export function Header({ queued, running, todayCost, clock, mode, ready, tunnelConnected, gpuConnected }: HeaderProps) {
-  const models: Model[] = mode === "real" ? [{...REAL_MODEL, status:ready ? "ready" : "offline"}] : MODELS;
+export function Header({ queued, running, todayCost, clock, mode, realProvider, ready, tunnelConnected, gpuConnected }: HeaderProps) {
+  const realModel = getRealModel(realProvider);
+  const models: Model[] = mode === "real" ? [{...realModel, status:ready ? "ready" : "offline"}] : MODELS;
   const uniqueBackends = models.filter(
     (m, i, arr) => arr.findIndex((x) => x.backend === m.backend) === i,
   ).map((base) => {
@@ -64,8 +66,8 @@ export function Header({ queued, running, todayCost, clock, mode, ready, tunnelC
         <div className="ml-4 hidden items-center gap-2 rounded-full border border-white/6 bg-white/[0.03] px-3 py-1 lg:flex">
           <Activity className="h-3.5 w-3.5 text-cyan-300" />
           <span className="text-[11px] text-zinc-300">{mode === "mock" ? "本机模拟 · 无真实GPU"
-            : !tunnelConnected ? "真实 H3 · 私有连接未确认连通"
-            : gpuConnected ? "私有连接连通 · CUDA设备已观察（H3显存峰值仍待测）"
+            : !tunnelConnected ? `${realModel.shortName} · 私有连接未确认连通`
+            : gpuConnected ? "私有连接连通 · CUDA设备已观察（生成显存峰值仍待测）"
             : "私有连接连通 · 尚未观察到CUDA设备"}</span>
           <span className="text-zinc-700">·</span>
           <span className="font-mono text-[11px] text-zinc-500">{formatClock(clock)}</span>

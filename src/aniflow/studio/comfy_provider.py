@@ -138,7 +138,9 @@ def verify_mp4(path: Path, profile: str | None = None) -> dict:
     audio = [stream for stream in data["streams"] if stream.get("codec_type") == "audio"]
     if profile == "h3_native_source":
         valid = width == 800 and height == 1376 and fps == 24 and frames >= 124
-    elif profile == "h3_native_final":
+    elif profile == "wan_native_source":
+        valid = width == 800 and height == 1376 and fps == 24 and frames >= 121
+    elif profile in {"h3_native_final", "wan_native_final"}:
         valid = (width == 774 and height == 1376 and fps == 24 and frames == 120
                  and sar == "1:1" and abs(duration - 5) < 0.000001
                  and abs(float(data["format"]["duration"]) - 5) < 0.000001
@@ -158,9 +160,10 @@ def verify_mp4(path: Path, profile: str | None = None) -> dict:
             "frame_count": frames, "sample_aspect_ratio": sar, "audio_present": bool(audio)}
 
 
-def postprocess_h3_portrait(source: Path, path: Path) -> tuple[str, int, dict]:
+def _postprocess_portrait(source: Path, path: Path, source_profile: str,
+                          final_profile: str) -> tuple[str, int, dict]:
     """Keep source frames 0..119 and crop pixels; re-encode without temporal resampling."""
-    verify_mp4(source, "h3_native_source")
+    verify_mp4(source, source_profile)
     partial = path.with_suffix(".mp4.partial")
     try:
         subprocess.run(["ffmpeg", "-v", "error", "-xerror", "-y", "-i", str(source),
@@ -170,10 +173,18 @@ def postprocess_h3_portrait(source: Path, path: Path) -> tuple[str, int, dict]:
                         "-c:v", "libx264", "-crf", "18", "-preset", "medium", "-pix_fmt", "yuv420p",
                         "-c:a", "aac", "-b:a", "192k", "-t", "5", "-movflags", "+faststart",
                         "-f", "mp4", str(partial)], capture_output=True, check=True, timeout=300)
-        metadata = verify_mp4(partial, "h3_native_final")
+        metadata = verify_mp4(partial, final_profile)
         digest = hashlib.sha256(partial.read_bytes()).hexdigest()
         size = partial.stat().st_size
         partial.replace(path)
         return digest, size, metadata
     finally:
         partial.unlink(missing_ok=True)
+
+
+def postprocess_h3_portrait(source: Path, path: Path) -> tuple[str, int, dict]:
+    return _postprocess_portrait(source, path, "h3_native_source", "h3_native_final")
+
+
+def postprocess_wan_portrait(source: Path, path: Path) -> tuple[str, int, dict]:
+    return _postprocess_portrait(source, path, "wan_native_source", "wan_native_final")

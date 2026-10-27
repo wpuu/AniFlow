@@ -1,0 +1,16 @@
+{
+  "python_contract_tests": 131,
+  "python_contract_tests_passed": true,
+  "frontend_contract_tests": 14,
+  "frontend_contract_tests_passed": true,
+  "typescript_passed": true,
+  "vite_build_passed": true,
+  "ruff_passed": true,
+  "tests_use_mock_upstreams_and_synthetic_local_video": true,
+  "aws_guard_templates_deployed": false,
+  "aws_validate_template_passed": false,
+  "real_gpu_preflight_passed": false,
+  "real_wan_video_generated": false,
+  "new_cloud_resources_created": 0,
+  "large_model_files_downloaded": 0
+}

@@ -1,4 +1,4 @@
-import type { Model, Task } from "./types";
+import type { Model, RealProvider, Task } from "./types";
 // Only a local simulator is visible: no real AWS, Agnes or GPU is connected.
 export const MODELS: Model[] = [{
   id: "mock-h3", name: "H3 模拟节点", shortName: "Mock H3",
@@ -14,6 +14,20 @@ export const REAL_MODEL: Model = {
   description: "真实图生视频；资格与停机保护未通过时禁止提交。",
   queue: 0, tags: ["真实", "5秒", "9:16"],
 };
+export const WAN_MODEL: Model = {
+  id: "wan2.2-i2v-a14b", name: "Wan2.2 I2V A14B · 真实节点", shortName: "Wan2.2 REAL",
+  backend: "huggingface", backendLabel: "AWS 俄亥俄州 · EC2 · ComfyUI",
+  status: "offline", latencyMs: 0, costPerSecond: 0, maxDuration: 5,
+  description: "真实图生视频候选；资格、原生规格与停机保护未通过时禁止提交。",
+  queue: 0, tags: ["真实", "5秒", "9:16"],
+};
+const UNKNOWN_REAL_MODEL: Model = {
+  ...REAL_MODEL, id: "unverified-real", name: "真实模型待核验", shortName: "真实模型待核验",
+  backendLabel: "本机真实服务 · 身份未确认", description: "等待核验本机服务的真实模型身份。",
+};
+export function getRealModel(provider: RealProvider | null): Model {
+  return provider === "minimax-h3" ? REAL_MODEL : provider === "wan2.2-i2v-a14b" ? WAN_MODEL : UNKNOWN_REAL_MODEL;
+}
 export const ASPECTS: { id: Task["aspectRatio"]; label: string; w: number; h: number }[] = [
   { id: "9:16", label: "竖屏", w: 9, h: 16 },
   { id: "16:9", label: "横屏", w: 16, h: 9 },
@@ -26,4 +40,4 @@ export const PROMPT_PRESETS = [
   "毛毡风格的小猫安静地向前看，只有轻微呼吸与耳朵动作，避免塑料和写实真猫质感。",
 ];
 export const INITIAL_TASKS: Task[] = [];
-export function getModel(id: string): Model | undefined { return [...MODELS, REAL_MODEL].find(m=>m.id===id); }
+export function getModel(id: string): Model | undefined { return [...MODELS, REAL_MODEL, WAN_MODEL, UNKNOWN_REAL_MODEL].find(m=>m.id===id); }

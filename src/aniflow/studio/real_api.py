@@ -1,4 +1,4 @@
-"""Durable local H3 Bridge, disabled until a time-limited human audit is supplied."""
+"""Durable local video Bridge, disabled until a time-limited human audit is supplied."""
 from __future__ import annotations
 
 import asyncio
@@ -24,7 +24,11 @@ from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse
 
-from aniflow.studio.comfy_provider import ComfyProvider, postprocess_h3_portrait
+from aniflow.studio.comfy_provider import (
+    ComfyProvider,
+    postprocess_h3_portrait,
+    postprocess_wan_portrait,
+)
 from aniflow.studio.mock_api import JobRequest, create_mock_app
 
 CHECKS = ("credit_ec2_eligible", "credit_expiry_confirmed", "tokyo_gpu_quota",
@@ -40,6 +44,11 @@ GAMELIFT_CHECKS = ("credit_gamelift_eligible", "credit_expiry_confirmed", "tokyo
                   "tokyo_capacity_and_price", "private_s3_connectivity", "h3_license_territory",
                   "gpu_stop_safeguard", "independent_stop_safeguard",
                   "account_plan_unchanged", "runtime_cuda_verified")
+WAN_PROVIDER = "wan2.2-i2v-a14b"
+WAN_CHECKS = ("credit_ec2_eligible", "credit_expiry_confirmed", "ohio_gpu_quota",
+              "ohio_capacity_and_price", "ssm_private_connectivity", "wan_license_verified",
+              "gpu_stop_safeguard", "independent_stop_safeguard", "account_plan_unchanged",
+              "native_video_spec_confirmed")
 KEY = re.compile(r"^[A-Za-z0-9_-]{8,128}$")
 SHA = re.compile(r"^[a-f0-9]{64}$")
 
@@ -59,7 +68,8 @@ class RealConfig:
             return Path(os.environ[name]) if os.environ.get(name) else None
         return cls(Path(os.environ.get("ANIFLOW_REAL_DATA_DIR", "data/runtime/studio-real")),
                    os.environ.get("ANIFLOW_COMFY_URL", "http://127.0.0.1:8188"),
-                   optional("ANIFLOW_REAL_GATE"), optional("ANIFLOW_H3_WORKFLOW"),
+                   optional("ANIFLOW_REAL_GATE"),
+                   optional("ANIFLOW_REAL_WORKFLOW") or optional("ANIFLOW_H3_WORKFLOW"),
                    os.environ.get("ANIFLOW_GAMELIFT_BUCKET"),
                    os.environ.get("ANIFLOW_GAMELIFT_SESSION_KEY", ""))
 
@@ -78,7 +88,17 @@ class RealConfig:
             remaining = float(gate.get("expires_at_unix", 0)) - time.time()
             checks = gate.get("checks", {})
             service = gate.get("service", "ec2")
-            if service == "gameliftstreams":
+            wan = gate.get("provider") == WAN_PROVIDER
+            if wan:
+                resource_valid = (service == "ec2" and gate.get("instance_type") == "g7e.2xlarge"
+                                  and bundle.get("provider") == WAN_PROVIDER and not self.s3_bucket
+                                  and type(gate.get("cash_cap_usd")) in (int, float)
+                                  and 0 <= gate["cash_cap_usd"] <= 1
+                                  and type(gate.get("credit_budget_usd")) in (int, float)
+                                  and 0 < gate["credit_budget_usd"] <= 20
+                                  and type(gate.get("max_runtime_seconds")) is int)
+                required_checks = WAN_CHECKS
+            elif service == "gameliftstreams":
                 resource_valid = (gate.get("instance_type") == "gen6n_pro"
                                   and 0 <= gate.get("cash_cap_usd", -1) <= 1
                                   and 0 < gate.get("credit_budget_usd", 0) <= 20
@@ -97,7 +117,9 @@ class RealConfig:
                 required_checks = CHECKS
             valid = (gate.get("launch_allowed") is True and gate.get("snapshot_only") is not True
                      and 0 < remaining <= 4 * 3600
-                     and gate.get("region") == "ap-northeast-1"
+                     and gate.get("region") == ("us-east-2" if wan else "ap-northeast-1")
+                     and gate.get("provider", "minimax-h3") in (WAN_PROVIDER, "minimax-h3")
+                     and bundle.get("provider", "minimax-h3") == gate.get("provider", "minimax-h3")
                      and resource_valid and isinstance(checks, dict)
                      and all(checks.get(name) is True for name in required_checks)
                      and gate.get("max_runtime_seconds", 0) in range(1, 14401)
@@ -107,16 +129,19 @@ class RealConfig:
                      and shutil.which("ffmpeg"))
             if not valid:
                 return ["Real audit is blocked, expired, incomplete, or workflow tools/hash are invalid"], None
-            if "postprocess" in bundle and bundle["postprocess"] != {"preset": "h3_native_5s_portrait_v1"}:
+            preset = "wan_native_5s_portrait_v1" if wan else "h3_native_5s_portrait_v1"
+            if "postprocess" in bundle and bundle["postprocess"] != {"preset": preset}:
                 return ["Unknown or invalid audited postprocess preset"], None
-            if service in {"workspaces", "gameliftstreams"} and bundle.get("postprocess") != {"preset": "h3_native_5s_portrait_v1"}:
-                return ["This H3 experiment requires the audited strict 5-second portrait preset"], None
+            if (wan or service in {"workspaces", "gameliftstreams"}) and bundle.get("postprocess") != {"preset": preset}:
+                return ["This experiment requires its audited strict 5-second portrait preset"], None
             prompt = bundle["prompt"]
             if not prompt or not all(isinstance(node, dict) and "class_type" in node
                                      and isinstance(node.get("inputs"), dict)
                                      for node in prompt.values()):
                 return ["Expected an audited ComfyUI API-format prompt"], None
-            for field in ("image", "prompt"):
+            for field in ("image", "prompt", "negative_prompt"):
+                if field == "negative_prompt" and field not in bundle["bindings"]:
+                    continue
                 node, input_name = bundle["bindings"][field]
                 if input_name not in prompt[node]["inputs"]:
                     return ["Workflow binding does not exist in the pinned API prompt"], None
@@ -132,12 +157,16 @@ class RealConfig:
             audit = json.loads(self.gate_path.read_text(encoding="utf-8"))
             checks = audit.get("checks", {})
             workspaces = audit.get("service") == "workspaces"
-            required = WORKSPACES_CHECKS if workspaces else GAMELIFT_CHECKS
-            target = (audit.get("instance_type") in WORKSPACES_RAM_GIB if workspaces else
+            wan = audit.get("provider") == WAN_PROVIDER
+            required = WAN_CHECKS if wan else WORKSPACES_CHECKS if workspaces else GAMELIFT_CHECKS
+            target = ((audit.get("service") == "ec2" and audit.get("instance_type") == "g7e.2xlarge"
+                       and not self.s3_bucket) if wan else
+                      audit.get("instance_type") in WORKSPACES_RAM_GIB if workspaces else
                       audit.get("service") == "gameliftstreams" and audit.get("instance_type") == "gen6n_pro")
             valid = (audit.get("snapshot_only") is True and audit.get("launch_allowed") is False
                      and target
-                     and audit.get("region") == "ap-northeast-1"
+                     and audit.get("region") == ("us-east-2" if wan else "ap-northeast-1")
+                     and audit.get("provider", "minimax-h3") in (WAN_PROVIDER, "minimax-h3")
                      and isinstance(checks, dict)
                      and all(name in checks and (checks[name] is None or type(checks[name]) is bool)
                              for name in required))
@@ -160,8 +189,14 @@ def create_real_app(config: RealConfig | None = None,
         provider = ComfyProvider(cfg.comfy_url, transport)
 
     def connection_state():
-        if cfg.blocked_projection() and not cfg.s3_bucket:
-            return False, False
+        if not cfg.s3_bucket:
+            if cfg.blocked_projection():
+                return False, False
+            try:
+                if cfg.gate_path and json.loads(cfg.gate_path.read_text()).get("snapshot_only") is True:
+                    return False, False
+            except (OSError, ValueError, AttributeError):
+                pass
         return provider.connection_state()
 
     base = cfg.data_dir.resolve()
@@ -198,19 +233,26 @@ def create_real_app(config: RealConfig | None = None,
                 if job["status"] in {"completed", "failed", "submitting"}:
                     continue
                 try:
+                    wan = job.get("provider") == WAN_PROVIDER
+                    if wan and job.get("postprocess") != {"preset": "wan_native_5s_portrait_v1"}:
+                        raise ValueError("A recovered Wan task requires its strict postprocess preset")
                     prompt_id, status, history = provider.inspect(
                         job["comfy_prompt_id"], job["idempotency_key"])
                     job.update(comfy_prompt_id=prompt_id, status=status, error=None)
                     if history:
                         path = videos / (job["id"] + ".mp4")
-                        if job.get("postprocess") == {"preset": "h3_native_5s_portrait_v1"}:
+                        if job.get("postprocess") == {"preset": "wan_native_5s_portrait_v1"} and not wan:
+                            raise ValueError("Wan postprocess cannot be used by another provider")
+                        preset = "wan_native_5s_portrait_v1" if wan else "h3_native_5s_portrait_v1"
+                        if job.get("postprocess") == {"preset": preset}:
                             source = videos / (job["id"] + ".source.mp4")
                             source_digest, source_size, source_metadata = provider.download(
-                                history, source, "h3_native_source")
+                                history, source, "wan_native_source" if wan else "h3_native_source")
                             job.update(source_local_path=str(source), source_sha256=source_digest,
                                        source_bytes=source_size, source_video_metadata=source_metadata)
                             save(job)
-                            digest, size, metadata = postprocess_h3_portrait(source, path)
+                            process = postprocess_wan_portrait if wan else postprocess_h3_portrait
+                            digest, size, metadata = process(source, path)
                         else:
                             digest, size, metadata = provider.download(history, path)
                         job.update(status="completed", verified=True, progress=100,
@@ -248,7 +290,7 @@ def create_real_app(config: RealConfig | None = None,
                 pass
             provider.client.close()
 
-    app = FastAPI(title="AniFlow Real H3 Local Bridge", lifespan=lifespan)
+    app = FastAPI(title="AniFlow Real Video Local Bridge", lifespan=lifespan)
     app.add_middleware(TrustedHostMiddleware,
                        allowed_hosts=["127.0.0.1", "localhost", "testserver"], www_redirect=False)
 
@@ -262,14 +304,17 @@ def create_real_app(config: RealConfig | None = None,
 
     @app.get("/api/studio/real/health")
     def health():
-        reasons, _ = cfg.audited_workflow()
+        reasons, bundle = cfg.audited_workflow()
+        audit = bundle["_local_audit"] if bundle else cfg.blocked_projection()
+        wan = audit.get("provider") == WAN_PROVIDER
         tunnel_connected, gpu_connected = connection_state()
         if not tunnel_connected:
-            reasons.append("Private S3 runtime heartbeat is unavailable" if cfg.s3_bucket or cfg.blocked_projection()
+            reasons.append("Private S3 runtime heartbeat is unavailable" if cfg.s3_bucket or (cfg.blocked_projection() and not wan)
                            else "ComfyUI loopback tunnel is unavailable")
         elif not gpu_connected:
             reasons.append("ComfyUI system stats do not report a CUDA GPU with positive VRAM")
-        return {"mode": "REAL_H3", "provider": "minimax-h3", "simulation": False,
+        return {"mode": "REAL_WAN" if wan else "REAL_H3",
+                "provider": WAN_PROVIDER if wan else "minimax-h3", "simulation": False,
                 "ready": not reasons, "tunnel_connected": tunnel_connected,
                 "gpu_connected": gpu_connected, "blocked_reasons": reasons,
                 "note": "Tunnel connectivity alone does not verify GPU, license, credit, or shutdown protection"}
@@ -282,6 +327,7 @@ def create_real_app(config: RealConfig | None = None,
             "gameliftstreams" if cfg.s3_bucket else "workspaces")
         workspaces = service == "workspaces"
         gamelift = service == "gameliftstreams"
+        wan = audit.get("provider") == WAN_PROVIDER
         tunnel_connected, gpu_connected = connection_state()
         if not tunnel_connected:
             reasons.append("Private S3 runtime heartbeat is unavailable" if gamelift
@@ -293,14 +339,16 @@ def create_real_app(config: RealConfig | None = None,
             value = audit.get(name)
             return value if type(value) in (int, float) and math.isfinite(value) else None
 
-        checks = GAMELIFT_CHECKS if gamelift else (WORKSPACES_CHECKS if workspaces else CHECKS)
+        checks = WAN_CHECKS if wan else GAMELIFT_CHECKS if gamelift else (WORKSPACES_CHECKS if workspaces else CHECKS)
         instance_type = (audit.get("instance_type", "Graphics.g6.4xlarge") if workspaces else
-                         "gen6n_pro" if gamelift else "g6e.2xlarge")
-        return {"mode": "LOCAL_AUDIT_PROJECTION", "service": service, "region": "ap-northeast-1",
+                         "gen6n_pro" if gamelift else "g7e.2xlarge" if wan else "g6e.2xlarge")
+        return {"mode": "LOCAL_AUDIT_PROJECTION", "service": service,
+                "region": "us-east-2" if wan else "ap-northeast-1",
+                "provider": WAN_PROVIDER if wan else "minimax-h3",
                 "instance_type": instance_type,
-                "expected_gpu": "NVIDIA L4" if workspaces or gamelift else None,
-                "expected_gpu_vram_gib": 24 if workspaces or gamelift else None,
-                "expected_ram_gib": WORKSPACES_RAM_GIB[instance_type] if workspaces else 64 if gamelift else None,
+                "expected_gpu": "NVIDIA RTX PRO Server 6000" if wan else "NVIDIA L4" if workspaces or gamelift else None,
+                "expected_gpu_vram_gib": 96 if wan else 24 if workspaces or gamelift else None,
+                "expected_ram_gib": WORKSPACES_RAM_GIB[instance_type] if workspaces else 64 if gamelift or wan else None,
                 "account_plan": audit.get("account_plan") if isinstance(audit.get("account_plan"), str)
                                 and audit["account_plan"] else "unknown",
                 "estimated_credit_remaining_usd": number("estimated_credit_remaining_usd"),
@@ -345,11 +393,11 @@ def create_real_app(config: RealConfig | None = None,
 
     @app.post("/api/studio/real/jobs", status_code=202)
     def create_job(task: JobRequest):
-        if (task.provider != "minimax-h3" or task.duration_seconds != 5
+        if (task.provider not in {"minimax-h3", WAN_PROVIDER} or task.duration_seconds != 5
                 or task.aspect_ratio != "9:16" or not KEY.fullmatch(task.idempotency_key)
                 or not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", task.project_id)
                 or not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", task.shot_id)):
-            raise HTTPException(422, "Real H3 requires a valid ID and one 5-second 9:16 job")
+            raise HTTPException(422, "A real provider requires a valid ID and one 5-second 9:16 job")
         payload = task.model_dump()
         digest = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
         with lock, connect() as cx:
@@ -361,6 +409,8 @@ def create_real_app(config: RealConfig | None = None,
             reasons, bundle = cfg.audited_workflow()
             if reasons:
                 raise HTTPException(403, "; ".join(reasons))
+            if task.provider != bundle["_local_audit"].get("provider", "minimax-h3"):
+                raise HTTPException(403, "Requested provider does not match the audited workflow")
             _, gpu_connected = provider.connection_state()
             if not gpu_connected:
                 raise HTTPException(403, "Real submission requires an observed CUDA GPU")

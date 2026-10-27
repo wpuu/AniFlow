@@ -2,6 +2,7 @@
 import base64
 import hashlib
 import json
+import sqlite3
 import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -15,6 +16,8 @@ from aniflow.studio.comfy_provider import ComfyProvider, verify_mp4
 from aniflow.studio.real_api import (
     CHECKS,
     GAMELIFT_CHECKS,
+    WAN_CHECKS,
+    WAN_PROVIDER,
     WORKSPACES_CHECKS,
     RealConfig,
     create_real_app,
@@ -34,6 +37,7 @@ class LocalComfyContract:
         self.download_fails = False
         self.devices = [{"type": "cuda", "name": "SYNTHETIC GPU FOR CONTRACT ONLY", "vram_total": 48 * 1024**3}]
         self.uploads = 0
+        self.submitted_workflow = None
 
     def __call__(self, request):
         path = request.url.path
@@ -44,7 +48,9 @@ class LocalComfyContract:
             return httpx.Response(200, json={"name": "contract.png", "subfolder": ""})
         if path == "/prompt":
             self.posts += 1
-            self.key = json.loads(request.content)["extra_data"]["aniflow_request_key"]
+            submitted = json.loads(request.content)
+            self.key = submitted["extra_data"]["aniflow_request_key"]
+            self.submitted_workflow = submitted["prompt"]
             if self.lost_response:
                 raise httpx.ReadError("Synthetic accepted response loss")
             return httpx.Response(200, json={"prompt_id": "server-returned-id"})
@@ -489,3 +495,197 @@ def test_blocked_gr6_snapshot_never_borrows_an_unrelated_local_gpu(tmp_path):
     assert projection["checks"]["workspaces_account_eligible"] is None
     assert not projection["launch_allowed"] and not projection["real_gpu_connected"]
     assert not health["ready"] and not health["gpu_connected"]
+
+
+def wan_config(tmp_path):
+    cfg = config(tmp_path)
+    bundle = json.loads(cfg.workflow_path.read_text())
+    bundle["provider"] = WAN_PROVIDER
+    bundle["prompt"]["8"] = {"class_type": "LOCAL_CONTRACT_ONLY", "inputs": {"text": "NOT_REPLACED"}}
+    bundle["bindings"]["negative_prompt"] = ["8", "text"]
+    cfg.workflow_path.write_text(json.dumps(bundle))
+    gate = json.loads(cfg.gate_path.read_text())
+    gate.update(service="ec2", region="us-east-2", provider=WAN_PROVIDER,
+                instance_type="g7e.2xlarge", cash_cap_usd=1, credit_budget_usd=20,
+                checks=dict.fromkeys(WAN_CHECKS, True))
+    gate.pop("experiment_budget_usd")
+    cfg.gate_path.write_text(json.dumps(gate))
+    add_postprocess(cfg, {"preset": "wan_native_5s_portrait_v1"})
+    return cfg
+
+
+def test_wan_identity_is_separate_and_repeated_submission_posts_once(tmp_path):
+    upstream, cfg = LocalComfyContract(), wan_config(tmp_path)
+    upstream.lost_response, upstream.visible = True, False
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        health = client.get("/api/studio/real/health").json()
+        projection = client.get("/api/studio/cloud/preflight").json()
+        assert health["mode"] == "REAL_WAN" and health["provider"] == WAN_PROVIDER
+        assert health["ready"] is True and health["simulation"] is False
+        assert projection["provider"] == WAN_PROVIDER and projection["service"] == "ec2"
+        assert projection["region"] == "us-east-2" and projection["instance_type"] == "g7e.2xlarge"
+        assert projection["expected_ram_gib"] == 64 and projection["expected_gpu_vram_gib"] == 96
+        assert projection["expected_gpu"] == "NVIDIA RTX PRO Server 6000"
+        assert projection["checks"] == dict.fromkeys(WAN_CHECKS, True)
+        assert projection["aws_queries"] == 0 and projection["aws_writes"] == 0
+        p = {**payload(client), "provider": WAN_PROVIDER, "negative_prompt": "Avoid synthetic blur"}
+        first = client.post("/api/studio/real/jobs", json=p)
+        assert first.status_code == 202 and first.json()["status"] == "submission_unknown"
+        assert first.json()["provider"] == WAN_PROVIDER
+        assert upstream.submitted_workflow["8"]["inputs"]["text"] == p["negative_prompt"]
+        assert client.post("/api/studio/real/jobs", json=p).json()["id"] == first.json()["id"]
+    upstream.visible = True
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        recovered = client.get("/api/studio/real/requests/contract-request-001").json()
+        assert recovered["provider"] == WAN_PROVIDER and recovered["comfy_prompt_id"] == "server-returned-id"
+    assert upstream.posts == 1
+
+
+@pytest.mark.parametrize(("field", "value"), [
+    ("service", "workspaces"), ("service", "gameliftstreams"),
+    ("region", "ap-northeast-1"), ("region", "us-east-1"),
+    ("instance_type", "g6e.2xlarge"), ("provider", "minimax-h3"), ("provider", "unknown"),
+    ("cash_cap_usd", 1.01), ("cash_cap_usd", True), ("credit_budget_usd", 20.01),
+    ("credit_budget_usd", False), ("max_runtime_seconds", 14401),
+    ("max_runtime_seconds", True), ("snapshot_only", True),
+    ("expires_at_unix", 0), ("expires_at_unix", time.time() + 15000),
+    ("workflow_sha256", "0" * 64)])
+def test_wan_gate_mismatches_cannot_submit(tmp_path, field, value):
+    cfg, upstream = wan_config(tmp_path), LocalComfyContract()
+    gate = json.loads(cfg.gate_path.read_text())
+    gate[field] = value
+    cfg.gate_path.write_text(json.dumps(gate))
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        assert not client.get("/api/studio/real/health").json()["ready"]
+        assert client.post("/api/studio/real/jobs", json={**payload(client), "provider": WAN_PROVIDER}).status_code == 403
+    assert upstream.posts == 0 and upstream.uploads == 0
+
+
+@pytest.mark.parametrize("check", WAN_CHECKS)
+def test_wan_requires_every_separate_audit_check(tmp_path, check):
+    cfg = wan_config(tmp_path)
+    gate = json.loads(cfg.gate_path.read_text())
+    gate["checks"].update(dict.fromkeys(CHECKS, True))
+    gate["checks"].pop(check)
+    cfg.gate_path.write_text(json.dumps(gate))
+    assert cfg.audited_workflow()[0]
+
+
+@pytest.mark.parametrize("preset", [None, {"preset": "h3_native_5s_portrait_v1"},
+                                    {"preset": "wan_native_5s_portrait_v1", "fps": 16}])
+def test_wan_cannot_borrow_h3_or_unverified_postprocess(tmp_path, preset):
+    cfg = wan_config(tmp_path)
+    add_postprocess(cfg, preset)
+    assert cfg.audited_workflow()[0]
+
+
+def test_wan_requires_matching_bundle_provider_and_rejects_other_provider_requests(tmp_path):
+    cfg, upstream = wan_config(tmp_path), LocalComfyContract()
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        p = payload(client)
+        assert client.post("/api/studio/real/jobs", json=p).status_code == 403
+        assert client.post("/api/studio/real/jobs", json={**p, "provider": "unknown"}).status_code == 422
+    assert upstream.posts == 0 and upstream.uploads == 0
+    bundle = json.loads(cfg.workflow_path.read_text())
+    bundle["provider"] = "minimax-h3"
+    cfg.workflow_path.write_text(json.dumps(bundle))
+    gate = json.loads(cfg.gate_path.read_text())
+    gate["workflow_sha256"] = hashlib.sha256(cfg.workflow_path.read_bytes()).hexdigest()
+    cfg.gate_path.write_text(json.dumps(gate))
+    assert cfg.audited_workflow()[0]
+
+
+def test_optional_negative_binding_must_point_to_an_existing_input(tmp_path):
+    cfg = wan_config(tmp_path)
+    bundle = json.loads(cfg.workflow_path.read_text())
+    bundle["bindings"]["negative_prompt"] = ["8", "missing_text"]
+    cfg.workflow_path.write_text(json.dumps(bundle))
+    add_postprocess(cfg, {"preset": "wan_native_5s_portrait_v1"})
+    assert cfg.audited_workflow()[0]
+    bundle["bindings"].pop("negative_prompt")
+    cfg.workflow_path.write_text(json.dumps(bundle))
+    add_postprocess(cfg, {"preset": "wan_native_5s_portrait_v1"})
+    assert not cfg.audited_workflow()[0]
+
+
+def test_wan_blocked_snapshot_cannot_use_a_local_gpu_or_claim_h3(tmp_path):
+    cfg, upstream = wan_config(tmp_path), LocalComfyContract()
+    gate = json.loads(cfg.gate_path.read_text())
+    gate.update(snapshot_only=True, launch_allowed=False)
+    gate["checks"]["ssm_private_connectivity"] = None
+    cfg.gate_path.write_text(json.dumps(gate))
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        health = client.get("/api/studio/real/health").json()
+        projection = client.get("/api/studio/cloud/preflight").json()
+        assert health["mode"] == "REAL_WAN" and health["provider"] == WAN_PROVIDER
+        assert not health["ready"] and not health["gpu_connected"]
+        assert projection["region"] == "us-east-2" and projection["instance_type"] == "g7e.2xlarge"
+        assert projection["checks"]["ssm_private_connectivity"] is None
+        assert not projection["launch_allowed"] and not projection["real_gpu_connected"]
+        assert "ComfyUI loopback tunnel is unavailable" in projection["blocked_reasons"]
+        assert client.post("/api/studio/real/jobs", json={**payload(client), "provider": WAN_PROVIDER}).status_code == 403
+    assert upstream.posts == 0 and upstream.uploads == 0
+
+
+@pytest.mark.parametrize(("field", "value"), [("region", "ap-northeast-1"),
+                                             ("instance_type", "g6e.2xlarge"),
+                                             ("provider", "unknown")])
+def test_invalid_wan_snapshot_still_never_queries_an_unrelated_gpu(tmp_path, field, value):
+    cfg = wan_config(tmp_path)
+    gate = json.loads(cfg.gate_path.read_text())
+    gate.update(snapshot_only=True, launch_allowed=False)
+    gate[field] = value
+    cfg.gate_path.write_text(json.dumps(gate))
+
+    def no_connection_allowed(request):
+        raise AssertionError("A saved snapshot must not query any loopback GPU")
+
+    with TestClient(create_real_app(cfg, httpx.MockTransport(no_connection_allowed))) as client:
+        health = client.get("/api/studio/real/health").json()
+        assert not health["ready"] and not health["gpu_connected"]
+
+
+def test_wan_121_frame_source_is_not_accepted_as_h3_and_final_is_strict(tmp_path):
+    upstream, cfg = LocalComfyContract(), wan_config(tmp_path)
+    source = tmp_path / "LOCAL_SYNTHETIC_NOT_WAN.mp4"
+    subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "color=c=blue:s=800x1376:r=24",
+                    "-frames:v", "121", "-c:v", "libx264", "-preset", "ultrafast", str(source)],
+                   check=True, timeout=60)
+    assert verify_mp4(source, "wan_native_source")["frame_count"] == 121
+    with pytest.raises(ValueError):
+        verify_mp4(source, "h3_native_source")
+    upstream.content = source.read_bytes()
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        first = client.post("/api/studio/real/jobs", json={**payload(client), "provider": WAN_PROVIDER}).json()
+        upstream.done = True
+        done = client.get(f"/api/studio/real/jobs/{first['id']}").json()
+        assert done["status"] == "completed" and done["provider"] == WAN_PROVIDER
+        assert Path(done["source_local_path"]).read_bytes() == upstream.content
+        assert done["source_video_metadata"]["frame_count"] == 121
+        assert done["video_metadata"] == {"duration_seconds": 5, "width": 774, "height": 1376,
+            "fps": 24, "frame_count": 120, "sample_aspect_ratio": "1:1", "audio_present": False}
+        assert done["output_sha256"] == hashlib.sha256(Path(done["local_path"]).read_bytes()).hexdigest()
+        assert client.get(done["video_download_path"]).content == Path(done["local_path"]).read_bytes()
+    assert upstream.posts == 1
+
+
+@pytest.mark.parametrize("preset", [None, {"preset": "h3_native_5s_portrait_v1"}])
+def test_recovered_wan_with_wrong_preset_cannot_download_or_complete(tmp_path, preset):
+    cfg, upstream = wan_config(tmp_path), LocalComfyContract()
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        created = client.post("/api/studio/real/jobs", json={**payload(client), "provider": WAN_PROVIDER}).json()
+    with sqlite3.connect(cfg.data_dir / "tasks.sqlite3") as database:
+        persisted = json.loads(database.execute("SELECT data FROM jobs WHERE id=?", (created["id"],)).fetchone()[0])
+        persisted["postprocess"] = preset
+        database.execute("UPDATE jobs SET data=? WHERE id=?", (json.dumps(persisted), created["id"]))
+    upstream.done = True
+
+    def forbid_download(request):
+        assert request.url.path != "/view", "Invalid Wan recovery must never download through the permissive profile"
+        return upstream(request)
+
+    with TestClient(create_real_app(cfg, httpx.MockTransport(forbid_download))) as client:
+        restored = client.get(f"/api/studio/real/jobs/{created['id']}").json()
+    assert restored["status"] == "failed" and not restored["verified"]
+    assert restored["local_path"] is None and restored["output_sha256"] is None
+    assert upstream.posts == 1

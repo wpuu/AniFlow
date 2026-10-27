@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { CreatePayload, StudioMode, Task } from "../types";
+import type { CreatePayload, RealProvider, StudioMode, Task } from "../types";
 
 interface ServerJob {
   id: string; project_id: string; shot_id: string; image_id: string;
@@ -15,6 +15,7 @@ interface ServerJob {
 
 export interface ServiceHealth {
   mode: StudioMode | null;
+  provider: RealProvider | null;
   ready: boolean;
   tunnelConnected: boolean;
   gpuConnected: boolean;
@@ -22,15 +23,17 @@ export interface ServiceHealth {
 }
 
 export function realServiceHealth(body: unknown, mode: StudioMode): ServiceHealth {
-  if (!body || typeof body !== "object" || !("mode" in body) || body.mode !== "REAL_H3"
+  if (!body || typeof body !== "object" || !("mode" in body)
       || !("simulation" in body) || body.simulation !== false
-      || !("provider" in body) || body.provider !== "minimax-h3"
+      || !("provider" in body) || !((body.mode === "REAL_H3" && body.provider === "minimax-h3")
+        || (body.mode === "REAL_WAN" && body.provider === "wan2.2-i2v-a14b"))
       || !("tunnel_connected" in body) || typeof body.tunnel_connected !== "boolean"
       || !("gpu_connected" in body) || typeof body.gpu_connected !== "boolean") {
     throw new Error("真实服务身份或隧道/GPU状态不符");
   }
   return {
     mode:"real",
+    provider:body.provider as RealProvider,
     ready:mode === "real" && "ready" in body && body.ready === true
       && body.tunnel_connected && body.gpu_connected,
     tunnelConnected:body.tunnel_connected,
@@ -62,7 +65,7 @@ function readPending(storageKey: string): PendingSubmission | null {
 export function toTask(job: ServerJob, mode: StudioMode): Task {
   const api = "/api/studio/" + mode;
   const real = mode === "real";
-  if (real ? job.simulation !== false || job.provider !== "minimax-h3"
+  if (real ? job.simulation !== false || !["minimax-h3", "wan2.2-i2v-a14b"].includes(job.provider)
     : job.simulation !== true || job.gpu_connected !== false || job.provider !== "mock-h3") {
     throw new Error("任务来源与当前模式不符，已拒绝混入历史");
   }
@@ -70,7 +73,10 @@ export function toTask(job: ServerJob, mode: StudioMode): Task {
   const verified = job.verified === true && Boolean(job.local_path)
     && /^[a-f0-9]{64}$/i.test(job.output_sha256 ?? "") && (job.output_bytes ?? 0) > 0
     && Boolean(metadata && [metadata.width, metadata.height, metadata.duration_seconds, metadata.fps]
-      .every(value => typeof value === "number" && Number.isFinite(value) && value > 0));
+      .every(value => typeof value === "number" && Number.isFinite(value) && value > 0))
+    && (job.provider !== "wan2.2-i2v-a14b" || Boolean(metadata && metadata.width === 774
+      && metadata.height === 1376 && metadata.fps === 24 && metadata.frame_count === 120
+      && metadata.sample_aspect_ratio === "1:1" && Math.abs(metadata.duration_seconds - 5) < 0.000001));
   if (!["queued", "running", "submission_unknown", "downloading", "completed", "failed"].includes(job.status)) {
     throw new Error("服务器返回未知任务状态");
   }
@@ -82,7 +88,7 @@ export function toTask(job: ServerJob, mode: StudioMode): Task {
   }
   return {
     id: job.id, prompt: job.prompt, negativePrompt: job.negative_prompt,
-    modelId: real ? "minimax-h3" : "mock-h3", aspectRatio: job.aspect_ratio,
+    modelId: real ? job.provider : "mock-h3", aspectRatio: job.aspect_ratio,
     duration: job.duration_seconds, fps: 24, seed: 0, cfg: 0, motion: 0,
     status: job.status === "completed" ? "done" : job.status,
     progress: job.progress, etaSeconds: real ? null : Math.max(0, Math.ceil(6 - (Date.now()/1000 - job.created_at))),
@@ -106,7 +112,7 @@ export function useTaskEngine(mode: StudioMode) {
   const API = "/api/studio/" + mode;
   const HIDDEN_KEY = "aniflow." + mode + ".hidden_ids.v1";
   const PENDING_KEY = "aniflow." + mode + ".pending_submission.v1";
-  const [service, setService] = useState<ServiceHealth>({mode:null, ready:false, tunnelConnected:false, gpuConnected:false, reasons:[]});
+  const [service, setService] = useState<ServiceHealth>({mode:null, provider:null, ready:false, tunnelConnected:false, gpuConnected:false, reasons:[]});
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [hidden, setHidden] = useState<Set<string>>(() => {
     try {
@@ -134,7 +140,7 @@ export function useTaskEngine(mode: StudioMode) {
     if (realResponse.status === 404) {
       const mock = await jsonOrError(await fetch("/api/studio/mock/health", {cache:"no-store"}));
       if (mock.mode !== "MOCK_ONLY" || mock.provider !== "mock-h3") throw new Error("未知本机服务");
-      next = {mode:"mock", ready:mode === "mock", tunnelConnected:false, gpuConnected:false, reasons:[]};
+      next = {mode:"mock", provider:null, ready:mode === "mock", tunnelConnected:false, gpuConnected:false, reasons:[]};
     } else {
       const real = await jsonOrError(realResponse);
       next = realServiceHealth(real, mode);
@@ -203,6 +209,9 @@ export function useTaskEngine(mode: StudioMode) {
     try {
       const health = await checkService();
       if (!health.ready || health.mode !== mode) throw new Error("当前服务不支持此模式或真实预检未通过，已阻止提交");
+      if (mode === "real" && payload.modelId !== health.provider) {
+        throw new Error("真实模型已变更，请核验当前模型后重新提交");
+      }
       const blob = await fetch(payload.firstFrame).then(r=>r.blob());
       if (blob.size > 10*1024*1024) throw new Error("首帧超过10MB");
       const filename = blob.type === "image/png" ? "frame.png" : "frame.jpg";
@@ -221,7 +230,7 @@ export function useTaskEngine(mode: StudioMode) {
           image_id:asset.image_id, prompt:payload.prompt,
           negative_prompt:payload.negativePrompt,
           duration_seconds:payload.duration, aspect_ratio:payload.aspectRatio,
-          idempotency_key:key, provider:mode === "real" ? "minimax-h3" : "mock-h3",
+          idempotency_key:key, provider:mode === "real" ? health.provider : "mock-h3",
         }),
       });
       if (!response.ok && [400, 401, 403, 404, 422].includes(response.status)) {

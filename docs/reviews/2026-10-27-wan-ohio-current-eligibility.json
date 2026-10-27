@@ -1,0 +1,121 @@
+{
+  "observed_at_utc": "2026-10-27T01:29:06.813136+00:00",
+  "region": "us-east-2",
+  "read_only": true,
+  "gpu_created": false,
+  "real_video_count": 0,
+  "quota": {
+    "QuotaCode": "L-DB2E81BA",
+    "QuotaName": "Running On-Demand G and VT instances",
+    "Value": 8.0,
+    "GlobalQuota": false
+  },
+  "inventory": {
+    "nonterminated_instances_count": 0,
+    "states": [],
+    "running_or_pending_g_vt_vcpus": 0
+  },
+  "instance_type": {
+    "InstanceType": "g7e.2xlarge",
+    "VCpuInfo": {
+      "DefaultVCpus": 8,
+      "DefaultCores": 4,
+      "DefaultThreadsPerCore": 2,
+      "ValidCores": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "ValidThreadsPerCore": [
+        1,
+        2
+      ]
+    },
+    "MemoryInfo": {
+      "SizeInMiB": 65536
+    },
+    "GpuInfo": {
+      "Gpus": [
+        {
+          "Name": "RTX PRO Server 6000",
+          "Manufacturer": "NVIDIA",
+          "Count": 1,
+          "LogicalGpuCount": 1,
+          "GpuPartitionSize": 1.0,
+          "Workloads": [
+            "ml-ai",
+            "graphics"
+          ],
+          "MemoryInfo": {
+            "SizeInMiB": 98304
+          }
+        }
+      ],
+      "TotalGpuMemoryInMiB": 98304
+    },
+    "ProcessorInfo": {
+      "SupportedArchitectures": [
+        "x86_64"
+      ],
+      "SustainedClockSpeedInGhz": 2.4,
+      "Manufacturer": "Intel"
+    },
+    "EbsInfo": {
+      "EbsOptimizedSupport": "default",
+      "EncryptionSupport": "supported",
+      "EbsOptimizedInfo": {
+        "BaselineBandwidthInMbps": 2000,
+        "BaselineThroughputInMBps": 250.0,
+        "BaselineIops": 8000,
+        "MaximumBandwidthInMbps": 5000,
+        "MaximumThroughputInMBps": 625.0,
+        "MaximumIops": 20000
+      },
+      "NvmeSupport": "required",
+      "MaximumEbsAttachments": 32,
+      "AttachmentLimitType": "dedicated"
+    },
+    "SupportedUsageClasses": [
+      "on-demand",
+      "spot"
+    ]
+  },
+  "offerings": {
+    "offerings": [
+      {
+        "InstanceType": "g7e.2xlarge",
+        "LocationType": "availability-zone",
+        "Location": "us-east-2a"
+      },
+      {
+        "InstanceType": "g7e.2xlarge",
+        "LocationType": "availability-zone",
+        "Location": "us-east-2b"
+      },
+      {
+        "InstanceType": "g7e.2xlarge",
+        "LocationType": "availability-zone",
+        "Location": "us-east-2c"
+      }
+    ],
+    "actual_on_demand_capacity_verified": false
+  },
+  "account": {
+    "accountPlanType": "PAID",
+    "accountPlanStatus": "ACTIVE",
+    "accountPlanRemainingCredits": {
+      "amount": 46.49,
+      "unit": "USD"
+    }
+  },
+  "price": [
+    {
+      "sku": "84MJTJ2X73HAYM9Q",
+      "effective_date": "2026-10-01T00:00:00Z",
+      "unit": "Hrs",
+      "usd": "3.3631200000",
+      "description": "$3.36312 per On Demand Linux g7e.2xlarge Instance Hour"
+    }
+  ]
+}

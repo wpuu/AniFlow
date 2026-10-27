@@ -1,5 +1,6 @@
 export type TaskStatus = "queued" | "running" | "submission_unknown" | "downloading" | "done" | "failed";
 export type StudioMode = "mock" | "real";
+export type RealProvider = "minimax-h3" | "wan2.2-i2v-a14b";
 export type AspectRatio = "16:9" | "9:16" | "1:1" | "4:3" | "21:9";
 export type BackendId = "minimax" | "agnes" | "huggingface";
 export type ModelStatus = "ready" | "busy" | "degraded" | "offline";
@@ -48,7 +49,8 @@ export interface Task {
   verified?: boolean;
   elapsedSeconds?: number | null;
   peakVramMb?: number | null;
-  videoMetadata?: { duration_seconds: number; width: number; height: number; fps: number };
+  videoMetadata?: { duration_seconds: number; width: number; height: number; fps: number;
+    frame_count?: number; sample_aspect_ratio?: string };
 }
 
 export interface CreatePayload {

@@ -1,4 +1,4 @@
-// Local response-contract tests only. These never contact AWS or generate H3 video.
+// Local response-contract tests only. These never contact AWS or generate video.
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -73,6 +73,45 @@ test("tunnel and CUDA evidence are separate and both required for ready", () => 
   assert.throws(()=>realServiceHealth(missing, "real"), /隧道\/GPU状态/);
 });
 
+test("Wan health requires its exact identity pair and current readiness", () => {
+  const health = {mode:"REAL_WAN", provider:"wan2.2-i2v-a14b", simulation:false,
+    ready:true, tunnel_connected:true, gpu_connected:true, blocked_reasons:[]};
+  assert.equal(realServiceHealth(health, "real").provider, "wan2.2-i2v-a14b");
+  assert.equal(realServiceHealth({...health, ready:false}, "real").ready, false);
+  assert.equal(realServiceHealth({...health, gpu_connected:false}, "real").ready, false);
+  assert.equal(realServiceHealth({...health, tunnel_connected:false}, "real").ready, false);
+  assert.equal(realServiceHealth(health, "mock").ready, false);
+  for (const broken of [{...health, mode:"REAL_H3"}, {...health, provider:"minimax-h3"},
+    {...health, provider:"some-other-model"}, {...health, simulation:true}]) {
+    assert.throws(()=>realServiceHealth(broken, "real"), /真实服务身份/);
+  }
+});
+
+test("Wan history keeps its own model and never invents completion or metrics", () => {
+  const wan = {...realJob, id:"wan-test", provider:"wan2.2-i2v-a14b"};
+  for (const status of ["running", "submission_unknown", "downloading"]) {
+    const task = toTask({...wan, status, video_download_path:"/api/studio/real/jobs/wan-test/video"}, "real");
+    assert.equal(task.modelId, "wan2.2-i2v-a14b");
+    assert.equal(task.videoUrl, undefined);
+    assert.equal(task.cost, null);
+    assert.equal(task.etaSeconds, null);
+  }
+  assert.equal(toTask(realJob, "real").modelId, "minimax-h3");
+  assert.throws(()=>toTask(wan, "mock"), /任务来源/);
+  assert.throws(()=>toTask({...wan, provider:"unknown-model"}, "real"), /任务来源/);
+  const completed = {...wan, status:"completed", verified:true, local_path:"G:/outputs/Wan.mp4",
+    output_sha256:"c".repeat(64), output_bytes:4096,
+    video_metadata:{width:774, height:1376, duration_seconds:5, fps:24, frame_count:120, sample_aspect_ratio:"1:1"},
+    video_download_path:"/api/studio/real/jobs/wan-test/video"};
+  assert.equal(toTask(completed, "real").status, "done");
+  assert.throws(()=>toTask({...completed, verified:false}, "real"), /不能显示完成/);
+  for (const metadata of [{...completed.video_metadata, width:720},
+    {...completed.video_metadata, duration_seconds:121/24}, {...completed.video_metadata, fps:16},
+    {...completed.video_metadata, frame_count:121}, {...completed.video_metadata, sample_aspect_ratio:"2:1"}]) {
+    assert.throws(()=>toTask({...completed, video_metadata:metadata}, "real"), /不能显示完成/);
+  }
+});
+
 const preflightSource = fs.readFileSync(path.join(__dirname, "../src/components/AwsPreflightPanel.tsx"), "utf8");
 const preflightModule = {exports:{}, require:()=>({}), Error, Number, Object};
 vm.runInNewContext(ts.transpileModule(preflightSource, {
@@ -118,4 +157,107 @@ test("GameLift preflight requires its private S3, CUDA and both release safeguar
     delete broken.checks[required];
     assert.throws(()=>parseCloudPreflight(broken,"real"), /必要安全字段/);
   }
+});
+
+test("Wan EC2 projection is bound to its model, Ohio, exact instance and hardware", () => {
+  const keys = ["credit_ec2_eligible", "credit_expiry_confirmed", "ohio_gpu_quota",
+    "ohio_capacity_and_price", "ssm_private_connectivity", "wan_license_verified",
+    "gpu_stop_safeguard", "independent_stop_safeguard", "account_plan_unchanged", "native_video_spec_confirmed"];
+  const projection = {mode:"LOCAL_AUDIT_PROJECTION", provider:"wan2.2-i2v-a14b", service:"ec2",
+    region:"us-east-2", instance_type:"g7e.2xlarge", expected_ram_gib:64, expected_gpu_vram_gib:96,
+    checks:Object.fromEntries(keys.map(key=>[key,null])), launch_allowed:false, real_gpu_connected:false};
+  assert.equal(parseCloudPreflight(projection, "real").provider, "wan2.2-i2v-a14b");
+  assert.equal(parseCloudPreflight(projection, "real").launch_allowed, false);
+  for (const broken of [{...projection, provider:"minimax-h3"}, {...projection, region:"ap-northeast-1"},
+    {...projection, instance_type:"g6e.2xlarge"}, {...projection, service:"workspaces"}]) {
+    assert.throws(()=>parseCloudPreflight(broken, "real"), /本机审计投影/);
+  }
+  for (const required of keys) {
+    const broken = {...projection, checks:{...projection.checks}};
+    delete broken.checks[required];
+    assert.throws(()=>parseCloudPreflight(broken, "real"), /必要安全字段/);
+  }
+  assert.throws(()=>parseCloudPreflight({...projection, expected_gpu_vram_gib:24}, "real"), /必要安全字段/);
+  assert.throws(()=>parseCloudPreflight({...projection, expected_ram_gib:"64"}, "real"), /必要安全字段/);
+  assert.throws(()=>parseCloudPreflight({...projection, launch_allowed:true}, "real"), /必要安全字段/);
+  const ready = {...projection, checks:Object.fromEntries(keys.map(key=>[key,true])),
+    launch_allowed:true, real_gpu_connected:true, tunnel_connected:true};
+  assert.equal(parseCloudPreflight(ready, "real").launch_allowed, true);
+  assert.throws(()=>parseCloudPreflight({...ready, tunnel_connected:false}, "real"), /必要安全字段/);
+});
+
+test("fresh validated Wan service identity supplies the submitted provider", async () => {
+  const calls = [];
+  const local = new Map();
+  const accepted = {...realJob, provider:"wan2.2-i2v-a14b"};
+  const react = {useCallback:fn=>fn, useEffect:()=>{}, useMemo:fn=>fn(), useRef:value=>({current:value}),
+    useState:value=>[typeof value === "function" ? value() : value, ()=>{}]};
+  const context = {exports:{}, require:()=>react, Date, Error, console, Blob, FormData,
+    localStorage:{getItem:key=>local.get(key) ?? null, setItem:(key,value)=>local.set(key,value), removeItem:key=>local.delete(key)},
+    crypto:{randomUUID:()=>"wan-create-contract-key"},
+    fetch:async (url, options) => {
+      calls.push({url, options});
+      if (url === "/api/studio/real/health") return {ok:true, status:200, json:async()=>({
+        mode:"REAL_WAN", provider:"wan2.2-i2v-a14b", simulation:false, ready:true,
+        tunnel_connected:true, gpu_connected:true, blocked_reasons:[]})};
+      if (url.startsWith("data:image/")) return {blob:async()=>new Blob(["image"],{type:"image/png"})};
+      if (url.endsWith("/assets")) return {ok:true, json:async()=>({image_id:"a".repeat(64)})};
+      if (url.endsWith("/jobs")) return {ok:true, json:async()=>accepted};
+      throw new Error("Unexpected local contract request");
+    }};
+  vm.runInNewContext(compiled, context);
+  const engine = context.exports.useTaskEngine("real");
+  const payload = {firstFrame:"data:image/png;base64,aW1hZ2U=",
+    prompt:"Owner motion", negativePrompt:"", modelId:"wan2.2-i2v-a14b", duration:5, aspectRatio:"9:16"};
+  const task = await engine.createTask(payload);
+  assert.equal(task.modelId, "wan2.2-i2v-a14b");
+  assert.equal(JSON.parse(calls.find(call=>call.url.endsWith("/jobs")).options.body).provider, "wan2.2-i2v-a14b");
+  assert.equal(calls.filter(call=>call.url.endsWith("/jobs")).length, 1);
+  await assert.rejects(()=>engine.createTask({...payload, modelId:"minimax-h3"}), /真实模型已变更/);
+  assert.equal(calls.filter(call=>call.url.endsWith("/jobs")).length, 1);
+});
+
+function renderComponent(relativePath, exportName, props) {
+  const modules = new Map();
+  function load(file) {
+    if (modules.has(file)) return modules.get(file);
+    const context = {exports:{}, require:id=>{
+      if (!id.startsWith(".")) return require(id);
+      const base = path.resolve(path.dirname(file), id);
+      const target = [base + ".ts", base + ".tsx"].find(candidate=>fs.existsSync(candidate));
+      if (!target) throw new Error("Unexpected local UI dependency");
+      return load(target);
+    }};
+    modules.set(file, context.exports);
+    vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, "utf8"), {
+      compilerOptions:{module:ts.ModuleKind.CommonJS, target:ts.ScriptTarget.ES2020, jsx:ts.JsxEmit.ReactJSX},
+    }).outputText, context);
+    return context.exports;
+  }
+  const component = load(path.join(__dirname, relativePath))[exportName];
+  return require("react-dom/server").renderToStaticMarkup(require("react").createElement(component, props));
+}
+
+test("Wan player exposes real file evidence and hides unsupported sampling metrics", () => {
+  const task = toTask({...realJob, provider:"wan2.2-i2v-a14b"}, "real");
+  const html = renderComponent("../src/components/PlayerModal.tsx", "PlayerModal", {
+    task, onClose:()=>{}, onDownload:()=>{},
+  });
+  assert.match(html, /Wan2\.2 I2V A14B/);
+  assert.match(html, /真实生成与本机文件证据/);
+  assert.match(html, /尚未保存/);
+  assert.match(html, /尚未校验/);
+  assert.doesNotMatch(html, />Seed<|>CFG<|>运动<|MiniMax H3/);
+});
+
+test("Wan preflight displays Ohio and unverified target specifications", () => {
+  const html = renderComponent("../src/components/AwsPreflightPanel.tsx", "AwsPreflightPanel", {
+    mode:"real", realProvider:"wan2.2-i2v-a14b", onClose:()=>{},
+  });
+  assert.match(html, /俄亥俄州 Wan2\.2/);
+  assert.match(html, /us-east-2/);
+  assert.match(html, /g7e\.2xlarge/);
+  assert.match(html, /原生视频规格核验/);
+  assert.match(html, /目标硬件（未实测）/);
+  assert.doesNotMatch(html, /H3 使用地域与许可/);
 });

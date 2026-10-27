@@ -27,6 +27,7 @@ export function PlayerModal({ task, onClose, onDownload }: PlayerModalProps) {
   const [progress, setProgress] = useState(0);
   const [copied, setCopied] = useState(false);
   const model = getModel(task.modelId);
+  const real = task.modelId === "minimax-h3" || task.modelId === "wan2.2-i2v-a14b";
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -164,8 +165,8 @@ export function PlayerModal({ task, onClose, onDownload }: PlayerModalProps) {
               <KV k="后端" v={model?.backendLabel ?? "—"} />
               <KV k="比例" v={task.aspectRatio} />
               <KV k="时长" v={`${task.duration}s`} />
-              <KV k="FPS" v={task.videoMetadata ? String(task.videoMetadata.fps) : task.modelId === "minimax-h3" ? "未测" : String(task.fps)} />
-              {task.modelId !== "minimax-h3" && <>
+              <KV k="FPS" v={task.videoMetadata ? String(task.videoMetadata.fps) : real ? "未测" : String(task.fps)} />
+              {!real && <>
                 <KV k="Seed" v={String(task.seed)} />
                 <KV k="CFG" v={task.cfg.toFixed(1)} />
                 <KV k="运动" v={task.motion.toFixed(2)} />
@@ -173,7 +174,7 @@ export function PlayerModal({ task, onClose, onDownload }: PlayerModalProps) {
               <KV k="成本" v={formatCost(task.cost)} />
               <KV k="创建" v={formatDate(task.createdAt)} />
             </div>
-            {task.modelId === "minimax-h3" && <Param label="真实生成与本机文件证据">
+            {real && <Param label="真实生成与本机文件证据">
               <dl className="space-y-2 break-all text-zinc-300">
                 <div>ComfyUI prompt_id：{task.promptId ?? "尚未确认"}</div>
                 <div>本机路径：{task.localPath ?? "尚未保存"}</div>

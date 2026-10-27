@@ -6,8 +6,8 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
-import { ASPECTS, DURATIONS, MODELS, REAL_MODEL, PROMPT_PRESETS, SAMPLE_FRAMES, getModel } from "../data";
-import type { AspectRatio, CreatePayload, StudioMode } from "../types";
+import { ASPECTS, DURATIONS, MODELS, PROMPT_PRESETS, SAMPLE_FRAMES, getModel, getRealModel } from "../data";
+import type { AspectRatio, CreatePayload, RealProvider, StudioMode } from "../types";
 import { cn } from "../utils/cn";
 import { formatCost } from "../utils/format";
 import { ModelDot } from "./StatusBadge";
@@ -17,14 +17,15 @@ interface CreatePanelProps {
   busyCount: number;
   disabled?: boolean;
   mode: StudioMode;
+  realProvider: RealProvider | null;
 }
 
-export function CreatePanel({ onSubmit, busyCount, disabled = false, mode }: CreatePanelProps) {
+export function CreatePanel({ onSubmit, busyCount, disabled = false, mode, realProvider }: CreatePanelProps) {
   const real = mode === "real";
-  const models = real ? [REAL_MODEL] : MODELS;
+  const models = real ? [getRealModel(realProvider)] : MODELS;
   const [prompt, setPrompt] = useState(PROMPT_PRESETS[0]);
   const [negativePrompt, setNegativePrompt] = useState("抖动, 过曝, 文字水印, 畸变, 低清晰度");
-  const [modelId, setModelId] = useState(models[0].id);
+  const [modelId, setModelId] = useState(MODELS[0].id);
   const [aspect, setAspect] = useState<AspectRatio>("9:16");
   const [duration, setDuration] = useState(5);
   const [firstFrame, setFirstFrame] = useState<string | undefined>(undefined);
@@ -35,7 +36,7 @@ export function CreatePanel({ onSubmit, busyCount, disabled = false, mode }: Cre
   const [advanced, setAdvanced] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const model = getModel(modelId)!;
+  const model = real ? getRealModel(realProvider) : getModel(modelId)!;
   const clampedDuration = Math.min(duration, model.maxDuration);
   const estimate = useMemo(
     () => Number((model.costPerSecond * clampedDuration).toFixed(3)),
@@ -54,7 +55,7 @@ export function CreatePanel({ onSubmit, busyCount, disabled = false, mode }: Cre
     onSubmit({
       prompt,
       negativePrompt,
-      modelId,
+      modelId:model.id,
       aspectRatio: aspect,
       duration: clampedDuration,
       fps,
@@ -84,7 +85,7 @@ export function CreatePanel({ onSubmit, busyCount, disabled = false, mode }: Cre
           <h2 className="text-sm font-medium text-zinc-100">新建视频</h2>
         </div>
         <span className="font-mono text-[10px] text-zinc-500">
-          {busyCount > 0 ? `${busyCount} 个任务占用后端` : real ? "真实 H3 · 受控实验" : "本机模拟服务"}
+          {busyCount > 0 ? `${busyCount} 个任务占用后端` : real ? `${model.shortName} · 受控实验` : "本机模拟服务"}
         </span>
       </div>
 
@@ -205,14 +206,14 @@ export function CreatePanel({ onSubmit, busyCount, disabled = false, mode }: Cre
                 }}
                 className={cn(
                   "w-full rounded-xl border px-3 py-2.5 text-left transition",
-                  modelId === m.id
+                  model.id === m.id
                     ? "border-cyan-400/40 bg-cyan-400/8"
                     : "border-white/6 bg-white/[0.02] hover:border-white/12",
                 )}
               >
                 <div className="flex items-center justify-between gap-2">
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="text-[13px] font-medium text-zinc-100">{m.name}</span>
                       <span className="rounded bg-white/6 px-1.5 py-px font-mono text-[10px] text-zinc-500">
                         {m.backendLabel}
