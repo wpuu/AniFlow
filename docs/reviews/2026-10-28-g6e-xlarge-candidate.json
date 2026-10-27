@@ -1,0 +1,41 @@
+{
+  "observed_at_utc": "2026-10-27T16:28:19.259025+00:00",
+  "read_only": true,
+  "region": "us-east-2",
+  "instance_type": "g6e.xlarge",
+  "vcpus": 4,
+  "physical_cores": 2,
+  "ram_mib": 32768,
+  "gpu": {
+    "Gpus": [
+      {
+        "Name": "L40S",
+        "Manufacturer": "NVIDIA",
+        "Count": 1,
+        "LogicalGpuCount": 1,
+        "GpuPartitionSize": 1.0,
+        "Workloads": [
+          "graphics",
+          "ml-ai"
+        ],
+        "MemoryInfo": {
+          "SizeInMiB": 45776
+        }
+      }
+    ],
+    "TotalGpuMemoryInMiB": 45776
+  },
+  "prices": [
+    {
+      "sku": "U8RNZPYWBGZY88NB",
+      "effective_date": "2026-10-01T00:00:00Z",
+      "unit": "Hrs",
+      "usd": "1.8610000000"
+    }
+  ],
+  "capacity_verified": false,
+  "instance_created": false,
+  "owner_approval_for_changed_cpu_ram_received": false,
+  "model_loading_verified": false,
+  "quality_settings_change_authorized": false
+}

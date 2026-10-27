@@ -1,5 +1,7 @@
 # AniFlow AWS东京H3｜Work模式执行交接｜2026-10-25
 
+> **2026-10-28接续L40S收尾：** 继续此前已批准的8 vCPU/64 GiB g6e.2xlarge，新唯一实验f双保护实际验证/备用实际等待后，auto+2a/2b/2c四次请求也全部容量不足。当前接续8次失败（G7e4、L40S4），历史累计21次容量拒绝；GPU/预检/模型/视频均0，模型下载暂停。本轮所有资源已核实删除、CLI退出缓存0。[完整结果及待选方案](../reviews/2026-10-28-l40s-f-result-and-option.md)。只读核出g6e.xlarge价1.861美元/小时、同L40S但4 vCPU/32 GiB；未创建或改Bridge门槛，因CPU/RAM减半与模型加载风险，等待Owner选择。保留8 vCPU/64 GiB错时重试是另一选择。
+
 > **2026-10-28 00:10本轮收尾：** Owner要求继续最高配置g7e.2xlarge；Luna/high仅完成Ego临时授权后停止，主负责人以唯一顺序执行器重建并实际验证双保护、确认备用真实等待，再做auto+2a/2b/2c四次真实请求，全部容量不足，无实例ID。累计容量拒绝17次（G7e8、L40S9），GPU/机上预检/模型部署/视频均0。模型下载仍暂停。本轮所有资源已逐项核实删除、CLI退出/认证缓存0。[本轮完整证据](../reviews/2026-10-28-g7e-e-result.md)。没有升级、提额或并行AWS资源操作者。下方为历史，不能把已清理保护视为仍部署。
 
 > **本轮最终补查：** CLI退出后仅利用原Ego已登录会话，在Tokyo与Ohio WorkSpaces Applications分别搜索G6e，各16条Accelerated.g6e Fleet/Image Builder配额应用值及默认值均0。[两区实际UI证据](../reviews/2026-10-27-applications-g6e-quotas.json)。Tokyo Graphics仅可见25行也均0，不代表穷尽所有图形机型；Ohio Graphics未另查。没有重新建立CLI登录、没有创建任何资源。当前仍未找到可直接启动的新增GPU路径，已有Ohio按需额度仍面临实际容量拒绝；GPU/模型部署/真实视频0、模型下载继续暂停。

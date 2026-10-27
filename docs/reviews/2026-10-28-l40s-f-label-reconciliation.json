@@ -1,0 +1,10 @@
+{
+  "observed_at_utc": "2026-10-27T16:21:03.238954+00:00",
+  "old_experiment_id": "aniflow-wan-ohio-20261028-l40s-f",
+  "new_experiment_id": "aniflow-wan-ohio-20261027-l40s-f",
+  "old_stacks_absent": {
+    "primary": true,
+    "backup": true,
+    "assets": true
+  }
+}

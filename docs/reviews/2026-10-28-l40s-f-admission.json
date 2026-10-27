@@ -1,0 +1,67 @@
+{
+  "experiment_id": "aniflow-wan-ohio-20261027-l40s-f",
+  "china_execution_date": "2026-10-28",
+  "actual_gpu_request_count": 4,
+  "actual_gpu_created": false,
+  "real_gpu_preflight_completed": false,
+  "model_downloads_started": false,
+  "real_video_count": 0,
+  "requests": [
+    {
+      "created_at_utc": "2026-10-28T00:26:17.000459+08:00",
+      "region": "us-east-2",
+      "zone": "auto",
+      "instance_type": "g6e.2xlarge",
+      "error_code": "InsufficientInstanceCapacity",
+      "reconciled_at_utc": "2026-10-28T00:26:27.193869+08:00",
+      "confirmed_nonterminated_instances": 0,
+      "confirmed_tagged_volumes": 0,
+      "stop_utc": "2026-10-27T16:35:01Z",
+      "cleanup_utc": "2026-10-27T16:40:01Z",
+      "root_encrypted_gb": 180,
+      "video_submitted": false
+    },
+    {
+      "created_at_utc": "2026-10-28T00:26:36.824066+08:00",
+      "region": "us-east-2",
+      "zone": "us-east-2a",
+      "instance_type": "g6e.2xlarge",
+      "error_code": "InsufficientInstanceCapacity",
+      "reconciled_at_utc": "2026-10-28T00:26:46.889523+08:00",
+      "confirmed_nonterminated_instances": 0,
+      "confirmed_tagged_volumes": 0,
+      "stop_utc": "2026-10-27T16:35:01Z",
+      "cleanup_utc": "2026-10-27T16:40:01Z",
+      "root_encrypted_gb": 180,
+      "video_submitted": false
+    },
+    {
+      "created_at_utc": "2026-10-28T00:26:55.811974+08:00",
+      "region": "us-east-2",
+      "zone": "us-east-2b",
+      "instance_type": "g6e.2xlarge",
+      "error_code": "InsufficientInstanceCapacity",
+      "reconciled_at_utc": "2026-10-28T00:27:05.749451+08:00",
+      "confirmed_nonterminated_instances": 0,
+      "confirmed_tagged_volumes": 0,
+      "stop_utc": "2026-10-27T16:35:01Z",
+      "cleanup_utc": "2026-10-27T16:40:01Z",
+      "root_encrypted_gb": 180,
+      "video_submitted": false
+    },
+    {
+      "created_at_utc": "2026-10-28T00:27:16.172225+08:00",
+      "region": "us-east-2",
+      "zone": "us-east-2c",
+      "instance_type": "g6e.2xlarge",
+      "error_code": "InsufficientInstanceCapacity",
+      "reconciled_at_utc": "2026-10-28T00:27:26.682453+08:00",
+      "confirmed_nonterminated_instances": 0,
+      "confirmed_tagged_volumes": 0,
+      "stop_utc": "2026-10-27T16:35:01Z",
+      "cleanup_utc": "2026-10-27T16:40:01Z",
+      "root_encrypted_gb": 180,
+      "video_submitted": false
+    }
+  ]
+}
