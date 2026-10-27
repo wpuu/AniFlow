@@ -1,5 +1,7 @@
 # AniFlow AWS东京H3｜Work模式执行交接｜2026-10-25
 
+> **2026-10-27 17:40本轮停止点：** 明确指定gpt-6-luna/high的唯一AWS操作者，在原Ego空间2恢复临时登录时收到“Control of this task space is with the user; browser commands are paused. Do not retry or take control back on your own.” 已停止浏览器操作、终止本轮登录等待并移除本轮授权URL；本轮AWS API操作0、GPU创建0，全区域配额补查尚未完成。模型下载保持暂停，用户东京页面未操作。等待Owner明确允许接回原空间；不将此前额度记录当作本轮新核查。
+
 > **Owner最新指令：先解决实例，暂停模型下载、归档补传及部署。** 本机进程复核未见模型下载任务；G盘未完成文件保留，不恢复下载。只有取得真实实例ID并确认Running后，才进入既定10分钟GPU预检；预检通过且实际Stopped后，再处理模型与生成。Ego继续明确使用gpt-6-luna/high，由单一代理操作AWS，主负责人不并行写云资源。当前实例仍0，正在补查其他已启用区域的真实配额及同款实例路径；不把区域提供该机型当作有库存，不改变既有费用、停机、地域及机型授权边界。下方为此前执行证据。
 
 > **2026-10-27 16:46当前：按用户要求，本轮Ego明确交给gpt-6-luna/high独立上下文子代理，后续云端协调也由同一Luna独占，主负责人停止AWS写入。** 新L40S实验c再做1次真实自动准入，仍InsufficientInstanceCapacity，GPU/模型部署/视频均0；已核查所有资源删除及CLI退出/缓存0。[本轮执行与模型指定记录](../reviews/2026-10-27-l40s-retry-luna.md)、[真实请求](../reviews/2026-10-27-l40s-retry-admission.json)、[清理](../reviews/2026-10-27-l40s-retry-cleanup.json)。另更正G盘权重下载已中断、约15.34GB/68.78GB、完整校验0，早前“后台继续”说法不准确。当前优先GPU实际Running，再处理模型。下方为历史。
