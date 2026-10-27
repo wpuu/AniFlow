@@ -1,5 +1,7 @@
 # AniFlow AWS东京H3｜Work模式执行交接｜2026-10-25
 
+> **Owner最新指令：先解决实例，暂停模型下载、归档补传及部署。** 本机进程复核未见模型下载任务；G盘未完成文件保留，不恢复下载。只有取得真实实例ID并确认Running后，才进入既定10分钟GPU预检；预检通过且实际Stopped后，再处理模型与生成。Ego继续明确使用gpt-6-luna/high，由单一代理操作AWS，主负责人不并行写云资源。当前实例仍0，正在补查其他已启用区域的真实配额及同款实例路径；不把区域提供该机型当作有库存，不改变既有费用、停机、地域及机型授权边界。下方为此前执行证据。
+
 > **2026-10-27 16:46当前：按用户要求，本轮Ego明确交给gpt-6-luna/high独立上下文子代理，后续云端协调也由同一Luna独占，主负责人停止AWS写入。** 新L40S实验c再做1次真实自动准入，仍InsufficientInstanceCapacity，GPU/模型部署/视频均0；已核查所有资源删除及CLI退出/缓存0。[本轮执行与模型指定记录](../reviews/2026-10-27-l40s-retry-luna.md)、[真实请求](../reviews/2026-10-27-l40s-retry-admission.json)、[清理](../reviews/2026-10-27-l40s-retry-cleanup.json)。另更正G盘权重下载已中断、约15.34GB/68.78GB、完整校验0，早前“后台继续”说法不准确。当前优先GPU实际Running，再处理模型。下方为历史。
 
 > **2026-10-27 15:44当前：用户已同意L40S，并要求先开出实例再处理模型。g6e.2xlarge本轮4次真实请求（自动、2a、2b、2c）均InsufficientInstanceCapacity，另外2次截止拦截未提交；GPU/预检/模型部署/视频均0。三个L40S实验栈已删除并逐项核查全无残留，CLI已logout/缓存0。** [L40S实际进度](../reviews/2026-10-27-l40s-admission-status.md)、[真实请求](../reviews/2026-10-27-l40s-admission-result.json)、[清理证据](../reviews/2026-10-27-l40s-cleanup-verification.json)。七个其他常用区域G/VT额度实读均0，Ohio仍8核；不提额、不升级、不联系客服。下一阶段先以真实实例ID及Running为门槛，再部署模型；已准备的本地白名单不是实云成功。下面记录均为历史。
