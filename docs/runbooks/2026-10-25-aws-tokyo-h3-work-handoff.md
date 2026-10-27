@@ -1,5 +1,7 @@
 # AniFlow AWS东京H3｜Work模式执行交接｜2026-10-25
 
+> **2026-10-27 22:26实际配额补查：** 唯一Luna/high操作者恢复官方CLI只读连接，东京完整分页读取2268项SageMaker配额、其中122项G6e/G7e相关值全部0；Ohio读取2383项、其中142项全部0，覆盖Notebook、Studio、Training、Processing、Transform、Endpoint、Cluster等用途。[目标2xlarge明细及全量原文哈希](../reviews/2026-10-27-sagemaker-two-region-quotas.json)。此前两区unknown已解决为实际0，其他区域不能外推。本轮云资源变更0、模型下载0；官方CLI退出并精确清理认证文件/缓存，全局配置与浏览器登录未改。[退出证据](../reviews/2026-10-27-sagemaker-quota-auth-cleanup.json)。继续只读补齐其他区域Spot/P及SageMaker其他GPU类型的未查部分，不创建新服务。
+
 > **剩余方案核查补充：** 本地重新检查同日05:15Z保存的五笔完整可抵扣服务原文，全部明确含Amazon SageMaker、Amazon Bedrock及AmazonBedrockFoundationModels；不是此次重新读取控制台，也不代表模型调用、GPU配额或所有产品费用已获准。[历史清单脱敏证据及原文哈希](../reviews/2026-10-27-sagemaker-credit-scope.json)。SageMaker为独立配额候选，官方已确认[Studio支持G7e](https://aws.amazon.com/about-aws/whats-new/2026/02/g7e-new-launch-sagemaker-studio-notebooks/)及[Notebook支持G6e](https://aws.amazon.com/about-aws/whats-new/2026/03/g6e-new-launch-sagemaker-notebook-instances/)；[10月15日公告](https://aws.amazon.com/about-aws/whats-new/2026/10/sagemaker-studio-new-sign-in-options/)描述验证客户默认GPU访问，但不能据此断言本账户已适用。Luna只读查询Ohio实际配额时页面导航及frame读取超时，按时限停止，当前值为unknown、不是0。[未读到的准确记录](../reviews/2026-10-27-sagemaker-quota-unknown.json)。本轮未创建SageMaker/其他资源、未下载模型；其他区域Spot/P尚未补查，不能将Ohio的0外推。
 
 > **19:51只读补查：** Ohio的G/VT Spot及按需P配额均为0，[证据](../reviews/2026-10-27-ohio-spot-p-quotas.json)。该结论不外推其他区域；没有新增创建或重新建立CLI连接。当前已核实按需路径需等待Ohio容量恢复，未承诺到期前可用。模型下载继续暂停。

@@ -1,0 +1,322 @@
+{
+  "captured_at_utc": "2026-10-27T22:25:11.071971+08:00",
+  "source": "ServiceQuotas.ListServiceQuotas; nonzero candidates confirmed with GetServiceQuota",
+  "historical_unknown_query_resolved_for_these_regions": true,
+  "full_local_evidence_sha256": "8ee797ceeabe310040747cafb041ef220cc82dae82ec90be1ad5224ffd67fd91",
+  "cloud_resource_mutations": 0,
+  "model_downloads_started": 0,
+  "regions": [
+    {
+      "region": "ap-northeast-1",
+      "listed_quota_count": 2268,
+      "g6e_g7e_matching_quota_count": 122,
+      "g6e_g7e_nonzero_count": 0,
+      "target_two_xlarge_quotas": [
+        {
+          "name": "ml.g7e.2xlarge for training warm pool usage",
+          "code": "L-6BC20E76",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g6e.2xlarge for training warm pool usage",
+          "code": "L-2E2B5B49",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g7e.2xlarge for training job usage",
+          "code": "L-4BCBE0A9",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g7e.2xlarge for processing job usage",
+          "code": "L-DAF97953",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g6e.2xlarge for cluster spot instance usage",
+          "code": "L-6B5E5FD1",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g7e.2xlarge for cluster spot instance usage",
+          "code": "L-5E364879",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g6e.2xlarge for spot training job usage",
+          "code": "L-29512C0F",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "Studio JupyterLab Apps running on ml.g6e.2xlarge instances",
+          "code": "L-014DC4EC",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g7e.2xlarge for endpoint usage",
+          "code": "L-5AA715AC",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "Studio CodeEditor Apps running on ml.g6e.2xlarge instances",
+          "code": "L-582AE722",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g6e.2xlarge for training job usage",
+          "code": "L-D1AFBF6F",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g6e.2xlarge for cluster usage",
+          "code": "L-75A970F1",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g6e.2xlarge for processing job usage",
+          "code": "L-56245D0D",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g6e.2xlarge for endpoint usage",
+          "code": "L-F8D7F460",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g7e.2xlarge for cluster usage",
+          "code": "L-9333FCD3",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g7e.2xlarge for spot training job usage",
+          "code": "L-B2E25E6A",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g6e.2xlarge for notebook instance usage",
+          "code": "L-9072E86E",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        }
+      ]
+    },
+    {
+      "region": "us-east-2",
+      "listed_quota_count": 2383,
+      "g6e_g7e_matching_quota_count": 142,
+      "g6e_g7e_nonzero_count": 0,
+      "target_two_xlarge_quotas": [
+        {
+          "name": "Studio CodeEditor Apps running on ml.g7e.2xlarge instances",
+          "code": "L-033B18EB",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g7e.2xlarge for training warm pool usage",
+          "code": "L-6BC20E76",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "Studio JupyterLab Apps running on ml.g7e.2xlarge instances",
+          "code": "L-7A3E0A2C",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g6e.2xlarge for training warm pool usage",
+          "code": "L-2E2B5B49",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g7e.2xlarge for training job usage",
+          "code": "L-4BCBE0A9",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g7e.2xlarge for processing job usage",
+          "code": "L-DAF97953",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g6e.2xlarge for cluster spot instance usage",
+          "code": "L-6B5E5FD1",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g7e.2xlarge for cluster spot instance usage",
+          "code": "L-5E364879",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g6e.2xlarge for spot training job usage",
+          "code": "L-29512C0F",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "Studio JupyterLab Apps running on ml.g6e.2xlarge instances",
+          "code": "L-014DC4EC",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g7e.2xlarge for endpoint usage",
+          "code": "L-5AA715AC",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "Studio CodeEditor Apps running on ml.g6e.2xlarge instances",
+          "code": "L-582AE722",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g6e.2xlarge for training job usage",
+          "code": "L-D1AFBF6F",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g6e.2xlarge for cluster usage",
+          "code": "L-75A970F1",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g6e.2xlarge for processing job usage",
+          "code": "L-56245D0D",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g6e.2xlarge for transform job usage",
+          "code": "L-CAF39894",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g6e.2xlarge for endpoint usage",
+          "code": "L-F8D7F460",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g7e.2xlarge for cluster usage",
+          "code": "L-9333FCD3",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g7e.2xlarge for spot training job usage",
+          "code": "L-B2E25E6A",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        },
+        {
+          "name": "ml.g6e.2xlarge for notebook instance usage",
+          "code": "L-9072E86E",
+          "value": 0.0,
+          "unit": "None",
+          "adjustable": true,
+          "source": "ListServiceQuotas"
+        }
+      ]
+    }
+  ]
+}
