@@ -1,5 +1,5 @@
 {
-  "observed_at_utc": "2026-10-28T11:03:19.715052+00:00",
+  "observed_at_utc": "2026-10-28T11:11:00.992417+00:00",
   "region": "us-east-2",
   "read_only": true,
   "quota": {
@@ -138,16 +138,6 @@
   "offerings": {
     "offerings": [
       {
-        "InstanceType": "g5.xlarge",
-        "LocationType": "availability-zone",
-        "Location": "us-east-2c"
-      },
-      {
-        "InstanceType": "g6.xlarge",
-        "LocationType": "availability-zone",
-        "Location": "us-east-2c"
-      },
-      {
         "InstanceType": "g6.xlarge",
         "LocationType": "availability-zone",
         "Location": "us-east-2b"
@@ -161,6 +151,16 @@
         "InstanceType": "g5.xlarge",
         "LocationType": "availability-zone",
         "Location": "us-east-2b"
+      },
+      {
+        "InstanceType": "g5.xlarge",
+        "LocationType": "availability-zone",
+        "Location": "us-east-2c"
+      },
+      {
+        "InstanceType": "g6.xlarge",
+        "LocationType": "availability-zone",
+        "Location": "us-east-2c"
       },
       {
         "InstanceType": "g5.xlarge",

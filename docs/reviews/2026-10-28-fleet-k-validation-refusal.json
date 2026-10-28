@@ -1,0 +1,17 @@
+{
+  "observed_at_utc": "2026-10-28T11:21:01.367880+00:00",
+  "exact_client_token_matched_in_cloudtrail": true,
+  "event_time_utc": "2026-10-28T11:16:24Z",
+  "error_code": "Client.InvalidParameter",
+  "error_message": "ValidUntil is not supported for given fleet type.",
+  "response_elements_present": false,
+  "matching_fleets": 0,
+  "matching_instances": 0,
+  "matching_volumes": 0,
+  "matching_network_interfaces": 0,
+  "matching_elastic_ips": 0,
+  "confirmed_no_fleet_or_compute_created": true,
+  "capacity_test_performed": false,
+  "single_create_fleet_api_calls": 1,
+  "automatic_replay_performed": false
+}

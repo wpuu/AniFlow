@@ -11,7 +11,10 @@ FLEET_ID = re.compile(r"fleet-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}")
 
 
 def build_request(template_id, template_version, subnets, experiment_id, client_token, valid_until):
-    """Build exactly six candidates for one instance; the caller verifies live protection first."""
+    """Build six one-instance candidates after the caller verifies independent protection.
+
+    The UTC stop deadline is validated locally; instant fleets do not support ValidUntil.
+    """
     if not isinstance(template_id, str) or not re.fullmatch(r"lt-[0-9a-f]{8,17}", template_id):
         raise ValueError("A concrete launch template ID is required")
     version = str(template_version)
@@ -38,7 +41,7 @@ def build_request(template_id, template_version, subnets, experiment_id, client_
                   "WeightedCapacity": 1, "Priority": priority}
                  for priority, kind in enumerate(ALLOWED_TYPES, start=1)
                  for subnet in sorted(subnets, key=lambda item: item["AvailabilityZone"])]
-    return {"Type": "instant", "ClientToken": client_token, "ValidUntil": valid_until,
+    return {"Type": "instant", "ClientToken": client_token,
         "OnDemandOptions": {"AllocationStrategy": "prioritized", "MaxTotalPrice": "1.006",
                             "SingleInstanceType": True, "MinTargetCapacity": 1},
         "TargetCapacitySpecification": {"TotalTargetCapacity": 1, "OnDemandTargetCapacity": 1,

@@ -62,6 +62,13 @@ def test_request_has_only_six_approved_pools_and_one_on_demand_target():
     validate_parameters(request, model.operation_model("CreateFleet").input_shape)
 
 
+def test_instant_request_omits_unsupported_fleet_lifetime_even_with_valid_stop_deadline():
+    request = FLEET.build_request(**arguments())
+    assert "ValidUntil" not in request
+    assert request["Type"] == "instant"
+    assert "SpotOptions" not in request
+
+
 @pytest.mark.parametrize("field,value", [
     ("template_id", "lt-other"), ("template_version", "$Latest"),
     ("template_version", "0"), ("template_version", True),
