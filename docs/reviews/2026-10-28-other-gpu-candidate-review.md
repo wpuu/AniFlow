@@ -1,5 +1,7 @@
 # Other GPU candidates under the existing quota: read-only review
 
+> 后续已完成账户实读与正式退出，以下“等待接回/未完成刷新”为此前历史。[2026-10-28 10:32实际结果](2026-10-28-other-gpu-live-results.md)。
+
 北京时间2026-10-28。Owner要求先查清其他GPU实例，不再重复容量不足的g7e.2xlarge、g6e.2xlarge、g6e.xlarge，不提额、不升级、不降低画质。本轮RunInstances/DryRun/云资源变更/模型下载均0，生产硬件门槛未改。
 
 ## 已完成与未完成

@@ -1,5 +1,7 @@
 # AniFlow AWS东京H3｜Work模式执行交接｜2026-10-25
 
+> **2026-10-28 10:32其他GPU实读完成：** 20启用区60项EC2配额全部读到，无unknown；仅Ohio G/VT按需8，其他区0、20区GSpot/P按需0。Ohio实例0，50种GPU规格中13种符合CPU额度，其中3种旧失败未重试、10种未试（含小内存和分割GPU）。新优先候选g7.2xlarge为8物理核/32 GiB RAM/RTX PRO4500 32 GiB，2.52美元/小时；G6.2xlarge为0.9776美元/小时、G5.2xlarge1.212美元/小时，两者显存22.35 GiB且主存32 GiB。三可用区offering不证明库存；本轮创建0、未改Bridge、模型下载0。赠金估算44.43美元，整条生成自付≤1尚未重核。CLI已官方退出缓存0；子代理误finish导致Ego空间2结束，原3页未动，当前只读核查已完成。[完整结果和API证据](../reviews/2026-10-28-other-gpu-live-results.md)。
+
 > **2026-10-28其他GPU只读补查（未完成账户刷新）：** Owner要求停止重复容量失败机型，先查其他现有额度内GPU。官方目录发现此前漏查的G7 g7.2xlarge（8 vCPU/32 GiB RAM、RTX PRO4500名义32 GB），不是已失败G7e；G5/G6 2xlarge也符合上次8核额度但显存更紧，Gr6最小16核超额。Luna/high将空快照误判为需登录并主动handOff，登录过期未确认；等待Owner允许接回后先修复显示再执行已备只读查询。本轮EC2/配额业务查询、资源创建及模型下载均0，未改Bridge门槛。[来源、风险和待核查项](../reviews/2026-10-28-other-gpu-candidate-review.md)。
 
 > **2026-10-28小规格实际结果：** Owner已同意的g6e.xlarge（4 vCPU/32 GiB、L40S）在新双保护实际验证及备用等待后，也对auto+2a/2b/2c四次全部返回容量不足，没有实例ID。当前累计25次容量拒绝（G7e.2xlarge8、G6e.2xlarge13、G6e.xlarge4）。本轮全部资源已逐项核实删除、临时CLI退出/认证缓存0。GPU/机上预检/模型加载/视频均0、模型下载仍暂停；Bridge门槛未改，也未触发或验证模型内存风险。[本轮完整证据](../reviews/2026-10-28-g6e-xlarge-g-result.md)。未创建定时重试或监控任务，未承诺30日前可用。

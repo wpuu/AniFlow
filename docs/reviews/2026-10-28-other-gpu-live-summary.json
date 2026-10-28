@@ -1,0 +1,293 @@
+{
+  "captured_at_utc": "2026-10-28T02:32:38.960833+00:00",
+  "china_time_range": "2026-10-28 10:31:54–10:32:38 UTC+8",
+  "read_only": true,
+  "enabled_regions_audited": 20,
+  "quota_values_read": 60,
+  "quota_unknowns": 0,
+  "only_nonzero_on_demand_g_region": "us-east-2",
+  "on_demand_g_vcpu_quota": 8,
+  "current_nonterminated_instances": 0,
+  "estimated_free_vcpus": 8,
+  "catalog_gpu_types_read": 50,
+  "quota_fitting_types": 13,
+  "untried_quota_fitting_types": 10,
+  "candidates": [
+    {
+      "instance_type": "g4dn.2xlarge",
+      "default_vcpus": 8,
+      "physical_cores": 4,
+      "threads_per_core": 2,
+      "ram_gib": 32.0,
+      "gpu": "T4",
+      "gpu_gib": 16.0,
+      "gpu_fraction": 1.0,
+      "linux_shared_on_demand_usd_per_hour": 0.752,
+      "gpu_only_4h_usd": 3.008,
+      "offering_zones": [
+        "us-east-2a",
+        "us-east-2b",
+        "us-east-2c"
+      ],
+      "previously_capacity_rejected": false,
+      "actual_capacity_verified": false,
+      "original_workflow_verified": false
+    },
+    {
+      "instance_type": "g4dn.xlarge",
+      "default_vcpus": 4,
+      "physical_cores": 2,
+      "threads_per_core": 2,
+      "ram_gib": 16.0,
+      "gpu": "T4",
+      "gpu_gib": 16.0,
+      "gpu_fraction": 1.0,
+      "linux_shared_on_demand_usd_per_hour": 0.526,
+      "gpu_only_4h_usd": 2.104,
+      "offering_zones": [
+        "us-east-2a",
+        "us-east-2b",
+        "us-east-2c"
+      ],
+      "previously_capacity_rejected": false,
+      "actual_capacity_verified": false,
+      "original_workflow_verified": false
+    },
+    {
+      "instance_type": "g5.2xlarge",
+      "default_vcpus": 8,
+      "physical_cores": 4,
+      "threads_per_core": 2,
+      "ram_gib": 32.0,
+      "gpu": "A10G",
+      "gpu_gib": 22.3515625,
+      "gpu_fraction": 1.0,
+      "linux_shared_on_demand_usd_per_hour": 1.212,
+      "gpu_only_4h_usd": 4.848,
+      "offering_zones": [
+        "us-east-2a",
+        "us-east-2b",
+        "us-east-2c"
+      ],
+      "previously_capacity_rejected": false,
+      "actual_capacity_verified": false,
+      "original_workflow_verified": false
+    },
+    {
+      "instance_type": "g5.xlarge",
+      "default_vcpus": 4,
+      "physical_cores": 2,
+      "threads_per_core": 2,
+      "ram_gib": 16.0,
+      "gpu": "A10G",
+      "gpu_gib": 22.3515625,
+      "gpu_fraction": 1.0,
+      "linux_shared_on_demand_usd_per_hour": 1.006,
+      "gpu_only_4h_usd": 4.024,
+      "offering_zones": [
+        "us-east-2a",
+        "us-east-2b",
+        "us-east-2c"
+      ],
+      "previously_capacity_rejected": false,
+      "actual_capacity_verified": false,
+      "original_workflow_verified": false
+    },
+    {
+      "instance_type": "g6.2xlarge",
+      "default_vcpus": 8,
+      "physical_cores": 4,
+      "threads_per_core": 2,
+      "ram_gib": 32.0,
+      "gpu": "L4",
+      "gpu_gib": 22.3515625,
+      "gpu_fraction": 1.0,
+      "linux_shared_on_demand_usd_per_hour": 0.9776,
+      "gpu_only_4h_usd": 3.9104,
+      "offering_zones": [
+        "us-east-2a",
+        "us-east-2b",
+        "us-east-2c"
+      ],
+      "previously_capacity_rejected": false,
+      "actual_capacity_verified": false,
+      "original_workflow_verified": false
+    },
+    {
+      "instance_type": "g6.xlarge",
+      "default_vcpus": 4,
+      "physical_cores": 2,
+      "threads_per_core": 2,
+      "ram_gib": 16.0,
+      "gpu": "L4",
+      "gpu_gib": 22.3515625,
+      "gpu_fraction": 1.0,
+      "linux_shared_on_demand_usd_per_hour": 0.8048,
+      "gpu_only_4h_usd": 3.2192,
+      "offering_zones": [
+        "us-east-2a",
+        "us-east-2b",
+        "us-east-2c"
+      ],
+      "previously_capacity_rejected": false,
+      "actual_capacity_verified": false,
+      "original_workflow_verified": false
+    },
+    {
+      "instance_type": "g6e.2xlarge",
+      "default_vcpus": 8,
+      "physical_cores": 4,
+      "threads_per_core": 2,
+      "ram_gib": 64.0,
+      "gpu": "L40S",
+      "gpu_gib": 44.703125,
+      "gpu_fraction": 1.0,
+      "linux_shared_on_demand_usd_per_hour": 2.24208,
+      "gpu_only_4h_usd": 8.96832,
+      "offering_zones": [
+        "us-east-2a",
+        "us-east-2b",
+        "us-east-2c"
+      ],
+      "previously_capacity_rejected": true,
+      "actual_capacity_verified": false,
+      "original_workflow_verified": false
+    },
+    {
+      "instance_type": "g6e.xlarge",
+      "default_vcpus": 4,
+      "physical_cores": 2,
+      "threads_per_core": 2,
+      "ram_gib": 32.0,
+      "gpu": "L40S",
+      "gpu_gib": 44.703125,
+      "gpu_fraction": 1.0,
+      "linux_shared_on_demand_usd_per_hour": 1.861,
+      "gpu_only_4h_usd": 7.444,
+      "offering_zones": [
+        "us-east-2a",
+        "us-east-2b",
+        "us-east-2c"
+      ],
+      "previously_capacity_rejected": true,
+      "actual_capacity_verified": false,
+      "original_workflow_verified": false
+    },
+    {
+      "instance_type": "g6f.2xlarge",
+      "default_vcpus": 8,
+      "physical_cores": 4,
+      "threads_per_core": 2,
+      "ram_gib": 32.0,
+      "gpu": "L4",
+      "gpu_gib": 5.587890625,
+      "gpu_fraction": 0.25,
+      "linux_shared_on_demand_usd_per_hour": 0.475,
+      "gpu_only_4h_usd": 1.9,
+      "offering_zones": [
+        "us-east-2a",
+        "us-east-2b",
+        "us-east-2c"
+      ],
+      "previously_capacity_rejected": false,
+      "actual_capacity_verified": false,
+      "original_workflow_verified": false
+    },
+    {
+      "instance_type": "g6f.large",
+      "default_vcpus": 2,
+      "physical_cores": 1,
+      "threads_per_core": 2,
+      "ram_gib": 8.0,
+      "gpu": "L4",
+      "gpu_gib": 2.7939453125,
+      "gpu_fraction": 0.125,
+      "linux_shared_on_demand_usd_per_hour": 0.202,
+      "gpu_only_4h_usd": 0.808,
+      "offering_zones": [
+        "us-east-2a",
+        "us-east-2b",
+        "us-east-2c"
+      ],
+      "previously_capacity_rejected": false,
+      "actual_capacity_verified": false,
+      "original_workflow_verified": false
+    },
+    {
+      "instance_type": "g6f.xlarge",
+      "default_vcpus": 4,
+      "physical_cores": 2,
+      "threads_per_core": 2,
+      "ram_gib": 16.0,
+      "gpu": "L4",
+      "gpu_gib": 2.7939453125,
+      "gpu_fraction": 0.125,
+      "linux_shared_on_demand_usd_per_hour": 0.2375,
+      "gpu_only_4h_usd": 0.95,
+      "offering_zones": [
+        "us-east-2a",
+        "us-east-2b",
+        "us-east-2c"
+      ],
+      "previously_capacity_rejected": false,
+      "actual_capacity_verified": false,
+      "original_workflow_verified": false
+    },
+    {
+      "instance_type": "g7.2xlarge",
+      "default_vcpus": 8,
+      "physical_cores": 8,
+      "threads_per_core": 1,
+      "ram_gib": 32.0,
+      "gpu": "RTX PRO 4500",
+      "gpu_gib": 32.0,
+      "gpu_fraction": 1.0,
+      "linux_shared_on_demand_usd_per_hour": 2.52,
+      "gpu_only_4h_usd": 10.08,
+      "offering_zones": [
+        "us-east-2a",
+        "us-east-2b",
+        "us-east-2c"
+      ],
+      "previously_capacity_rejected": false,
+      "actual_capacity_verified": false,
+      "original_workflow_verified": false
+    },
+    {
+      "instance_type": "g7e.2xlarge",
+      "default_vcpus": 8,
+      "physical_cores": 4,
+      "threads_per_core": 2,
+      "ram_gib": 64.0,
+      "gpu": "RTX PRO Server 6000",
+      "gpu_gib": 96.0,
+      "gpu_fraction": 1.0,
+      "linux_shared_on_demand_usd_per_hour": 3.36312,
+      "gpu_only_4h_usd": 13.45248,
+      "offering_zones": [
+        "us-east-2a",
+        "us-east-2b",
+        "us-east-2c"
+      ],
+      "previously_capacity_rejected": true,
+      "actual_capacity_verified": false,
+      "original_workflow_verified": false
+    }
+  ],
+  "excluded_above_quota_count": 37,
+  "first_new_candidate": "g7.2xlarge",
+  "lower_price_but_lower_vram_candidates": [
+    "g6.2xlarge",
+    "g5.2xlarge"
+  ],
+  "remaining_credits_estimate_usd": 44.43,
+  "full_generation_cash_cap_verified": false,
+  "future_tax_verified": false,
+  "run_instances_calls": 0,
+  "dry_run_calls": 0,
+  "cloud_resource_mutations": 0,
+  "model_downloads_started": 0,
+  "official_cli_logout": true,
+  "auth_cache_files_remaining": 0,
+  "full_api_record_sha256": "7f3bbcf37745ce6664caba594562b5cdf9f2615e5fb6d446d011a9da54cb02a6"
+}
