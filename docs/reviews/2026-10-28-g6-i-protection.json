@@ -1,0 +1,83 @@
+{
+  "experiment_id": "aniflow-wan-ohio-20261027-g6-i",
+  "primary_real_no_target_invocation": true,
+  "iam_positive_and_negative_decisions": {
+    "primary": {
+      "owned": {
+        "ec2:StopInstances": "allowed",
+        "ec2:TerminateInstances": "allowed",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      },
+      "wrong_tag": {
+        "ec2:StopInstances": "implicitDeny",
+        "ec2:TerminateInstances": "implicitDeny",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      },
+      "wrong_region": {
+        "ec2:StopInstances": "implicitDeny",
+        "ec2:TerminateInstances": "implicitDeny",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      }
+    },
+    "backup": {
+      "owned": {
+        "ec2:StopInstances": "allowed",
+        "ec2:TerminateInstances": "allowed",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      },
+      "wrong_tag": {
+        "ec2:StopInstances": "implicitDeny",
+        "ec2:TerminateInstances": "implicitDeny",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      },
+      "wrong_region": {
+        "ec2:StopInstances": "implicitDeny",
+        "ec2:TerminateInstances": "implicitDeny",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      }
+    }
+  },
+  "backup_actual_execution_status": "Success",
+  "backup_actual_steps": [
+    {
+      "name": "WaitUntilStop",
+      "status": "Success"
+    },
+    {
+      "name": "IndependentStop",
+      "status": "Success"
+    },
+    {
+      "name": "WaitUntilCleanup",
+      "status": "Success"
+    },
+    {
+      "name": "IndependentCleanup",
+      "status": "Success"
+    }
+  ],
+  "fixed_stop_utc": "2026-10-28T05:26:20Z",
+  "fixed_terminate_utc": "2026-10-28T05:27:20Z",
+  "final_stack_statuses_before_request": {
+    "primary": "UPDATE_COMPLETE",
+    "backup": "UPDATE_COMPLETE",
+    "assets": "CREATE_COMPLETE"
+  },
+  "actual_backup_wait_verified": true,
+  "actual_backup_wait_observed_at_utc": "2026-10-28T05:20:29.632894+00:00",
+  "actual_backup_wait_status": "InProgress",
+  "backup_terminal_after_no_instances": {
+    "status": "Cancelled",
+    "confirmed": true
+  },
+  "live_gpu_stop_test_performed": false,
+  "unchanged_shared_protection_tests_previously_passed": 76,
+  "local_synthetic_timing_regressions_passed": 4,
+  "timing_regression_is_not_real_gpu_test": true
+}

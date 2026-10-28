@@ -2,6 +2,7 @@
   "experiment_id": "aniflow-wan-ohio-20261027-g6-i",
   "actual_execution_date": "2026-10-28",
   "runtime_proofs_copied": 0,
+  "captured_after_execution": true,
   "sources_sha256": {
     "arm_preflight.py": "8f81c8662914b559c698a04b4788a265b06d9ffb5496adadd2cfe898f4e10a18",
     "aws_session.py": "6f7754b18840aefacfe7d39bd214fdafc8c39f922bd1f0facb9e5b7422b94292",
