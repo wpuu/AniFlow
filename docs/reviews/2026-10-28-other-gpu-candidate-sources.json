@@ -1,0 +1,82 @@
+{
+  "created_at_utc": "2026-10-28T01:56:28.024304+00:00",
+  "read_only": true,
+  "current_account_refresh_completed": false,
+  "historical_account_observation": {
+    "observed_at_utc": "2026-10-27T16:38:27.528224+00:00",
+    "region": "us-east-2",
+    "quota": {
+      "QuotaCode": "L-DB2E81BA",
+      "QuotaName": "Running On-Demand G and VT instances",
+      "Value": 8.0,
+      "GlobalQuota": false
+    },
+    "inventory": {
+      "nonterminated_instances_count": 0,
+      "states": [],
+      "running_or_pending_g_vt_vcpus": 0
+    }
+  },
+  "official_sources": [
+    "https://aws.amazon.com/ec2/instance-types/g7/",
+    "https://aws.amazon.com/blogs/aws/announcing-amazon-ec2-g7-instances-accelerated-by-nvidia-rtx-pro-4500-blackwell-server-edition-gpus/",
+    "https://docs.aws.amazon.com/ec2/latest/instancetypes/ac.html",
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-optimize-cpu.html",
+    "https://huggingface.co/Wan-AI/Wan2.2-I2V-A14B"
+  ],
+  "candidates_from_official_catalog_not_live_account_api": [
+    {
+      "type": "g7.2xlarge",
+      "vcpus": 8,
+      "system_ram_gib": 32,
+      "gpu": "RTX PRO 4500 Blackwell",
+      "advertised_gpu_memory_gb": 32,
+      "rank": "first_new_candidate_pending_account_refresh_and_capacity"
+    },
+    {
+      "type": "g5.2xlarge",
+      "vcpus": 8,
+      "system_ram_gib": 32,
+      "gpu": "A10G",
+      "advertised_gpu_memory_gb": 24,
+      "rank": "higher_memory_transfer_risk_unverified"
+    },
+    {
+      "type": "g6.2xlarge",
+      "vcpus": 8,
+      "system_ram_gib": 32,
+      "gpu": "L4",
+      "advertised_gpu_memory_gb": 24,
+      "rank": "higher_memory_transfer_risk_unverified"
+    },
+    {
+      "type": "g4dn.2xlarge",
+      "vcpus": 8,
+      "system_ram_gib": 32,
+      "gpu": "T4",
+      "advertised_gpu_memory_gb": 16,
+      "rank": "not_recommended_for_original_fp16_target_without_evidence"
+    },
+    {
+      "type": "gr6.4xlarge",
+      "vcpus": 16,
+      "system_ram_gib": 128,
+      "gpu": "L4",
+      "advertised_gpu_memory_gb": 24,
+      "rank": "exceeds_historical_8_vcpu_quota"
+    }
+  ],
+  "all_candidates_actual_capacity_verified": false,
+  "all_candidates_original_workflow_fit_verified": false,
+  "run_instances_calls": 0,
+  "dry_run_calls": 0,
+  "cloud_resource_mutations": 0,
+  "model_downloads_started": 0,
+  "production_hardware_gates_modified": false,
+  "browser_interruption": {
+    "blank_snapshot_misclassified_as_login_required": true,
+    "login_expiry_confirmed": false,
+    "control_handed_to_user": true,
+    "waiting_explicit_user_resume": true
+  }
+}
