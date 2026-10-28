@@ -1,0 +1,14 @@
+{
+  "observed_at_utc": "2026-10-28T11:10:31.205894+00:00",
+  "synthetic": true,
+  "aws_calls": 0,
+  "credentials_read": false,
+  "real_gpu_test": false,
+  "source": "cleanup_fleet_metadata.py",
+  "tests_collected": 21,
+  "tests_passed": 21,
+  "tests_failed": 0,
+  "pytest_exit_code": 0,
+  "all_passed": true,
+  "not_evidence_of_real_gpu_or_aws_resource_cleanup": true
+}
