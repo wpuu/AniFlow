@@ -1,0 +1,141 @@
+{
+  "source": "AWS Billing and Cost Management > Credits (current console UI)",
+  "captured_at": "2026-10-28T11:56:34+08:00",
+  "summary": {
+    "active_credit_count": 5,
+    "booked_remaining_usd": 91.14,
+    "estimated_remaining_usd": 44.06,
+    "amount_refresh_note": "UI says estimated amounts update every 24 hours; total amounts update when the monthly invoice is finalized."
+  },
+  "eligible_service_scope_checked_for_each_credit": {
+    "Amazon Elastic Compute Cloud (EC2)": true,
+    "Amazon Virtual Private Cloud (VPC)": true,
+    "AWS Systems Manager (SSM)": true,
+    "Amazon Simple Storage Service (S3)": true,
+    "AWS Lambda": true,
+    "AmazonCloudWatch": true,
+    "CloudWatch Events (EventBridge legacy name)": true,
+    "AWS CloudFormation": true
+  },
+  "line_item_limits": {
+    "specific EBS and public IPv4 line items individually confirmed": false,
+    "note": "The UI exposes service-level eligible product lists; it does not break down EC2/VPC coverage by EBS or public IPv4 line item."
+  },
+  "supplementary_scope_check": {
+    "captured_at": "2026-10-28T12:00:06+08:00",
+    "credit_name": "Explore AWS: Create a web app using AWS Lambda",
+    "status": "Active",
+    "booked_remaining_usd": 20.0,
+    "estimated_remaining_usd": 20.0,
+    "expires": "2026-10-30",
+    "AWS Key Management Service": true,
+    "AWS Data Transfer": true
+  },
+  "tax_and_marketplace": {
+    "tax named in eligible-product list": false,
+    "marketplace named in eligible-product list": false,
+    "explicit tax exclusion statement shown": false,
+    "explicit marketplace exclusion statement shown": false,
+    "interpretation": "No tax or Marketplace rule was explicitly stated in the service-list UI; absence from the product list is not recorded as an explicit exclusion clause."
+  },
+  "tax_settings_ui": {
+    "captured_at": "2026-10-28T11:59:11+08:00",
+    "registration_records_shown": 1,
+    "country_or_state_tax_location": "unknown; no country/state field was available in the permitted table columns",
+    "aws_service_seller": "Amazon Web Services, Inc.",
+    "tax_exemption_inferred": false,
+    "settings_changed": false
+  },
+  "credits": [
+    {
+      "name": "Explore AWS: Launch an instance using EC2",
+      "status": "Active",
+      "granted_usd": 20.0,
+      "booked_remaining_usd": 11.14,
+      "estimated_remaining_usd": 0.0,
+      "expires": "2026-10-30",
+      "eligible_services": {
+        "ec2": true,
+        "vpc": true,
+        "ssm": true,
+        "s3": true,
+        "lambda": true,
+        "cloudwatch": true,
+        "cloudwatch_events_eventbridge": true,
+        "cloudformation": true
+      }
+    },
+    {
+      "name": "Explore AWS: Use a foundation model in the Amazon Bedrock playground",
+      "status": "Active",
+      "granted_usd": 20.0,
+      "booked_remaining_usd": 20.0,
+      "estimated_remaining_usd": 0.0,
+      "expires": "2026-10-30",
+      "eligible_services": {
+        "ec2": true,
+        "vpc": true,
+        "ssm": true,
+        "s3": true,
+        "lambda": true,
+        "cloudwatch": true,
+        "cloudwatch_events_eventbridge": true,
+        "cloudformation": true
+      }
+    },
+    {
+      "name": "Explore AWS: Set up a cost budget using AWS Budgets",
+      "status": "Active",
+      "granted_usd": 20.0,
+      "booked_remaining_usd": 20.0,
+      "estimated_remaining_usd": 4.06,
+      "expires": "2026-10-30",
+      "eligible_services": {
+        "ec2": true,
+        "vpc": true,
+        "ssm": true,
+        "s3": true,
+        "lambda": true,
+        "cloudwatch": true,
+        "cloudwatch_events_eventbridge": true,
+        "cloudformation": true
+      }
+    },
+    {
+      "name": "Explore AWS: Create a web app using AWS Lambda",
+      "status": "Active",
+      "granted_usd": 20.0,
+      "booked_remaining_usd": 20.0,
+      "estimated_remaining_usd": 20.0,
+      "expires": "2026-10-30",
+      "eligible_services": {
+        "ec2": true,
+        "vpc": true,
+        "ssm": true,
+        "s3": true,
+        "lambda": true,
+        "cloudwatch": true,
+        "cloudwatch_events_eventbridge": true,
+        "cloudformation": true
+      }
+    },
+    {
+      "name": "Explore AWS: Create an Aurora or RDS database",
+      "status": "Active",
+      "granted_usd": 20.0,
+      "booked_remaining_usd": 20.0,
+      "estimated_remaining_usd": 20.0,
+      "expires": "2026-10-30",
+      "eligible_services": {
+        "ec2": true,
+        "vpc": true,
+        "ssm": true,
+        "s3": true,
+        "lambda": true,
+        "cloudwatch": true,
+        "cloudwatch_events_eventbridge": true,
+        "cloudformation": true
+      }
+    }
+  ]
+}
