@@ -1,0 +1,11 @@
+{
+  "synthetic_local_test": true,
+  "aws_calls": 0,
+  "real_gpu_test": false,
+  "create_launch_template_sdk_schema_passed": true,
+  "create_fleet_sdk_schema_passed": true,
+  "target_instances": 1,
+  "spot_target": 0,
+  "candidate_pools": 6,
+  "unsupported_valid_until_omitted": true
+}
