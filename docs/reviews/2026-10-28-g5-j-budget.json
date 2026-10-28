@@ -1,5 +1,5 @@
 {
-  "observed_at_utc": "2026-10-28T10:17:46.548537+00:00",
+  "observed_at_utc": "2026-10-28T10:18:08.929322+00:00",
   "estimate_only_not_invoice": true,
   "phase": "G5 admission and real CUDA/SSM/private-S3 preflight only; no models",
   "instance_type": "g5.2xlarge",
