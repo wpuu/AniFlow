@@ -1,5 +1,5 @@
 {
-  "observed_at_utc": "2026-10-28T12:48:01.594570+00:00",
+  "observed_at_utc": "2026-10-28T12:50:28.719739+00:00",
   "region": "us-east-2",
   "read_only": true,
   "quota": {
@@ -14,62 +14,6 @@
     "running_or_pending_g_vt_vcpus": 0
   },
   "instance_type": {
-    "g5.xlarge": {
-      "InstanceType": "g5.xlarge",
-      "VCpuInfo": {
-        "DefaultVCpus": 4,
-        "DefaultCores": 2,
-        "DefaultThreadsPerCore": 2
-      },
-      "MemoryInfo": {
-        "SizeInMiB": 16384
-      },
-      "GpuInfo": {
-        "Gpus": [
-          {
-            "Name": "A10G",
-            "Manufacturer": "NVIDIA",
-            "Count": 1,
-            "LogicalGpuCount": 1,
-            "GpuPartitionSize": 1.0,
-            "Workloads": [
-              "graphics",
-              "ml-ai"
-            ],
-            "MemoryInfo": {
-              "SizeInMiB": 22888
-            }
-          }
-        ],
-        "TotalGpuMemoryInMiB": 22888
-      },
-      "ProcessorInfo": {
-        "SupportedArchitectures": [
-          "x86_64"
-        ],
-        "SustainedClockSpeedInGhz": 3.3,
-        "Manufacturer": "AMD"
-      },
-      "EbsInfo": {
-        "EbsOptimizedSupport": "default",
-        "EncryptionSupport": "supported",
-        "EbsOptimizedInfo": {
-          "BaselineBandwidthInMbps": 700,
-          "BaselineThroughputInMBps": 87.5,
-          "BaselineIops": 3000,
-          "MaximumBandwidthInMbps": 3500,
-          "MaximumThroughputInMBps": 437.5,
-          "MaximumIops": 15000
-        },
-        "NvmeSupport": "required",
-        "MaximumEbsAttachments": 25,
-        "AttachmentLimitType": "shared"
-      },
-      "SupportedUsageClasses": [
-        "on-demand",
-        "spot"
-      ]
-    },
     "g6.xlarge": {
       "InstanceType": "g6.xlarge",
       "VCpuInfo": {
@@ -133,27 +77,68 @@
         "on-demand",
         "spot"
       ]
+    },
+    "g5.xlarge": {
+      "InstanceType": "g5.xlarge",
+      "VCpuInfo": {
+        "DefaultVCpus": 4,
+        "DefaultCores": 2,
+        "DefaultThreadsPerCore": 2
+      },
+      "MemoryInfo": {
+        "SizeInMiB": 16384
+      },
+      "GpuInfo": {
+        "Gpus": [
+          {
+            "Name": "A10G",
+            "Manufacturer": "NVIDIA",
+            "Count": 1,
+            "LogicalGpuCount": 1,
+            "GpuPartitionSize": 1.0,
+            "Workloads": [
+              "graphics",
+              "ml-ai"
+            ],
+            "MemoryInfo": {
+              "SizeInMiB": 22888
+            }
+          }
+        ],
+        "TotalGpuMemoryInMiB": 22888
+      },
+      "ProcessorInfo": {
+        "SupportedArchitectures": [
+          "x86_64"
+        ],
+        "SustainedClockSpeedInGhz": 3.3,
+        "Manufacturer": "AMD"
+      },
+      "EbsInfo": {
+        "EbsOptimizedSupport": "default",
+        "EncryptionSupport": "supported",
+        "EbsOptimizedInfo": {
+          "BaselineBandwidthInMbps": 700,
+          "BaselineThroughputInMBps": 87.5,
+          "BaselineIops": 3000,
+          "MaximumBandwidthInMbps": 3500,
+          "MaximumThroughputInMBps": 437.5,
+          "MaximumIops": 15000
+        },
+        "NvmeSupport": "required",
+        "MaximumEbsAttachments": 25,
+        "AttachmentLimitType": "shared"
+      },
+      "SupportedUsageClasses": [
+        "on-demand",
+        "spot"
+      ]
     }
   },
   "offerings": {
     "offerings": [
       {
-        "InstanceType": "g5.xlarge",
-        "LocationType": "availability-zone",
-        "Location": "us-east-2a"
-      },
-      {
         "InstanceType": "g6.xlarge",
-        "LocationType": "availability-zone",
-        "Location": "us-east-2a"
-      },
-      {
-        "InstanceType": "g6.xlarge",
-        "LocationType": "availability-zone",
-        "Location": "us-east-2b"
-      },
-      {
-        "InstanceType": "g5.xlarge",
         "LocationType": "availability-zone",
         "Location": "us-east-2b"
       },
@@ -163,9 +148,24 @@
         "Location": "us-east-2c"
       },
       {
+        "InstanceType": "g6.xlarge",
+        "LocationType": "availability-zone",
+        "Location": "us-east-2a"
+      },
+      {
+        "InstanceType": "g5.xlarge",
+        "LocationType": "availability-zone",
+        "Location": "us-east-2b"
+      },
+      {
         "InstanceType": "g5.xlarge",
         "LocationType": "availability-zone",
         "Location": "us-east-2c"
+      },
+      {
+        "InstanceType": "g5.xlarge",
+        "LocationType": "availability-zone",
+        "Location": "us-east-2a"
       }
     ],
     "actual_on_demand_capacity_verified": false

@@ -1,0 +1,60 @@
+{
+  "instance_reference_sha256": "77475ec6edec1b4ff98e188a350e6c15d0482f351d0f5b754121d3ad92eae49e",
+  "created_at_utc": "2026-10-28T12:56:22.431190+00:00",
+  "region": "us-east-2",
+  "instance_type": "g6.xlarge",
+  "zone": "us-east-2a",
+  "actual_created_instances": 1,
+  "real_create_fleet_calls": 1,
+  "parameter_corrections_used": 0,
+  "capacity_attempts_ended_after_creation": true,
+  "journal_terminal_outcomes": [
+    "created"
+  ],
+  "gpu_preflight_passed": true,
+  "ssm_read_command_confirmed": true,
+  "states": [
+    {
+      "at_utc": "2026-10-28T12:56:55.436856+00:00",
+      "state": "running"
+    },
+    {
+      "at_utc": "2026-10-28T12:59:48.757775+00:00",
+      "state": "stopping"
+    },
+    {
+      "at_utc": "2026-10-28T13:03:14.456717+00:00",
+      "state": "shutting-down"
+    },
+    {
+      "at_utc": "2026-10-28T13:06:23.942774+00:00",
+      "state": "terminated"
+    }
+  ],
+  "runtime_upper_seconds_including_pending": 601.511584,
+  "observed_not_running_within_10min": false,
+  "overall_real_preflight_success": false,
+  "seconds_over_strict_600s_observation_limit": 1.5115839999999707,
+  "gpu_name": "NVIDIA L4",
+  "cuda_visible_memory_gib": 22.0362548828125,
+  "actual_system_ram_gib": 15.003463745117188,
+  "cpu_count": 4,
+  "physical_cpu_cores": 2,
+  "threads_per_core": 2,
+  "real_fp16_cuda_matrix_seconds": 5.772764717999991,
+  "matrix_peak_allocated_mib": 44.125,
+  "matrix_peak_reserved_mib": 62.0,
+  "driver_and_nvidia_smi_memory": "NVIDIA L4, 595.112.07, 23034",
+  "torch_version": "2.11.0+cu130",
+  "model_downloaded": false,
+  "model_loaded": false,
+  "comfyui_deployed": false,
+  "real_video_count": 0,
+  "ffmpeg_present": false,
+  "ffprobe_present": false,
+  "gpu_compute_cost_conservative_upper_estimate_usd": 0.13447125633422222,
+  "cost_is_estimate_not_invoice": true,
+  "tax_and_credit_application_final_bill_unknown": true,
+  "original_raw_report_bytes": 1061,
+  "original_raw_report_sha256": "8b21694ec664857a776406749aa42c633051b99772da7d47c0f45854e3eb1188"
+}

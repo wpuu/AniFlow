@@ -1,0 +1,9 @@
+{
+  "observed_at_utc": "2026-10-28T13:07:21.530271+00:00",
+  "experiment_id": "aniflow-wan-ohio-20261027-fleet-m",
+  "fleet_deleted_terminal": true,
+  "fleet_state": "deleted_terminating",
+  "fleet_instance_ids_verified_terminated": 1,
+  "launch_template_absent": true,
+  "all_fleet_compute_terminated": true
+}

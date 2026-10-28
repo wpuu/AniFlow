@@ -1,0 +1,150 @@
+{
+  "observed_at_utc": "2026-10-28T13:13:23.934069+00:00",
+  "read_only": true,
+  "new_cloud_resources": 0,
+  "automation_status": "Failed",
+  "steps": [
+    {
+      "name": "WaitUntilStop",
+      "status": "Success",
+      "start_utc": "2026-10-28T12:56:00.851000+00:00",
+      "end_utc": "2026-10-28T13:02:00.112000+00:00",
+      "failure_classification": null
+    },
+    {
+      "name": "IndependentStop",
+      "status": "Failed",
+      "start_utc": "2026-10-28T13:02:00.332000+00:00",
+      "end_utc": "2026-10-28T13:03:07.657000+00:00",
+      "failure_classification": "compute_terminal_state_not_confirmed_before_bounded_script_end"
+    },
+    {
+      "name": "WaitUntilCleanup",
+      "status": "Success",
+      "start_utc": "2026-10-28T13:03:07.861000+00:00",
+      "end_utc": "2026-10-28T13:03:07.922000+00:00",
+      "failure_classification": null
+    },
+    {
+      "name": "IndependentCleanup",
+      "status": "Failed",
+      "start_utc": "2026-10-28T13:03:08.120000+00:00",
+      "end_utc": "2026-10-28T13:05:09.953000+00:00",
+      "failure_classification": "compute_terminal_state_not_confirmed_before_bounded_script_end"
+    }
+  ],
+  "instance_mutation_events": [
+    {
+      "time_utc": "2026-10-28T12:59:43Z",
+      "action": "StopInstances",
+      "actor": "root_controller",
+      "force": false,
+      "skip_os_shutdown": false,
+      "api_error_code": null
+    },
+    {
+      "time_utc": "2026-10-28T13:02:04Z",
+      "action": "StopInstances",
+      "actor": "independent_backup",
+      "force": true,
+      "skip_os_shutdown": false,
+      "api_error_code": null
+    },
+    {
+      "time_utc": "2026-10-28T13:02:10Z",
+      "action": "StopInstances",
+      "actor": "independent_backup",
+      "force": true,
+      "skip_os_shutdown": false,
+      "api_error_code": null
+    },
+    {
+      "time_utc": "2026-10-28T13:02:16Z",
+      "action": "StopInstances",
+      "actor": "independent_backup",
+      "force": true,
+      "skip_os_shutdown": false,
+      "api_error_code": null
+    },
+    {
+      "time_utc": "2026-10-28T13:02:21Z",
+      "action": "StopInstances",
+      "actor": "independent_backup",
+      "force": true,
+      "skip_os_shutdown": false,
+      "api_error_code": null
+    },
+    {
+      "time_utc": "2026-10-28T13:02:27Z",
+      "action": "StopInstances",
+      "actor": "independent_backup",
+      "force": true,
+      "skip_os_shutdown": false,
+      "api_error_code": null
+    },
+    {
+      "time_utc": "2026-10-28T13:02:33Z",
+      "action": "StopInstances",
+      "actor": "independent_backup",
+      "force": true,
+      "skip_os_shutdown": false,
+      "api_error_code": null
+    },
+    {
+      "time_utc": "2026-10-28T13:02:39Z",
+      "action": "StopInstances",
+      "actor": "independent_backup",
+      "force": true,
+      "skip_os_shutdown": false,
+      "api_error_code": null
+    },
+    {
+      "time_utc": "2026-10-28T13:02:44Z",
+      "action": "StopInstances",
+      "actor": "independent_backup",
+      "force": true,
+      "skip_os_shutdown": false,
+      "api_error_code": null
+    },
+    {
+      "time_utc": "2026-10-28T13:02:50Z",
+      "action": "StopInstances",
+      "actor": "independent_backup",
+      "force": true,
+      "skip_os_shutdown": false,
+      "api_error_code": null
+    },
+    {
+      "time_utc": "2026-10-28T13:02:51Z",
+      "action": "StopInstances",
+      "actor": "primary_guard",
+      "force": true,
+      "skip_os_shutdown": false,
+      "api_error_code": null
+    },
+    {
+      "time_utc": "2026-10-28T13:03:11Z",
+      "action": "TerminateInstances",
+      "actor": "independent_backup",
+      "force": false,
+      "skip_os_shutdown": false,
+      "api_error_code": null
+    },
+    {
+      "time_utc": "2026-10-28T13:05:06Z",
+      "action": "TerminateInstances",
+      "actor": "root_controller",
+      "force": true,
+      "skip_os_shutdown": true,
+      "api_error_code": null
+    },
+    {
+      "time_utc": "2026-10-28T13:07:23Z",
+      "action": "TerminateInstances",
+      "actor": "root_controller",
+      "force": false,
+      "skip_os_shutdown": false,
+      "api_error_code": null
+    }
+  ]
+}

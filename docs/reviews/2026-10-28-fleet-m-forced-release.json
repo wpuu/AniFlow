@@ -1,0 +1,9 @@
+{
+  "requested_at_utc": "2026-10-28T13:05:05.355804+00:00",
+  "previous_state": "shutting-down",
+  "only_owned_instance": true,
+  "gpu_and_ssm_checks_completed": true,
+  "force": true,
+  "skip_os_shutdown": true,
+  "acknowledged_state": "shutting-down"
+}

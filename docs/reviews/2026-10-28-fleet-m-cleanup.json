@@ -1,0 +1,31 @@
+{
+  "observed_at_utc": "2026-10-28T13:08:51.705455+00:00",
+  "checks": {
+    "asset_role_absent": true,
+    "lambda_absent": true,
+    "event_rule_absent": true,
+    "primary_role_absent": true,
+    "backup_role_absent": true,
+    "instance_profile_absent": true,
+    "security_group_absent": true,
+    "bucket_absent": true,
+    "backup_document_absent": true,
+    "log_group_absent": true,
+    "primary_stack": {
+      "absent": true
+    },
+    "backup_stack": {
+      "absent": true
+    },
+    "assets_stack": {
+      "absent": true
+    },
+    "fleet_deleted_compute_terminated": true,
+    "launch_template_absent": true
+  },
+  "nonterminated_instances": 0,
+  "tagged_ebs_volumes": 0,
+  "tagged_network_interfaces": 0,
+  "tagged_elastic_ips": 0,
+  "all_checked_resources_absent": true
+}

@@ -1,0 +1,10 @@
+{
+  "observed_at_utc": "2026-10-28T13:14:35.490808+00:00",
+  "read_only_audit": true,
+  "new_cloud_resources": 0,
+  "official_cli_logout": true,
+  "cached_auth_files_remaining": 0,
+  "global_user_aws_config_modified": false,
+  "browser_logout_invoked": false,
+  "exact_scope": "Retained Automation and EC2 CloudTrail evidence for terminated m instance only"
+}
