@@ -1,0 +1,12 @@
+{
+  "instance_type": "g5.2xlarge",
+  "vcpus": 8,
+  "ram_gib": 32,
+  "gpu_name": "A10G",
+  "expected_gpu_mib": 22888,
+  "owner_accepted_insufficient_memory_risk": true,
+  "quality_change_authorized": false,
+  "cpu_inference_authorized": false,
+  "models_remain_paused_before_gpu_preflight": true,
+  "authorization_scope": "Owner explicitly agreed one Ohio G5 attempt under the proposed conditions; current credit and full budget <=1 USD net cash, fresh independent double stop, at most10min real GPU preflight; no models, quota increase, upgrade or quality reduction"
+}

@@ -1,0 +1,142 @@
+{
+  "observed_at_utc": "2026-10-28T10:13:15.192022+00:00",
+  "region": "us-east-2",
+  "read_only": true,
+  "quota": {
+    "QuotaCode": "L-DB2E81BA",
+    "QuotaName": "Running On-Demand G and VT instances",
+    "Value": 8.0,
+    "GlobalQuota": false
+  },
+  "inventory": {
+    "nonterminated_instances_count": 0,
+    "states": [],
+    "running_or_pending_g_vt_vcpus": 0
+  },
+  "instance_type": {
+    "InstanceType": "g5.2xlarge",
+    "VCpuInfo": {
+      "DefaultVCpus": 8,
+      "DefaultCores": 4,
+      "DefaultThreadsPerCore": 2
+    },
+    "MemoryInfo": {
+      "SizeInMiB": 32768
+    },
+    "GpuInfo": {
+      "Gpus": [
+        {
+          "Name": "A10G",
+          "Manufacturer": "NVIDIA",
+          "Count": 1,
+          "LogicalGpuCount": 1,
+          "GpuPartitionSize": 1.0,
+          "Workloads": [
+            "graphics",
+            "ml-ai"
+          ],
+          "MemoryInfo": {
+            "SizeInMiB": 22888
+          }
+        }
+      ],
+      "TotalGpuMemoryInMiB": 22888
+    },
+    "ProcessorInfo": {
+      "SupportedArchitectures": [
+        "x86_64"
+      ],
+      "SustainedClockSpeedInGhz": 3.3,
+      "Manufacturer": "AMD"
+    },
+    "EbsInfo": {
+      "EbsOptimizedSupport": "default",
+      "EncryptionSupport": "supported",
+      "EbsOptimizedInfo": {
+        "BaselineBandwidthInMbps": 850,
+        "BaselineThroughputInMBps": 106.25,
+        "BaselineIops": 3500,
+        "MaximumBandwidthInMbps": 3500,
+        "MaximumThroughputInMBps": 437.5,
+        "MaximumIops": 15000
+      },
+      "NvmeSupport": "required",
+      "MaximumEbsAttachments": 25,
+      "AttachmentLimitType": "shared"
+    },
+    "SupportedUsageClasses": [
+      "on-demand",
+      "spot"
+    ]
+  },
+  "offerings": {
+    "offerings": [
+      {
+        "InstanceType": "g5.2xlarge",
+        "LocationType": "availability-zone",
+        "Location": "us-east-2b"
+      },
+      {
+        "InstanceType": "g5.2xlarge",
+        "LocationType": "availability-zone",
+        "Location": "us-east-2a"
+      },
+      {
+        "InstanceType": "g5.2xlarge",
+        "LocationType": "availability-zone",
+        "Location": "us-east-2c"
+      }
+    ],
+    "actual_on_demand_capacity_verified": false
+  },
+  "account": {
+    "accountPlanType": "PAID",
+    "accountPlanStatus": "ACTIVE",
+    "accountPlanRemainingCredits": {
+      "amount": 44.06,
+      "unit": "USD"
+    }
+  },
+  "price": [
+    {
+      "sku": "6BKQGE374ZZN28NG",
+      "effective_date": "2026-10-01T00:00:00Z",
+      "unit": "Hrs",
+      "usd": "1.2120000000",
+      "description": "$1.212 per On Demand Linux g5.2xlarge Instance Hour"
+    }
+  ],
+  "gp3_price": [
+    {
+      "sku": "M6UGCCQ3CDJQAA37",
+      "unit": "GB-Mo",
+      "usd": "0.0800000000",
+      "description": "$0.08 per GB-month of General Purpose (gp3) provisioned storage - US East (Ohio)"
+    }
+  ],
+  "tax_summary": {
+    "error_class": "ResourceNotFoundException",
+    "error_code": "ResourceNotFoundException"
+  },
+  "image": {
+    "parameter_source": "/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.11-ubuntu-24.04/latest/ami-id",
+    "amazon_owner_verified": true,
+    "ImageId": "ami-0698f85d0713011e7",
+    "Name": "Deep Learning OSS Nvidia Driver AMI GPU PyTorch 2.11 (Ubuntu 24.04) 20261024",
+    "CreationDate": "2026-10-24T15:25:51.000Z",
+    "State": "available",
+    "Architecture": "x86_64",
+    "PlatformDetails": "Linux/UNIX",
+    "ProductCodes": null
+  },
+  "network_checks": {
+    "default_subnet_count": 3,
+    "all_default_subnets_public_ipv4": true,
+    "active_internet_gateway": true,
+    "dns": {
+      "enableDnsSupport": true,
+      "enableDnsHostnames": true
+    }
+  },
+  "capacity_and_model_fit_verified_by_this_read": false
+}
