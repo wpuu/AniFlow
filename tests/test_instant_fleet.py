@@ -52,7 +52,7 @@ def test_request_has_only_six_approved_pools_and_one_on_demand_target():
     assert {(o["InstanceType"], o["SubnetId"]) for o in overrides} == {
         (kind, subnet["SubnetId"]) for kind in FLEET.ALLOWED_TYPES for subnet in SUBNETS}
     assert all(o["WeightedCapacity"] == 1 for o in overrides)
-    assert [o["Priority"] for o in overrides] == [1, 1, 1, 2, 2, 2]
+    assert all("Priority" not in o for o in overrides)
     assert request["OnDemandOptions"]["MaxTotalPrice"] == "1.006"
     assert {t["ResourceType"] for t in request["TagSpecifications"]} == {
         "fleet", "instance", "volume", "network-interface"}
@@ -67,6 +67,13 @@ def test_instant_request_omits_unsupported_fleet_lifetime_even_with_valid_stop_d
     assert "ValidUntil" not in request
     assert request["Type"] == "instant"
     assert "SpotOptions" not in request
+
+
+def test_lowest_price_keeps_hourly_cap_without_override_priorities():
+    request = FLEET.build_request(**arguments())
+    assert request["OnDemandOptions"]["AllocationStrategy"] == "lowest-price"
+    assert request["OnDemandOptions"]["MaxTotalPrice"] == "1.006"
+    assert all("Priority" not in row for row in request["LaunchTemplateConfigs"][0]["Overrides"])
 
 
 @pytest.mark.parametrize("field,value", [

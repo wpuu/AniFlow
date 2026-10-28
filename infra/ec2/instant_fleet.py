@@ -37,12 +37,11 @@ def build_request(template_id, template_version, subnets, experiment_id, client_
     if any(not isinstance(s, str) or not re.fullmatch(r"subnet-[0-9a-f]{8,17}", s)
            for s in identifiers) or len(set(identifiers)) != 3:
         raise ValueError("Three distinct concrete subnet IDs are required")
-    overrides = [{"InstanceType": kind, "SubnetId": subnet["SubnetId"],
-                  "WeightedCapacity": 1, "Priority": priority}
-                 for priority, kind in enumerate(ALLOWED_TYPES, start=1)
+    overrides = [{"InstanceType": kind, "SubnetId": subnet["SubnetId"], "WeightedCapacity": 1}
+                 for kind in ALLOWED_TYPES
                  for subnet in sorted(subnets, key=lambda item: item["AvailabilityZone"])]
     return {"Type": "instant", "ClientToken": client_token,
-        "OnDemandOptions": {"AllocationStrategy": "prioritized", "MaxTotalPrice": "1.006",
+        "OnDemandOptions": {"AllocationStrategy": "lowest-price", "MaxTotalPrice": "1.006",
                             "SingleInstanceType": True, "MinTargetCapacity": 1},
         "TargetCapacitySpecification": {"TotalTargetCapacity": 1, "OnDemandTargetCapacity": 1,
             "SpotTargetCapacity": 0, "DefaultTargetCapacityType": "on-demand",

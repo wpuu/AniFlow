@@ -1,0 +1,16 @@
+{
+  "observed_at_utc": "2026-10-28T12:34:06.672100+00:00",
+  "real_create_fleet_call": 1,
+  "readonly_create_fleet_dry_run_calls": 2,
+  "fleet_created": false,
+  "fleet_absence_confirmed_by_exact_validation_proof": true,
+  "launch_template_actually_created_then_absent": true,
+  "actual_gpu_created": false,
+  "real_gpu_preflight_completed": false,
+  "model_downloads_started": false,
+  "real_video_count": 0,
+  "prior_capacity_rejections_unchanged": 28,
+  "current_validation_refusals": 1,
+  "all_fleet_validation_refusals_to_date": 2,
+  "six_pool_capacity_results_available": false
+}

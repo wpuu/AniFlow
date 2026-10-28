@@ -1,5 +1,5 @@
 {
-  "observed_at_utc": "2026-10-28T12:22:10.386510+00:00",
+  "observed_at_utc": "2026-10-28T12:24:01.177076+00:00",
   "estimate_only_not_invoice": true,
   "phase": "Fleet admission and real CUDA/SSM/private-S3 preflight only; no models",
   "instance_types": [
