@@ -1,0 +1,88 @@
+{
+  "record_kind": "historical_deployment_checkpoint_not_fresh_cloud_read",
+  "runtime_verified_at_utc": "2026-10-29T01:39:55.810Z",
+  "runtime_result": "Success",
+  "source_revision_and_verified_models": {
+    "schema_version": 1,
+    "comfyui_commit": "63be2f9b82ad0dac88a7ceaa28a9cf3154125a18",
+    "repository": "Comfy-Org/Wan-2.2",
+    "revision": "ee6f4a40737a995bf5818954cfce6d59443b0f04",
+    "expected_total_bytes": 68776044287,
+    "models": [
+      {
+        "relative_path": "diffusion_models/wan2.2_i2v_high_noise_14B_fp16.safetensors",
+        "bytes": 28577914792,
+        "sha256": "c21c21efa368d529a982a7d89dd11d86608b5937cae9a125d0ffe5491918a100",
+        "verified": true
+      },
+      {
+        "relative_path": "diffusion_models/wan2.2_i2v_low_noise_14B_fp16.safetensors",
+        "bytes": 28577914792,
+        "sha256": "edb89340c8a6fbf1a70e76a839ae01eaf7d289f05ea1ebd6b1a3fc6f533826e9",
+        "verified": true
+      },
+      {
+        "relative_path": "text_encoders/umt5_xxl_fp16.safetensors",
+        "bytes": 11366399385,
+        "sha256": "7b8850f1961e1cf8a77cca4c964a358d303f490833c6c087d0cff4b2f99db2af",
+        "verified": true
+      },
+      {
+        "relative_path": "vae/wan_2.1_vae.safetensors",
+        "bytes": 253815318,
+        "sha256": "2fc39d31359a4b0a64f55876d8ff7fa8d780956ae2cb13463b0223e15148976b",
+        "verified": true
+      }
+    ],
+    "real_video_generated": false
+  },
+  "inference_device_configuration": {
+    "model": "cuda:0",
+    "text_encoder": "cuda:0",
+    "vae": "cuda:0"
+  },
+  "comfyui_version": "0.42.1",
+  "pytorch_version": "2.11.0+cu130",
+  "dynamic_vram_enabled_log_observed": true,
+  "loopback_api_verified_at_utc": "2026-10-29T01:42:12.486510+00:00",
+  "windows_frontend_http_status": 200,
+  "historical_bridge_health": {
+    "mode": "REAL_WAN",
+    "provider": "wan2.2-i2v-a14b",
+    "simulation": false,
+    "ready": true,
+    "tunnel_connected": true,
+    "gpu_connected": true,
+    "blocked_reasons": [],
+    "note": "Tunnel connectivity alone does not verify GPU, license, credit, or shutdown protection"
+  },
+  "submitted_job_count_at_live_check": 0,
+  "last_actual_stopped_observation_utc": "2026-10-29T02:16:41Z",
+  "instance_state_at_last_observation": "stopped",
+  "instance_and_root_volume_retained_at_last_observation": true,
+  "root_volume_gb": 180,
+  "root_volume_type": "gp3",
+  "root_volume_throughput_mibps": 375,
+  "root_volume_encrypted": true,
+  "subsequent_start_rejection_utc": "2026-10-29T02:17:48Z",
+  "subsequent_start_rejection": "InsufficientInstanceCapacity",
+  "new_start_attempts_after_rejection": 0,
+  "persistent_boot_comfy_service_installed": false,
+  "patched_frontend_live_gpu_revalidation_completed": false,
+  "cloud_guard_sealing_pending_reauthentication": true,
+  "expired_primary_rule_disabled_confirmed": false,
+  "model_inference_verified": false,
+  "real_video_count": 0,
+  "complete_windows_wan_archive_verified": false,
+  "prices_usd": {
+    "compute_per_hour": 0.8048,
+    "root_storage_per_month": 14.4,
+    "additional_throughput_per_month": 10.0,
+    "stopped_storage_per_month": 24.4,
+    "stopped_storage_per_day_30_day_estimate": 0.8133333333333332,
+    "running_compute_storage_ipv4_per_hour_30_day_estimate": 0.8436888888888888
+  },
+  "tax_rate_unknown": true,
+  "actual_bill_credit_application_confirmed": false,
+  "credits_do_not_cover_usage_after_expiry": true
+}
