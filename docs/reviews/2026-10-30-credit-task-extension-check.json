@@ -1,0 +1,43 @@
+{
+  "checked_at_utc": "2026-10-29T17:06:42Z",
+  "read_only": true,
+  "activities": [
+    {
+      "title": "Create an Aurora or RDS database",
+      "status": "COMPLETED",
+      "reward_usd": 20.0
+    },
+    {
+      "title": "Create a web app using AWS Lambda",
+      "status": "COMPLETED",
+      "reward_usd": 20.0
+    },
+    {
+      "title": "Set up a cost budget using AWS Budgets",
+      "status": "COMPLETED",
+      "reward_usd": 20.0
+    },
+    {
+      "title": "Use a foundation model in the Amazon Bedrock playground",
+      "status": "COMPLETED",
+      "reward_usd": 20.0
+    },
+    {
+      "title": "Launch an instance using EC2",
+      "status": "COMPLETED",
+      "reward_usd": 20.0
+    }
+  ],
+  "available_activities": 0,
+  "completed_activities": 5,
+  "new_pages_available": false,
+  "existing_credit_expiry_beijing": "2026-10-30T11:29:56+08:00",
+  "extension_by_repeating_activities_available": false,
+  "policy": "Free Tier activity credits expire 12 months from account creation; activity completion does not reset the existing expiry.",
+  "sources": [
+    "https://aws.amazon.com/free/free-tier-faqs/",
+    "https://docs.aws.amazon.com/us_en/awsaccountbilling/latest/aboutv2/free-tier-plans-activities.html",
+    "https://aws.amazon.com/free/terms/"
+  ],
+  "aws_mutations": 0
+}
