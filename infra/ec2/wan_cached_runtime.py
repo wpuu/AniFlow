@@ -7,9 +7,28 @@ import shlex
 from wan_bootstrap import COMFY_COMMIT, MODELS, WEIGHT_REVISION
 
 RUNTIME_CAPTURE_TIMEOUT_SECONDS = 120
+DEFAULT_MODELS_ROOT = "/opt/aniflow/wan/ComfyUI/models"
+FP8_NVME_MODELS_ROOT = "/mnt/aniflow-fp8/models"
 
 
-def _manifest():
+def _models_root(profile, models_root):
+    selected = DEFAULT_MODELS_ROOT if models_root is None else models_root
+    allowed = {DEFAULT_MODELS_ROOT, FP8_NVME_MODELS_ROOT} if profile == "fp8-scaled" else {DEFAULT_MODELS_ROOT}
+    if not isinstance(selected, str) or selected not in allowed:
+        raise ValueError("Unapproved Wan model root")
+    return selected
+
+
+def _manifest(profile="fp16"):
+    if profile == "fp8-scaled":
+        from wan_fp8 import build_manifest
+        manifest = build_manifest()
+        for row in manifest["models"]:
+            row["verified"] = True
+        manifest["real_video_generated"] = False
+        return manifest
+    if profile != "fp16":
+        raise ValueError("Unknown Wan model profile")
     return {"schema_version": 1, "comfyui_commit": COMFY_COMMIT,
             "repository": "Comfy-Org/Wan-2.2", "revision": WEIGHT_REVISION,
             "expected_total_bytes": sum(row[1] for row in MODELS),
@@ -18,8 +37,8 @@ def _manifest():
             "real_video_generated": False}
 
 
-def _source(script):
-    expected = json.dumps(_manifest(), indent=2).encode()
+def _source(script, profile="fp16"):
+    expected = json.dumps(_manifest(profile), indent=2).encode()
     return script.replace("@@MANIFEST_SHA@@", hashlib.sha256(expected).hexdigest())
 
 
@@ -28,8 +47,13 @@ def _write(path, text):
     return "printf %s " + shlex.quote(encoded) + " | base64 -d > " + shlex.quote(path)
 
 
-def build_cached_start_commands():
+def build_cached_start_commands(profile="fp16", *, models_root=None):
     """Return root-run Bash commands; service startup requires a valid current deadline."""
+    if profile == "fp8-scaled":
+        return _fp8_start_commands(_models_root(profile, models_root))
+    if profile != "fp16":
+        raise ValueError("Unknown Wan model profile")
+    _models_root(profile, models_root)
     return ["set -euo pipefail", "umask 077", 'test "$(id -u)" -eq 0',
             "systemctl is-active --quiet aniflow-deadline.service",
             _write("/opt/aniflow/wan/verify-retained-cache.py", _source(_CACHE_VERIFY)),
@@ -41,10 +65,112 @@ def build_cached_start_commands():
             "systemctl is-enabled --quiet aniflow-comfy.service", "sync"]
 
 
-def build_runtime_capture_commands():
+def build_runtime_capture_commands(profile="fp16", *, models_root=None):
     """Return read-only collection commands; caller must allow the declared timeout."""
+    if profile not in {"fp16", "fp8-scaled"}:
+        raise ValueError("Unknown Wan model profile")
+    selected = _models_root(profile, models_root)
+    suffix = "-fp8-scaled" if profile == "fp8-scaled" else ""
+    prefix = "ANIFLOW_EXPECTED_EXPERT_ROOT=" + shlex.quote(selected) + " " if suffix else ""
     return ["set -euo pipefail", "cd /opt/aniflow/wan/ComfyUI",
-            "/opt/aniflow/wan/venv/bin/python /opt/aniflow/wan/capture-cached-runtime.py"]
+            prefix + "/opt/aniflow/wan/venv/bin/python /opt/aniflow/wan/capture-cached-runtime" + suffix + ".py"]
+
+
+def _fp8_source(script):
+    return (script.replace("verified-models.json", "verified-models-fp8-scaled.json")
+            .replace("cached-restore-verification.json", "cached-restore-verification-fp8-scaled.json")
+            .replace("aniflow-wan-cache-verify.service", "aniflow-wan-cache-verify-fp8-scaled.service"))
+
+
+def _fp8_start_commands(models_root):
+    from wan_fp8 import build_bundle
+    verify = _fp8_source(_CACHE_VERIFY)
+    original_sha = hashlib.sha256(json.dumps(_manifest(), indent=2).encode()).hexdigest()
+    verify = verify.replace("manifest=json.loads(raw)", "manifest=json.loads(raw)\n"
+        "assert manifest['profile']=='fp8-scaled'\n"
+        "assert hashlib.sha256((root/'verified-models.json').read_bytes()).hexdigest()==" + repr(original_sha))
+    verify = verify.replace("receipt={'schema_version':1,", "receipt={'schema_version':1,'profile':'fp8-scaled',"
+        "'manifest_filename':'verified-models-fp8-scaled.json','expert_models_root':expert_root,"
+        "'physical_layout_verified':True,")
+    layout_check = _FP8_LAYOUT_CHECK.replace("@@MODELS_ROOT@@", repr(models_root))
+    verify = verify.replace("for row in manifest['models']:", layout_check + "\nfor row in manifest['models']:")
+    verify = verify.replace("path=models/row['relative_path']", "scope=Path(expert_root).resolve() if row['relative_path'].startswith('diffusion_models/') else models\n    path=scope/row['relative_path']")
+    verify = verify.replace("path.resolve().is_relative_to(models)", "path.resolve().is_relative_to(scope)")
+    capture = _fp8_source(_CAPTURE)
+    capture = capture.replace("assert cache['cache_restore_verified'] is True", "assert cache['profile']=='fp8-scaled'\n"
+        "assert cache['manifest_filename']=='verified-models-fp8-scaled.json'\n"
+        "assert cache['cache_restore_verified'] is True")
+    capture = capture.replace("manifest=json.loads(raw)", "manifest=json.loads(raw)\n"
+        "assert manifest['profile']=='fp8-scaled'\n"
+        "assert hashlib.sha256(raw).hexdigest()==" + repr(hashlib.sha256(
+            json.dumps(_manifest('fp8-scaled'), indent=2).encode()).hexdigest()) + "\n" +
+        _FP8_PROCESS_CHECK.replace("@@MODELS_ROOT@@", repr(models_root)))
+    capture = capture.replace("assert stop==datetime.fromisoformat(cache['stop_utc'])",
+        "assert stop==datetime.fromisoformat(cache['stop_utc'])\n" + layout_check)
+    capture = capture.replace("log=command('journalctl','-u','aniflow-comfy.service','-b','--no-pager','-o','cat')",
+        "log=command('journalctl','_SYSTEMD_INVOCATION_ID='+invocation,'--no-pager','-o','cat')")
+    capture = capture.replace("data={'schema_version':1,", "data={'schema_version':1,'profile':'fp8-scaled',"
+        "'manifest_filename':'verified-models-fp8-scaled.json','process_profile_verified':True,"
+        "'expert_models_root':expert_root,'physical_layout_verified':True,"
+        "'comfy_main_pid':pid,'comfy_invocation_id':invocation,"
+        "'configured_expert_choices':experts,'fp8_inference_verified':False,")
+    cache_unit = _fp8_source(_CACHE_UNIT).replace("verify-retained-cache.py", "verify-retained-cache-fp8-scaled.py")
+    comfy_unit = _fp8_source(_COMFY_UNIT).replace("[Service]\n", "[Service]\nEnvironment=ANIFLOW_WAN_PROFILE=fp8-scaled\n")
+    extra = []
+    if models_root == FP8_NVME_MODELS_ROOT:
+        extra = [_write("/opt/aniflow/wan/extra-model-paths-fp8-scaled.yaml",
+                        "aniflow_fp8:\n  base_path: " + models_root + "\n  diffusion_models: diffusion_models\n")]
+        comfy_unit = comfy_unit.replace("--disable-auto-launch\n", "--disable-auto-launch --extra-model-paths-config /opt/aniflow/wan/extra-model-paths-fp8-scaled.yaml\n")
+    return ["set -euo pipefail", "umask 077", 'test "$(id -u)" -eq 0',
+            "systemctl is-active --quiet aniflow-deadline.service",
+            "systemctl stop aniflow-comfy.service",
+            _write("/opt/aniflow/wan/verify-retained-cache-fp8-scaled.py", _source(verify, "fp8-scaled")),
+            _write("/opt/aniflow/wan/capture-cached-runtime-fp8-scaled.py", capture),
+            _write("/opt/aniflow/wan/workflow-bundle-fp8-scaled.json", json.dumps(build_bundle(), indent=2)),
+            _write("/etc/systemd/system/aniflow-wan-cache-verify-fp8-scaled.service", cache_unit),
+            _write("/etc/systemd/system/aniflow-comfy.service", comfy_unit), *extra,
+            "systemctl daemon-reload", "systemctl restart aniflow-wan-cache-verify-fp8-scaled.service",
+            "systemctl enable aniflow-comfy.service", "systemctl restart aniflow-comfy.service",
+            "systemctl is-active --quiet aniflow-comfy.service",
+            "systemctl is-enabled --quiet aniflow-comfy.service", "sync"]
+
+
+_FP8_LAYOUT_CHECK = r'''expert_root=@@MODELS_ROOT@@
+assert not Path(expert_root).is_symlink() and str(Path(expert_root).resolve())==expert_root
+layout=json.loads((root/'physical-layout-fp8-scaled.json').read_text())
+assert layout['profile']=='fp8-scaled' and layout['expert_models_root']==expert_root
+assert layout['boot_id']==Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+assert datetime.fromisoformat(layout['deadline_utc'])==stop
+assert layout['expert_files_sha256_verified'] is True
+if expert_root=='/mnt/aniflow-fp8/models':
+    for row in manifest['models'][:2]:
+        assert not (root/'ComfyUI/models'/row['relative_path']).is_file(), 'Root expert would shadow the verified NVMe expert'
+'''
+
+
+_FP8_PROCESS_CHECK = r'''import os
+assert os.environ.get('ANIFLOW_EXPECTED_EXPERT_ROOT')==@@MODELS_ROOT@@
+assert cache['expert_models_root']==@@MODELS_ROOT@@ and cache['physical_layout_verified'] is True
+pid=int(command('systemctl','show','aniflow-comfy.service','-p','MainPID','--value'))
+assert pid>0
+environment=(Path('/proc')/str(pid)/'environ').read_bytes().split(bytes([0]))
+assert b'ANIFLOW_WAN_PROFILE=fp8-scaled' in environment, 'Old or unknown Comfy process profile'
+cmdline=(Path('/proc')/str(pid)/'cmdline').read_bytes().split(bytes([0]))
+assert b'main.py' in cmdline and b'127.0.0.1' in cmdline and b'8188' in cmdline
+if @@MODELS_ROOT@@=='/mnt/aniflow-fp8/models':
+    assert b'--extra-model-paths-config' in cmdline and b'/opt/aniflow/wan/extra-model-paths-fp8-scaled.yaml' in cmdline
+    assert (root/'extra-model-paths-fp8-scaled.yaml').read_text()=='aniflow_fp8:\n  base_path: /mnt/aniflow-fp8/models\n  diffusion_models: diffusion_models\n'
+else:
+    assert b'--extra-model-paths-config' not in cmdline
+invocation=command('systemctl','show','aniflow-comfy.service','-p','InvocationID','--value')
+assert re.fullmatch('[a-f0-9]{32}',invocation)
+selection=json.loads((root/'workflow-bundle-fp8-scaled.json').read_text())
+assert selection['preparation']['profile']=='fp8-scaled'
+assert selection['preparation']['models']==[{k:v for k,v in row.items() if k!='verified'} for row in manifest['models']]
+experts=[selection['prompt'][node]['inputs']['unet_name'] for node in ('3','4')]
+assert experts==[Path(row['relative_path']).name for row in manifest['models'][:2]]
+assert all(selection['prompt'][node]['inputs']['weight_dtype']=='default' for node in ('3','4'))
+'''
 
 
 _CACHE_UNIT = """[Unit]

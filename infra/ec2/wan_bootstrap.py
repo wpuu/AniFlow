@@ -20,23 +20,31 @@ MODELS = (
 )
 
 
-def validate_bundle(bundle):
+def validate_bundle(bundle, *, profile="fp16"):
     """Fail closed on changes to upstream pins, precision or the approved quality contract."""
+    if profile == "fp8-scaled":
+        from wan_fp8 import FP8_MODELS, MANIFEST_FILENAME
+        models = FP8_MODELS
+    elif profile == "fp16":
+        models = MODELS
+    else:
+        raise ValueError("Unknown Wan model profile")
     try:
         preparation, prompt = bundle["preparation"], bundle["prompt"]
         rows = preparation["models"]
         actual = [(row["relative_path"], row["bytes"], row["sha256"]) for row in rows]
-        valid = (preparation["comfyui_commit"] == COMFY_COMMIT
+        valid = (preparation.get("profile", "fp16") == profile
+                 and preparation["comfyui_commit"] == COMFY_COMMIT
                  and preparation["weight_repository"] == "Comfy-Org/Wan-2.2"
                  and preparation["weight_revision"] == WEIGHT_REVISION
-                 and actual == list(MODELS)
+                 and actual == list(models)
                  and prompt["3"]["inputs"] == {
-                     "unet_name": MODELS[0][0].split("/")[-1], "weight_dtype": "default"}
+                     "unet_name": models[0][0].split("/")[-1], "weight_dtype": "default"}
                  and prompt["4"]["inputs"] == {
-                     "unet_name": MODELS[1][0].split("/")[-1], "weight_dtype": "default"}
+                     "unet_name": models[1][0].split("/")[-1], "weight_dtype": "default"}
                  and prompt["5"]["inputs"] == {
-                     "clip_name": MODELS[2][0].split("/")[-1], "type": "wan", "device": "default"}
-                 and prompt["6"]["inputs"]["vae_name"] == MODELS[3][0].split("/")[-1])
+                     "clip_name": models[2][0].split("/")[-1], "type": "wan", "device": "default"}
+                 and prompt["6"]["inputs"]["vae_name"] == models[3][0].split("/")[-1])
         classes = ("LoadImage", "ImageScale", "UNETLoader", "UNETLoader", "CLIPLoader",
                    "VAELoader", "CLIPTextEncode", "CLIPTextEncode", "ModelSamplingSD3",
                    "ModelSamplingSD3", "WanImageToVideo", "KSamplerAdvanced", "KSamplerAdvanced",
@@ -58,15 +66,21 @@ def validate_bundle(bundle):
                                   for key, value in expected.items())
         valid = valid and preparation["final_target"] == {
             "width": 774, "height": 1376, "frames": 120, "fps": 24, "seconds": 5, "crop_x": 13}
+        if profile == "fp8-scaled":
+            valid = (valid and preparation["manifest_filename"] == MANIFEST_FILENAME
+                     and bundle["postprocess"] == {"preset": "wan_native_5s_portrait_v1"})
     except (KeyError, TypeError, ValueError):
         valid = False
     if not valid:
-        raise ValueError("Bundle does not match the pinned FP16 Wan quality contract")
-    return {"schema_version": 1, "comfyui_commit": COMFY_COMMIT,
+        raise ValueError(f"Bundle does not match the pinned {profile.upper()} Wan quality contract")
+    manifest = {"schema_version": 1, "comfyui_commit": COMFY_COMMIT,
             "repository": "Comfy-Org/Wan-2.2", "revision": WEIGHT_REVISION,
-            "expected_total_bytes": sum(row[1] for row in MODELS),
+            "expected_total_bytes": sum(row[1] for row in models),
             "models": [{"relative_path": path, "bytes": size, "sha256": digest}
-                       for path, size, digest in MODELS]}
+                       for path, size, digest in models]}
+    if profile != "fp16":
+        manifest["profile"] = profile
+    return manifest
 
 
 def build_bootstrap(bundle):
