@@ -7,10 +7,11 @@ import {
   X,
 } from "lucide-react";
 import { ASPECTS, DURATIONS, MODELS, PROMPT_PRESETS, SAMPLE_FRAMES, getModel, getRealModel } from "../data";
-import type { AspectRatio, CreatePayload, RealProvider, StudioMode } from "../types";
+import type { AspectRatio, CreatePayload, Model, RealProvider, StudioMode } from "../types";
 import { cn } from "../utils/cn";
 import { formatCost } from "../utils/format";
 import { ModelDot } from "./StatusBadge";
+import { formatExpectedHardware, parseCloudPreflight } from "./AwsPreflightPanel";
 
 interface CreatePanelProps {
   onSubmit: (payload: CreatePayload) => void;
@@ -18,11 +19,14 @@ interface CreatePanelProps {
   disabled?: boolean;
   mode: StudioMode;
   realProvider: RealProvider | null;
+  ready?: boolean;
 }
 
-export function CreatePanel({ onSubmit, busyCount, disabled = false, mode, realProvider }: CreatePanelProps) {
+export function CreatePanel({ onSubmit, busyCount, disabled = false, mode, realProvider, ready = false }: CreatePanelProps) {
   const real = mode === "real";
-  const models = real ? [getRealModel(realProvider)] : MODELS;
+  const models: Model[] = real ? [{...getRealModel(realProvider),
+    status: ready && realProvider !== null ? "ready" : "offline"}] : MODELS;
+  const [hardwareLabel, setHardwareLabel] = useState<string | null>(null);
   const [prompt, setPrompt] = useState(PROMPT_PRESETS[0]);
   const [negativePrompt, setNegativePrompt] = useState("抖动, 过曝, 文字水印, 畸变, 低清晰度");
   const [modelId, setModelId] = useState(MODELS[0].id);
@@ -36,7 +40,7 @@ export function CreatePanel({ onSubmit, busyCount, disabled = false, mode, realP
   const [advanced, setAdvanced] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const model = real ? getRealModel(realProvider) : getModel(modelId)!;
+  const model = real ? models[0] : getModel(modelId)!;
   const clampedDuration = Math.min(duration, model.maxDuration);
   const estimate = useMemo(
     () => Number((model.costPerSecond * clampedDuration).toFixed(3)),
@@ -65,6 +69,21 @@ export function CreatePanel({ onSubmit, busyCount, disabled = false, mode, realP
       firstFrame,
     });
   }
+
+  useEffect(() => {
+    let cancelled = false;
+    setHardwareLabel(null);
+    if (real && realProvider) {
+      void fetch("/api/studio/cloud/preflight", {cache:"no-store"})
+        .then(async response => {
+          if (!response.ok) throw new Error("Hardware projection unavailable");
+          const data = parseCloudPreflight(await response.json(), "real");
+          if (data.provider !== realProvider) return;
+          if (!cancelled) setHardwareLabel(formatExpectedHardware(data));
+        }).catch(() => { if (!cancelled) setHardwareLabel(null); });
+    }
+    return () => { cancelled = true; };
+  }, [real, realProvider]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -220,6 +239,9 @@ export function CreatePanel({ onSubmit, busyCount, disabled = false, mode, realP
                       </span>
                     </div>
                     <p className="mt-0.5 text-[11px] leading-snug text-zinc-500">{m.description}</p>
+                    {real && <p className="mt-1 text-[11px] leading-snug text-zinc-400" data-testid="real-model-hardware">
+                      {hardwareLabel ?? "目标硬件：等待本机预检核验"}。生成显存峰值待测。
+                    </p>}
                   </div>
                   <div className="shrink-0 text-right">
                     <ModelDot status={m.status} />

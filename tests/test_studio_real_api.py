@@ -12,7 +12,12 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from aniflow.studio.comfy_provider import ComfyProvider, verify_mp4
+from aniflow.studio.comfy_provider import (
+    ComfyProvider,
+    postprocess_h3_portrait,
+    postprocess_wan_portrait,
+    verify_mp4,
+)
 from aniflow.studio.real_api import (
     CHECKS,
     GAMELIFT_CHECKS,
@@ -542,6 +547,65 @@ def test_g6_xlarge_contract_projects_approved_hardware_and_recovers_without_dupl
     assert upstream.posts == 1
 
 
+@pytest.mark.parametrize("invalid", ["expired", "missing_primary_stop", "failed_independent_stop",
+                                    "changed_workflow_hash"])
+def test_invalidated_wan_gate_preserves_readonly_identity_without_gpu_queries_or_submission(tmp_path, invalid):
+    # Synthetic audit/MockTransport only; never a claim of real hardware/video validation.
+    cfg = wan_config(tmp_path, "g6.xlarge")
+    gate = json.loads(cfg.gate_path.read_text())
+    gate["snapshot_only"] = False
+    if invalid == "expired":
+        gate["expires_at_unix"] = time.time() - 1
+    elif invalid == "missing_primary_stop":
+        gate["checks"].pop("gpu_stop_safeguard")
+    elif invalid == "failed_independent_stop":
+        gate["checks"]["independent_stop_safeguard"] = False
+    else:
+        gate["workflow_sha256"] = "0" * 64
+    cfg.gate_path.write_text(json.dumps(gate))
+    original = cfg.gate_path.read_bytes()
+
+    def no_connection(request):
+        pytest.fail("Invalidated Wan gate must not query or submit to any GPU")
+
+    with TestClient(create_real_app(cfg, httpx.MockTransport(no_connection))) as client:
+        health = client.get("/api/studio/real/health").json()
+        projection = client.get("/api/studio/cloud/preflight").json()
+        assert health["mode"] == "REAL_WAN" and health["provider"] == WAN_PROVIDER
+        assert not health["ready"] and not health["gpu_connected"] and not health["tunnel_connected"]
+        assert projection["provider"] == WAN_PROVIDER and projection["region"] == "us-east-2"
+        assert projection["service"] == "ec2" and projection["instance_type"] == "g6.xlarge"
+        assert projection["expected_gpu"] == "NVIDIA L4" and projection["expected_ram_gib"] == 16
+        assert not projection["launch_allowed"] and not projection["real_gpu_connected"]
+        assert projection["checks"] == dict.fromkeys(WAN_CHECKS)
+        request = {**payload(client), "provider": WAN_PROVIDER}
+        assert client.post("/api/studio/real/jobs", json=request).status_code == 403
+        assert client.get("/api/studio/real/jobs").json()["jobs"] == []
+    assert cfg.gate_path.read_bytes() == original and cfg.audited_workflow()[0]
+    readonly = cfg.blocked_projection()
+    assert readonly["snapshot_only"] is True and readonly["launch_allowed"] is False
+
+
+@pytest.mark.parametrize("field,value", [("provider", "unknown"), ("provider", "minimax-h3"),
+                                         ("region", "ap-northeast-1"), ("instance_type", "g6.2xlarge"),
+                                         ("service", "workspaces")])
+def test_invalidated_wan_readonly_identity_rejects_unapproved_resource_combinations(tmp_path, field, value):
+    cfg = wan_config(tmp_path, "g6.xlarge")
+    gate = json.loads(cfg.gate_path.read_text())
+    gate.update(snapshot_only=False, expires_at_unix=time.time() - 1)
+    gate[field] = value
+    cfg.gate_path.write_text(json.dumps(gate))
+    assert cfg.blocked_projection() == {}
+
+    def no_connection(request):
+        pytest.fail("Invalid resource selection must not query an unrelated GPU")
+
+    with TestClient(create_real_app(cfg, httpx.MockTransport(no_connection))) as client:
+        assert not client.get("/api/studio/real/health").json()["ready"]
+        assert not client.get("/api/studio/cloud/preflight").json()["launch_allowed"]
+        assert client.post("/api/studio/real/jobs", json={**payload(client), "provider": WAN_PROVIDER}).status_code == 403
+
+
 @pytest.mark.parametrize("blocked", ["no_audit", "missing_primary_stop", "missing_independent_stop",
                                     "expired", "no_cuda"])
 def test_g6_xlarge_still_requires_complete_current_audit_and_cuda_to_submit(tmp_path, blocked):
@@ -737,6 +801,27 @@ def test_wan_121_frame_source_is_not_accepted_as_h3_and_final_is_strict(tmp_path
         assert done["output_sha256"] == hashlib.sha256(Path(done["local_path"]).read_bytes()).hexdigest()
         assert client.get(done["video_download_path"]).content == Path(done["local_path"]).read_bytes()
     assert upstream.posts == 1
+
+
+@pytest.mark.parametrize("provider,crop", [(postprocess_wan_portrait, "774:1376:13:0:exact=1"),
+                                         (postprocess_h3_portrait, "774:1376:12:0")])
+def test_offline_postprocess_crop_contract_keeps_h3_and_matches_wan_export(
+        tmp_path, monkeypatch, provider, crop):
+    from aniflow.studio import comfy_provider
+
+    seen = []
+
+    def run_fixture(args, **kwargs):
+        seen.append(args)
+        Path(args[-1]).write_bytes(b"offline encoder fixture, not a real video")
+
+    monkeypatch.setattr(comfy_provider.subprocess, "run", run_fixture)
+    monkeypatch.setattr(comfy_provider, "verify_mp4", lambda *_: {"offline_fixture": True})
+    final = tmp_path / "offline.mp4"
+    provider(tmp_path / "offline-source.mp4", final)
+    assert seen[0][seen[0].index("-vf") + 1] == (
+        f"trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS,crop={crop},setsar=1")
+    assert final.read_bytes() == b"offline encoder fixture, not a real video"
 
 
 @pytest.mark.parametrize("preset", [None, {"preset": "h3_native_5s_portrait_v1"}])

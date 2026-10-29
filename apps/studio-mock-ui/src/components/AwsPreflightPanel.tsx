@@ -88,8 +88,8 @@ const GAMELIFT_CHECKS: { key: CheckKey; label: string; detail: string }[] = [
 const WAN_CHECKS: { key: CheckKey; label: string; detail: string }[] = [
   { key: "credit_ec2_eligible", label: "赠金适用 EC2", detail: "核对实例、存储与辅助费用的抵扣资格" },
   { key: "credit_expiry_confirmed", label: "到期日与预计余额", detail: "账单估算快照，不是实时余额" },
-  { key: "ohio_gpu_quota", label: "俄亥俄州 GPU 配额", detail: "g7e.2xlarge 需要8 vCPU；配额显示不保证真实准入" },
-  { key: "ohio_capacity_and_price", label: "实例容量与完整费用", detail: "核对 us-east-2 的 g7e.2xlarge 及附加费用" },
+  { key: "ohio_gpu_quota", label: "俄亥俄州 GPU 配额", detail: "按本次目标实例核对所需 vCPU；配额显示不保证真实准入" },
+  { key: "ohio_capacity_and_price", label: "实例容量与完整费用", detail: "核对 us-east-2 本次目标实例及附加费用" },
   { key: "ssm_private_connectivity", label: "SSM 私有连接", detail: "通过私有隧道访问 ComfyUI，不公开8188端口" },
   { key: "wan_license_verified", label: "Wan 模型与许可", detail: "使用独立 Wan2.2 I2V A14B 契约，不冒充H3" },
   { key: "gpu_stop_safeguard", label: "定时停机保护", detail: "固定截止停止GPU；停机后存储仍可能计费" },
@@ -109,14 +109,21 @@ export function parseCloudPreflight(body: unknown, mode: StudioMode): CloudPrefl
   }
   const value = body as CloudPreflight;
   if (mode === "real") {
+    const targets: Record<string, {gpu:string; ram:number; vram:number}> = {
+      "g7e.2xlarge": {gpu:"NVIDIA RTX PRO Server 6000", ram:64, vram:96},
+      "g6e.2xlarge": {gpu:"NVIDIA L40S", ram:64, vram:45776 / 1024},
+      "g6.xlarge": {gpu:"NVIDIA L4", ram:16, vram:22888 / 1024},
+    };
+    const hardware = targets[value.instance_type];
     const wan = value.service === "ec2" && value.provider === "wan2.2-i2v-a14b"
-      && value.region === "us-east-2" && value.instance_type === "g7e.2xlarge";
+      && value.region === "us-east-2" && hardware !== undefined;
     const h3 = ["workspaces", "gameliftstreams"].includes(value.service ?? "")
       && (value.provider === undefined || value.provider === "minimax-h3");
     if (value.mode !== "LOCAL_AUDIT_PROJECTION" || !(wan || h3)) {
       throw new Error("真实预检必须返回已支持服务与模型的本机审计投影");
     }
-    if (wan && (value.expected_ram_gib !== 64 || value.expected_gpu_vram_gib !== 96)) {
+    if (wan && (value.expected_ram_gib !== hardware.ram || value.expected_gpu_vram_gib !== hardware.vram
+        || (value.expected_gpu !== undefined && value.expected_gpu !== hardware.gpu))) {
       throw new Error("AWS 预检返回缺少必要安全字段：Wan目标硬件不符");
     }
   }
@@ -139,6 +146,11 @@ export function parseCloudPreflight(body: unknown, mode: StudioMode): CloudPrefl
     }
   }
   return value;
+}
+
+export function formatExpectedHardware(data: CloudPreflight): string {
+  return `目标硬件（未实测）：${data.instance_type} / ${data.expected_gpu ?? "GPU待核验"} / `
+    + `${data.expected_gpu_vram_gib?.toFixed(2) ?? "未知"}GiB 显存 / ${data.expected_ram_gib ?? "未知"}GiB 内存`;
 }
 
 function Status({ value }: { value: Verification }) {
@@ -201,13 +213,13 @@ export function AwsPreflightPanel({ onClose, mode, realProvider }: { onClose: ()
           </div>
           <div className="grid gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs sm:grid-cols-2">
             <div>目标区域 <span className="font-mono text-cyan-200">{data?.region ?? (wan ? "us-east-2" : h3 || mode === "mock" ? "ap-northeast-1" : "尚未核验")}</span></div>
-            <div>目标规格 <span className="font-mono text-cyan-200">{data?.instance_type ?? (wan ? "g7e.2xlarge" : h3 ? "Graphics.g6.4xlarge" : mode === "mock" ? "g6e.2xlarge" : "尚未核验")}</span></div>
+            <div>目标规格 <span className="font-mono text-cyan-200">{data?.instance_type ?? (h3 ? "Graphics.g6.4xlarge" : mode === "mock" ? "g6e.2xlarge" : "尚未核验")}</span></div>
             <div>账户计划 <span className="text-amber-300">{data?.account_plan === "unknown" || !data ? "未知" : data.account_plan}</span></div>
             <div>赠金预计余额 <span className="text-amber-300">{data?.estimated_credit_remaining_usd == null ? "尚未核验" : "$" + data.estimated_credit_remaining_usd.toFixed(2)}</span></div>
             {mode === "real" && <>
               <div>结算余额 <span className="text-zinc-400">{data?.credit_settled_remaining_usd == null ? "尚未核验" : "$" + data.credit_settled_remaining_usd.toFixed(2)}</span></div>
               <div>核验时间（UTC） <span className="text-zinc-400">{data?.credit_observed_at_utc ?? "尚未核验"}</span></div>
-              <div className="sm:col-span-2">目标硬件（未实测） <span className="text-cyan-200">{data?.expected_gpu ?? (wan ? "NVIDIA RTX PRO Server 6000" : h3 ? "NVIDIA L4" : "尚未核验")} / {data?.expected_gpu_vram_gib ?? (wan ? 96 : h3 ? 24 : "未知")}GiB 显存 / {data?.expected_ram_gib ?? (wan || h3 ? 64 : "未知")}GiB 内存</span></div>
+              <div className="sm:col-span-2 text-cyan-200">{data ? formatExpectedHardware(data) : "目标硬件（未实测）：尚未核验"}</div>
             </>}
           </div>
           <div className="space-y-1" data-testid="aws-preflight-checklist">

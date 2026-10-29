@@ -137,7 +137,8 @@ function Workspace({mode, onMode}: {mode:StudioMode; onMode:(mode:StudioMode)=>v
 
       <main className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
         <CreatePanel onSubmit={handleCreate} busyCount={stats.queued + stats.running}
-          mode={mode} realProvider={service.provider} disabled={Boolean(pending) || !service.ready || service.mode !== mode} />
+          mode={mode} realProvider={service.provider} ready={service.ready && service.mode === mode}
+          disabled={Boolean(pending) || !service.ready || service.mode !== mode} />
         <TaskBoard
           tasks={tasks}
           filter={filter}

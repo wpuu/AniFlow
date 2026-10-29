@@ -169,7 +169,7 @@ test("Wan EC2 projection is bound to its model, Ohio, exact instance and hardwar
   assert.equal(parseCloudPreflight(projection, "real").provider, "wan2.2-i2v-a14b");
   assert.equal(parseCloudPreflight(projection, "real").launch_allowed, false);
   for (const broken of [{...projection, provider:"minimax-h3"}, {...projection, region:"ap-northeast-1"},
-    {...projection, instance_type:"g6e.2xlarge"}, {...projection, service:"workspaces"}]) {
+    {...projection, instance_type:"g6.2xlarge"}, {...projection, service:"workspaces"}]) {
     assert.throws(()=>parseCloudPreflight(broken, "real"), /本机审计投影/);
   }
   for (const required of keys) {
@@ -184,6 +184,29 @@ test("Wan EC2 projection is bound to its model, Ohio, exact instance and hardwar
     launch_allowed:true, real_gpu_connected:true, tunnel_connected:true};
   assert.equal(parseCloudPreflight(ready, "real").launch_allowed, true);
   assert.throws(()=>parseCloudPreflight({...ready, tunnel_connected:false}, "real"), /必要安全字段/);
+});
+
+test("Wan preflight accepts exact deployed L4 hardware without confusing RAM and VRAM", () => {
+  const keys = ["credit_ec2_eligible", "credit_expiry_confirmed", "ohio_gpu_quota",
+    "ohio_capacity_and_price", "ssm_private_connectivity", "wan_license_verified",
+    "gpu_stop_safeguard", "independent_stop_safeguard", "account_plan_unchanged", "native_video_spec_confirmed"];
+  const base = {mode:"LOCAL_AUDIT_PROJECTION", provider:"wan2.2-i2v-a14b", service:"ec2",
+    region:"us-east-2", checks:Object.fromEntries(keys.map(key=>[key,null])),
+    launch_allowed:false, real_gpu_connected:false};
+  for (const hardware of [
+    {instance_type:"g6.xlarge", expected_gpu:"NVIDIA L4", expected_ram_gib:16, expected_gpu_vram_gib:22888/1024},
+    {instance_type:"g6e.2xlarge", expected_gpu:"NVIDIA L40S", expected_ram_gib:64, expected_gpu_vram_gib:45776/1024},
+    {instance_type:"g7e.2xlarge", expected_gpu:"NVIDIA RTX PRO Server 6000", expected_ram_gib:64, expected_gpu_vram_gib:96},
+  ]) {
+    assert.equal(parseCloudPreflight({...base, ...hardware}, "real").instance_type, hardware.instance_type);
+    assert.throws(()=>parseCloudPreflight({...base, ...hardware, expected_ram_gib:128}, "real"), /目标硬件不符/);
+    assert.throws(()=>parseCloudPreflight({...base, ...hardware, expected_gpu_vram_gib:16}, "real"), /目标硬件不符/);
+    assert.throws(()=>parseCloudPreflight({...base, ...hardware, expected_gpu:"Pretend GPU"}, "real"), /目标硬件不符/);
+  }
+  const label = preflightModule.exports.formatExpectedHardware({...base, instance_type:"g6.xlarge",
+    expected_gpu:"NVIDIA L4", expected_ram_gib:16, expected_gpu_vram_gib:22888/1024});
+  assert.match(label, /目标硬件（未实测）/);
+  assert.match(label, /g6\.xlarge \/ NVIDIA L4 \/ 22\.35GiB 显存 \/ 16GiB 内存/);
 });
 
 test("fresh validated Wan service identity supplies the submitted provider", async () => {
@@ -256,8 +279,30 @@ test("Wan preflight displays Ohio and unverified target specifications", () => {
   });
   assert.match(html, /俄亥俄州 Wan2\.2/);
   assert.match(html, /us-east-2/);
-  assert.match(html, /g7e\.2xlarge/);
+  assert.match(html, /尚未核验/);
+  assert.doesNotMatch(html, /g7e\.2xlarge|96GiB|64GiB/);
   assert.match(html, /原生视频规格核验/);
   assert.match(html, /目标硬件（未实测）/);
   assert.doesNotMatch(html, /H3 使用地域与许可/);
+});
+
+test("real model card follows health readiness for Wan and H3 while Mock stays unchanged", () => {
+  for (const provider of ["wan2.2-i2v-a14b", "minimax-h3"]) {
+    for (const ready of [false, true]) {
+      const html = renderComponent("../src/components/CreatePanel.tsx", "CreatePanel", {
+        mode:"real", realProvider:provider, ready, disabled:!ready, busyCount:0, onSubmit:()=>{},
+      });
+      assert.match(html, ready ? /就绪/ : /离线/);
+      assert.doesNotMatch(html, ready ? /离线/ : /就绪/);
+      assert.match(html, /目标硬件：等待本机预检核验/);
+      assert.match(html, /生成显存峰值待测/);
+      assert.doesNotMatch(html, /720[Pp]|高级参数/);
+    }
+  }
+  const mock = renderComponent("../src/components/CreatePanel.tsx", "CreatePanel", {
+    mode:"mock", realProvider:null, ready:false, busyCount:0, onSubmit:()=>{},
+  });
+  assert.match(mock, /H3 模拟节点/);
+  assert.match(mock, /就绪/);
+  assert.doesNotMatch(mock, /生成显存峰值待测/);
 });

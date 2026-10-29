@@ -168,6 +168,15 @@ class RealConfig:
                        and not self.s3_bucket) if wan else
                       audit.get("instance_type") in WORKSPACES_RAM_GIB if workspaces else
                       audit.get("service") == "gameliftstreams" and audit.get("instance_type") == "gen6n_pro")
+            if (wan and target and audit.get("region") == "us-east-2"
+                    and type(audit.get("launch_allowed")) is bool
+                    and audit.get("snapshot_only") in (None, False)
+                    and isinstance(checks, dict)
+                    and all(checks.get(name) is None or type(checks[name]) is bool for name in required)
+                    and self.audited_workflow()[0]):
+                # Preserve selected hardware identity, never expired launch/check authority.
+                return {**audit, "snapshot_only": True, "launch_allowed": False,
+                        "checks": dict.fromkeys(required)}
             valid = (audit.get("snapshot_only") is True and audit.get("launch_allowed") is False
                      and target
                      and audit.get("region") == ("us-east-2" if wan else "ap-northeast-1")
@@ -199,6 +208,9 @@ def create_real_app(config: RealConfig | None = None,
                 return False, False
             try:
                 if cfg.gate_path and json.loads(cfg.gate_path.read_text()).get("snapshot_only") is True:
+                    return False, False
+                if (cfg.workflow_path and cfg.audited_workflow()[0]
+                        and json.loads(cfg.workflow_path.read_text()).get("provider") == WAN_PROVIDER):
                     return False, False
             except (OSError, ValueError, AttributeError):
                 pass

@@ -165,10 +165,11 @@ def _postprocess_portrait(source: Path, path: Path, source_profile: str,
     """Keep source frames 0..119 and crop pixels; re-encode without temporal resampling."""
     verify_mp4(source, source_profile)
     partial = path.with_suffix(".mp4.partial")
+    crop = "774:1376:13:0:exact=1" if source_profile == "wan_native_source" else "774:1376:12:0"
     try:
         subprocess.run(["ffmpeg", "-v", "error", "-xerror", "-y", "-i", str(source),
                         "-map", "0:v:0", "-map", "0:a:0?", "-vf",
-                        "trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS,crop=774:1376:12:0,setsar=1",
+                        f"trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS,crop={crop},setsar=1",
                         "-af", "atrim=start=0:end=5,asetpts=PTS-STARTPTS", "-fps_mode", "passthrough",
                         "-c:v", "libx264", "-crf", "18", "-preset", "medium", "-pix_fmt", "yuv420p",
                         "-c:a", "aac", "-b:a", "192k", "-t", "5", "-movflags", "+faststart",
