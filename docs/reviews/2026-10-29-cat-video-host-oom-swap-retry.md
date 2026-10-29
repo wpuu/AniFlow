@@ -31,3 +31,15 @@ Fresh primary and independent backup proofs are required before starting. The pr
 Local helper verification: 13 swap tests and four private controller interception tests passed. These tests do not prove GPU inference or a generated video.
 
 All credentials, account identifiers, raw AWS receipts, source-image paths and browser authorization data remain outside this public report.
+
+## Real retry checkpoint — 2026-10-29 11:08 UTC
+
+The new primary and independent backup proofs passed against the actually stopped retained instance. Fresh future protection was then armed for 11:48:09 UTC stop and 11:58:09 UTC emergency fallback. Only one Start request was issued; a separate EC2 read confirmed `running`.
+
+The 64 GiB swap setup completed through real SSM. Its receipt reports 68,719,472,640 effective swap bytes on the existing root disk, with physical RAM unchanged at 16,109,846,528 bytes. Fresh cached runtime evidence confirmed four retained model files and live CUDA/ComfyUI. The readiness gate matched the swap evidence and runtime evidence to the same current boot.
+
+The new-boot queue and history were both actually empty. The prior failed export state was preserved under a separate failed-cycle directory. New monitor/export/save observers started successfully, and the private encrypted S3 save probe passed before submission.
+
+The local real Bridge reported `REAL_WAN`, ready, GPU connected, and `simulation=false`. One new approved real job was posted; its prompt ID is `3d2a9624-91cc-4f9c-8a69-08ac12f06c7b`. It was observed running at 11:07:23 UTC. A separate browser read confirmed the frontend shows the new real task and the Wan model ready.
+
+At 11:08 UTC there is still no completed or verified video. Early sampled GPU use reached 12,232,687,616 bytes and host-memory use 13,674,889,216 bytes. These are progress observations, not a successful-video claim or final peaks. The request must only be recovered by its existing identity; no automatic POST retry is permitted.
