@@ -1,0 +1,41 @@
+{
+  "kind": "sanitized_report_and_source_only",
+  "source_commit": "b1c62c0",
+  "created_at_beijing": "2026-10-29T19:42:38.478863+08:00",
+  "real_video_verified": false,
+  "complete_model_archive": false,
+  "complete_environment_image": false,
+  "original_archives_modified": false,
+  "source_zip_crc_and_file_sha_verified": true,
+  "frontend_final_readonly_verified": true,
+  "frontend_mode": "REAL_WAN",
+  "frontend_model_state": "offline",
+  "frontend_jobs": {
+    "running": 0,
+    "completed": 0,
+    "failed": 1
+  },
+  "frontend_failure_cause": "Verified external budget interruption; no automatic resubmission",
+  "files": [
+    {
+      "path": "AniFlow-source.zip",
+      "bytes": 455401,
+      "sha256": "40308ffdc2b36d983572617b915fd118fda5fea705f84a443ab57f63fc067843"
+    },
+    {
+      "path": "report.html",
+      "bytes": 9088,
+      "sha256": "c70dd2e6c6180653d0794b0f06106f3f992bf83cc91d2336261751942cf92649"
+    },
+    {
+      "path": "source-file-manifest.json",
+      "bytes": 42359,
+      "sha256": "dc948eb87f205d3c2a23a0670813c0e57ad510481224614a60fec7a3be302b0d"
+    },
+    {
+      "path": "summary.json",
+      "bytes": 3953,
+      "sha256": "7b5c4bf3f6a882c0515355177c4a63d2777ff48fc3dd58eecb37e253d4a32731"
+    }
+  ]
+}
