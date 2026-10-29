@@ -102,7 +102,7 @@ def test_stopped_and_terminated_instances_are_preserved_at_every_deadline(
 
 def test_stop_and_emergency_termination_force_skip_os_but_ack_is_not_completion():
     guard = module()
-    ec2 = EC2(["running", "stopping", "terminated"])
+    ec2 = EC2(["running", "running", "terminated"])
     stop = guard.sweep(ec2, EXPERIMENT, True, False)
     assert not stop["all_compute_stopped"]
     assert ec2.calls[-1] == ("stop", {"InstanceIds": [INSTANCE_ID],
@@ -119,13 +119,56 @@ def test_stop_and_emergency_termination_force_skip_os_but_ack_is_not_completion(
             validate_parameters(params, model.operation_model(operation).input_shape)
 
 
-@pytest.mark.parametrize("state", ["pending", "running", "stopping", "shutting-down"])
-def test_cleanup_terminates_only_compute_not_observed_stopped_or_terminated(state):
+@pytest.mark.parametrize("state", ["pending", "running"])
+def test_cleanup_terminates_only_pending_or_running_compute(state):
     ec2 = EC2([state])
     result = module().sweep(ec2, EXPERIMENT, True, True)
     assert not result["all_compute_stopped"] and not result["all_compute_released"]
     assert ec2.calls[-1] == ("terminate", {"InstanceIds": [INSTANCE_ID],
                                              "Force": True, "SkipOsShutdown": True})
+
+
+def test_cleanup_retries_stop_for_stopping_but_never_claims_stopped_or_terminates():
+    ec2 = EC2(["stopping"])
+    result = module().sweep(ec2, EXPERIMENT, True, True)
+    assert not result["all_compute_stopped"] and not result["all_compute_released"]
+    assert result["states"] == ["stopping"]
+    assert ec2.calls[-1] == ("stop", {"InstanceIds": [INSTANCE_ID],
+                                        "Force": True, "SkipOsShutdown": True})
+    assert not any(name == "terminate" for name, _ in ec2.calls)
+
+
+def test_cleanup_only_observes_shutting_down_without_repeating_termination():
+    ec2 = EC2(["shutting-down"])
+    result = module().sweep(ec2, EXPERIMENT, True, True)
+    assert not result["all_compute_stopped"] and not result["all_compute_released"]
+    assert [name for name, _ in ec2.calls] == ["describe"]
+
+
+@pytest.mark.parametrize("stop_due,cleanup_due", [(False, False), (True, False), (True, True)])
+def test_unknown_state_is_rejected_before_any_mutation(stop_due, cleanup_due):
+    ec2 = EC2(["unknown"])
+    with pytest.raises(RuntimeError, match="Unknown instance state"):
+        module().sweep(ec2, EXPERIMENT, stop_due, cleanup_due)
+    assert [name for name, _ in ec2.calls] == ["describe"]
+
+
+def test_mixed_inventory_unknown_state_blocks_mutation_of_all_instances():
+    ec2 = EC2()
+    describe = ec2.describe_instances
+
+    def mixed(**request):
+        response = describe(**request)
+        unknown = dict(response["Reservations"][0]["Instances"][0])
+        unknown["InstanceId"] = "i-00000000000000001"
+        unknown["State"] = {"Name": "unknown"}
+        response["Reservations"][0]["Instances"].append(unknown)
+        return response
+
+    ec2.describe_instances = mixed
+    with pytest.raises(RuntimeError, match="Unknown instance state"):
+        module().sweep(ec2, EXPERIMENT, True, True)
+    assert [name for name, _ in ec2.calls] == ["describe"]
 
 
 def test_before_deadlines_is_readonly_and_cleanup_cannot_precede_stop():
@@ -204,7 +247,7 @@ def test_independent_backup_preserves_observed_stopped_instance_without_mutation
 
 
 @pytest.mark.parametrize("cleanup,states", [(False, ["running", "stopped"]),
-                                           (True, ["stopping", "terminated"])])
+                                           (True, ["running", "terminated"])])
 def test_independent_backup_requires_later_terminal_observation(monkeypatch, cleanup, states):
     guard = module()
     clock = Clock(360 if cleanup else 300)
@@ -216,6 +259,26 @@ def test_independent_backup_requires_later_terminal_observation(monkeypatch, cle
     assert writes == [("terminate" if cleanup else "stop", {
         "InstanceIds": [INSTANCE_ID], "Force": True, "SkipOsShutdown": True})]
     assert [name for name, _ in ec2.calls].count("describe") == 2
+
+
+def test_independent_cleanup_preserves_instance_that_finishes_stopping_after_deadline(monkeypatch):
+    guard = module()
+    clock = Clock(360)
+    ec2 = EC2(["stopping", "stopped"])
+    monkeypatch.setattr(guard, "api", lambda: ec2)
+    result = guard._backup(EVENT, True, clock.now, clock.monotonic, clock.sleep)
+    assert result["all_compute_stopped"] and result["states"] == ["stopped"]
+    assert [name for name, _ in ec2.calls] == ["describe", "stop", "describe"]
+
+
+def test_independent_cleanup_waits_for_shutting_down_without_repeating_termination(monkeypatch):
+    guard = module()
+    clock = Clock(360)
+    ec2 = EC2(["shutting-down", "terminated"])
+    monkeypatch.setattr(guard, "api", lambda: ec2)
+    result = guard._backup(EVENT, True, clock.now, clock.monotonic, clock.sleep)
+    assert result["all_compute_stopped"] and result["states"] == ["terminated"]
+    assert [name for name, _ in ec2.calls] == ["describe", "describe"]
 
 
 @pytest.mark.parametrize("cleanup,seconds", [(False, 299), (True, 359)])
@@ -248,8 +311,7 @@ def test_unconfirmed_slow_calls_remain_bounded(monkeypatch, cleanup, limit):
     with pytest.raises(RuntimeError, match="unconfirmed"):
         guard._backup(EVENT, cleanup, clock.now, clock.monotonic, clock.sleep)
     assert clock.elapsed <= limit
-    if not cleanup:
-        assert not any(name == "terminate" for name, _ in ec2.calls)
+    assert not any(name == "terminate" for name, _ in ec2.calls)
 
 
 def test_network_failure_has_same_bounded_retry_window(monkeypatch):

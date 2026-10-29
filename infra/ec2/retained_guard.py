@@ -77,6 +77,9 @@ def sweep(ec2, experiment, stop_due, cleanup_due, until=None, monotonic=time.mon
             raise RuntimeError("Partial instance observation leaves final state unconfirmed")
         request["NextToken"] = page["NextToken"]
     states = [item.get("State", {}).get("Name", "unknown") for item in instances]
+    if any(state not in {"pending", "running", "stopping", "stopped", "shutting-down", "terminated"}
+           for state in states):
+        raise RuntimeError("Unknown instance state; no resource mutation allowed")
     summary = {"matched_instances": len(instances), "states": states,
                "stop_due": stop_due, "cleanup_due": cleanup_due,
                "all_compute_stopped": all(state in {"stopped", "terminated"} for state in states),
@@ -87,10 +90,14 @@ def sweep(ec2, experiment, stop_due, cleanup_due, until=None, monotonic=time.mon
     for item in instances:
         state = item.get("State", {}).get("Name", "unknown")
         if cleanup_due:
-            if state not in {"stopped", "terminated"}:
+            if state in {"pending", "running"}:
                 budget()
                 ec2.terminate_instances(InstanceIds=[item["InstanceId"]],
                                         Force=True, SkipOsShutdown=True)
+            elif state == "stopping":
+                budget()
+                ec2.stop_instances(InstanceIds=[item["InstanceId"]],
+                                  Force=True, SkipOsShutdown=True)
         elif state in {"running", "stopping"}:
             budget()
             ec2.stop_instances(InstanceIds=[item["InstanceId"]], Force=True, SkipOsShutdown=True)
