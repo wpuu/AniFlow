@@ -514,6 +514,60 @@ def wan_config(tmp_path, instance_type="g7e.2xlarge"):
     return cfg
 
 
+def test_g6_xlarge_contract_projects_approved_hardware_and_recovers_without_duplicate_post(tmp_path):
+    # MockTransport and synthetic audit only; this is not a real GPU or video success.
+    upstream, cfg = LocalComfyContract(), wan_config(tmp_path, "g6.xlarge")
+    upstream.devices = [{"type": "cuda", "name": "NVIDIA L4", "vram_total": 22888 * 1024**2}]
+    upstream.lost_response, upstream.visible = True, False
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        health = client.get("/api/studio/real/health").json()
+        projection = client.get("/api/studio/cloud/preflight").json()
+        assert health["ready"] and health["provider"] == WAN_PROVIDER
+        assert projection["instance_type"] == "g6.xlarge"
+        assert projection["expected_gpu"] == "NVIDIA L4"
+        assert projection["expected_gpu_vram_gib"] == 22888 / 1024
+        assert projection["expected_ram_gib"] == 16
+        assert projection["checks"] == dict.fromkeys(WAN_CHECKS, True)
+        request = {**payload(client), "provider": WAN_PROVIDER}
+        first = client.post("/api/studio/real/jobs", json=request)
+        assert first.status_code == 202 and first.json()["status"] == "submission_unknown"
+        assert not first.json()["verified"] and first.json()["local_path"] is None
+        assert client.post("/api/studio/real/jobs", json=request).json()["id"] == first.json()["id"]
+    upstream.visible = True
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        recovered = client.get("/api/studio/real/requests/contract-request-001").json()
+        assert recovered["id"] == first.json()["id"]
+        assert recovered["status"] == "queued" and not recovered["verified"]
+        assert client.post("/api/studio/real/jobs", json=request).json()["id"] == first.json()["id"]
+    assert upstream.posts == 1
+
+
+@pytest.mark.parametrize("blocked", ["no_audit", "missing_primary_stop", "missing_independent_stop",
+                                    "expired", "no_cuda"])
+def test_g6_xlarge_still_requires_complete_current_audit_and_cuda_to_submit(tmp_path, blocked):
+    upstream, cfg = LocalComfyContract(), wan_config(tmp_path, "g6.xlarge")
+    upstream.devices = [{"type": "cuda", "name": "NVIDIA L4", "vram_total": 22888 * 1024**2}]
+    gate = json.loads(cfg.gate_path.read_text())
+    if blocked == "missing_primary_stop":
+        gate["checks"].pop("gpu_stop_safeguard")
+    elif blocked == "missing_independent_stop":
+        gate["checks"].pop("independent_stop_safeguard")
+    elif blocked == "expired":
+        gate["expires_at_unix"] = time.time() - 1
+    elif blocked == "no_cuda":
+        upstream.devices = [{"type": "cpu", "name": "CPU", "vram_total": 16 * 1024**3}]
+    cfg.gate_path.write_text(json.dumps(gate))
+    if blocked == "no_audit":
+        cfg.gate_path = None
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        health = client.get("/api/studio/real/health").json()
+        assert not health["ready"] and health["blocked_reasons"]
+        request = {**payload(client), "provider": WAN_PROVIDER}
+        assert client.post("/api/studio/real/jobs", json=request).status_code == 403
+        assert client.get("/api/studio/real/jobs").json()["jobs"] == []
+    assert upstream.posts == 0 and upstream.uploads == 0
+
+
 @pytest.mark.parametrize(("instance_type", "gpu", "vram_gib"), [
     ("g7e.2xlarge", "NVIDIA RTX PRO Server 6000", 96),
     ("g6e.2xlarge", "NVIDIA L40S", 44.703125)])

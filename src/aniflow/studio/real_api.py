@@ -48,6 +48,7 @@ WAN_PROVIDER = "wan2.2-i2v-a14b"
 WAN_HARDWARE = {
     "g7e.2xlarge": {"gpu": "NVIDIA RTX PRO Server 6000", "vram_gib": 96, "ram_gib": 64},
     "g6e.2xlarge": {"gpu": "NVIDIA L40S", "vram_gib": 45776 / 1024, "ram_gib": 64},
+    "g6.xlarge": {"gpu": "NVIDIA L4", "vram_gib": 22888 / 1024, "ram_gib": 16},
 }
 WAN_CHECKS = ("credit_ec2_eligible", "credit_expiry_confirmed", "ohio_gpu_quota",
               "ohio_capacity_and_price", "ssm_private_connectivity", "wan_license_verified",
