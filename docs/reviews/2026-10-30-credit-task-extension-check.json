@@ -37,7 +37,16 @@
   "sources": [
     "https://aws.amazon.com/free/free-tier-faqs/",
     "https://docs.aws.amazon.com/us_en/awsaccountbilling/latest/aboutv2/free-tier-plans-activities.html",
-    "https://aws.amazon.com/free/terms/"
+    "https://aws.amazon.com/free/terms/",
+    "https://aws.amazon.com/awscredits/"
   ],
-  "aws_mutations": 0
+  "aws_mutations": 0,
+  "promotional_terms_clause_9": "Redeemed promotional credit offsets eligible fees incurred during the entire billing cycle in which it expires.",
+  "current_billing_period": {
+    "start_date": "2026-10-01",
+    "end_date": "2026-10-31",
+    "status": "Pending"
+  },
+  "cycle_wide_application_to_these_automatic_activity_credits_confirmed": false,
+  "expiry_date_changed": false
 }
