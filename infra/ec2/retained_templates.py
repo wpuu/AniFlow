@@ -14,6 +14,7 @@ def templates():
     content["description"] = "Retain stopped GPUs; export and flush reports before emergency shutdown"
     for step in content["mainSteps"]:
         if step["action"] == "aws:executeScript":
+            step["timeoutSeconds"] = 540
             step["inputs"]["Script"] = source
     for template in (primary, backup):
         policy = template["Resources"]["Role"]["Properties"]["Policies"][0]["PolicyDocument"]

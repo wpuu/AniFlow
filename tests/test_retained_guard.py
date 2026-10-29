@@ -207,7 +207,7 @@ def test_api_client_is_one_bounded_attempt_and_checks_both_operation_models(monk
     config = factory.call_args.kwargs["config"]
     assert config.connect_timeout == 3 and config.read_timeout == 5
     assert config.retries["total_max_attempts"] == 1
-    assert guard.BACKUP_SECONDS == 120
+    assert guard.BACKUP_SECONDS == 480
     client.describe_instances.assert_not_called()
     client.stop_instances.assert_not_called()
     client.terminate_instances.assert_not_called()
@@ -302,7 +302,7 @@ def test_late_stop_is_readonly_and_does_not_delay_independent_cleanup(monkeypatc
     assert [name for name, _ in ec2.calls] == ["describe"]
 
 
-@pytest.mark.parametrize("cleanup,limit", [(False, 360), (True, 480)])
+@pytest.mark.parametrize("cleanup,limit", [(False, 360), (True, 840)])
 def test_unconfirmed_slow_calls_remain_bounded(monkeypatch, cleanup, limit):
     guard = module()
     clock = Clock(360 if cleanup else 300)
@@ -327,7 +327,52 @@ def test_network_failure_has_same_bounded_retry_window(monkeypatch):
     monkeypatch.setattr(guard, "api", lambda: ec2)
     with pytest.raises(RuntimeError, match="unconfirmed"):
         guard._backup(EVENT, True, clock.now, clock.monotonic, clock.sleep)
-    assert clock.elapsed <= 480
+    assert clock.elapsed <= 840
+
+
+@pytest.mark.parametrize("cleanup", [False, True])
+def test_backup_can_confirm_stopped_after_two_minutes_without_terminating(monkeypatch, cleanup):
+    guard = module()
+    event = {**EVENT, "CleanupUtc": "2026-10-29T00:15:00Z"}
+    started = 900 if cleanup else 300
+    clock = Clock(started)
+    ec2 = EC2(["stopping"] * 7 + ["stopped"], clock=clock)
+    monkeypatch.setattr(guard, "api", lambda: ec2)
+
+    result = guard._backup(event, cleanup, clock.now, clock.monotonic, clock.sleep)
+
+    assert result["all_compute_stopped"] and result["states"] == ["stopped"]
+    assert started + 120 < clock.elapsed <= started + 480
+    assert sum(name == "stop" for name, _ in ec2.calls) == 7
+    assert not any(name == "terminate" for name, _ in ec2.calls)
+
+
+def test_long_stop_confirmation_remains_bounded_by_eight_minutes(monkeypatch):
+    guard = module()
+    event = {**EVENT, "CleanupUtc": "2026-10-29T00:15:00Z"}
+    clock = Clock(300)
+    ec2 = EC2(["stopping"], clock=clock)
+    monkeypatch.setattr(guard, "api", lambda: ec2)
+
+    with pytest.raises(RuntimeError, match="unconfirmed"):
+        guard._backup(event, False, clock.now, clock.monotonic, clock.sleep)
+
+    assert 420 < clock.elapsed <= 780
+    assert not any(name == "terminate" for name, _ in ec2.calls)
+
+
+def test_long_stop_confirmation_still_yields_at_fixed_cleanup_deadline(monkeypatch):
+    guard = module()
+    event = {**EVENT, "CleanupUtc": "2026-10-29T00:07:30Z"}
+    clock = Clock(300)
+    ec2 = EC2(["stopping"], clock=clock)
+    monkeypatch.setattr(guard, "api", lambda: ec2)
+
+    with pytest.raises(RuntimeError, match="unconfirmed"):
+        guard._backup(event, False, clock.now, clock.monotonic, clock.sleep)
+
+    assert 420 < clock.elapsed <= 450
+    assert not any(name == "terminate" for name, _ in ec2.calls)
 
 
 def test_partial_pagination_cannot_prove_empty_success_or_mutate():
@@ -368,5 +413,11 @@ def test_templates_require_both_tags_and_keep_independent_execution_limits(monke
         "WaitUntilStop", "IndependentStop", "WaitUntilCleanup", "IndependentCleanup"]
     assert steps[1]["onFailure"] == "Continue"
     for index in (1, 3):
-        assert steps[index]["timeoutSeconds"] == 150 and steps[index]["maxAttempts"] == 1
+        assert steps[index]["timeoutSeconds"] == 540 and steps[index]["maxAttempts"] == 1
+        guard = module()
+        assert guard.BACKUP_SECONDS + 2 * guard.API_SECONDS < steps[index]["timeoutSeconds"] <= 600
         assert steps[index]["inputs"]["Script"] == source
+    base_steps = module("g7_templates").templates()[1]["Resources"]["Document"][
+        "Properties"]["Content"]["mainSteps"]
+    assert all(step["timeoutSeconds"] == 150 for step in base_steps
+               if step["action"] == "aws:executeScript")

@@ -17,7 +17,7 @@ from botocore.exceptions import BotoCoreError, ClientError
 REGION = "us-east-2"
 EXPERIMENT = re.compile(r"aniflow-wan-ohio-20261027-[a-z0-9-]+")
 API_SECONDS = 8
-BACKUP_SECONDS = 120
+BACKUP_SECONDS = 480
 PHASE = "gpu-retained"
 
 
