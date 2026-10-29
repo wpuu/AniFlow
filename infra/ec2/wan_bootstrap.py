@@ -199,7 +199,9 @@ for row in manifest['models']:
                 check=True, timeout=10900)
         assert partial.stat().st_size == row['bytes'] and digest(partial) == row['sha256']
         partial.replace(target)
-    assert target.stat().st_size == row['bytes'] and digest(target) == row['sha256']
+    else:
+        assert target.stat().st_size == row['bytes'] and digest(target) == row['sha256']
+    assert target.stat().st_size == row['bytes']
     verified.append({**row, 'verified': True})
     print('PINNED_MODEL_VERIFIED:' + row['relative_path'], flush=True)
 (root / 'verified-models.json').write_text(json.dumps({**manifest, 'models': verified,

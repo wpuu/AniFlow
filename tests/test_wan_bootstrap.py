@@ -2,6 +2,7 @@ import ast
 import base64
 import builtins
 import copy
+import hashlib
 import importlib.util
 import json
 import re
@@ -223,6 +224,78 @@ def test_last_shell_status_uses_echo_without_an_escaped_format_string():
     script = module().build_bootstrap(bundle())
     assert shlex.split(script.strip().splitlines()[-1]) == [
         "echo", "BOOTSTRAP_PREPARED_NOT_COMFY_READY"]
+
+
+@pytest.mark.parametrize("existing,valid", [(False, True), (True, True),
+                                          (False, False), (True, False)])
+def test_model_heredoc_hashes_new_partial_once_and_existing_target_on_every_run(
+        tmp_path, monkeypatch, existing, valid):
+    script = module().build_bootstrap(bundle())
+    sections = dict(re.findall(r"<<'(ANIFLOW_\w+)'\n(.*?)\n\1", script, re.DOTALL))
+    root = tmp_path / "wan"
+    root.mkdir()
+    expected = b"original-fp16-model-for-offline-contract"
+    actual = expected if valid else b"X" * len(expected)
+    row = {"relative_path": "diffusion_models/contract.safetensors", "bytes": len(expected),
+           "sha256": hashlib.sha256(expected).hexdigest()}
+    manifest = {"repository": "Comfy-Org/Wan-2.2", "revision": module().WEIGHT_REVISION,
+                "models": [row]}
+    (root / "pinned-models.json").write_text(json.dumps(manifest))
+    target = root / "ComfyUI/models" / row["relative_path"]
+    partial = target.with_suffix(target.suffix + ".part")
+    if existing:
+        target.parent.mkdir(parents=True)
+        target.write_bytes(actual)
+    reads, renames, downloads = [], [], []
+    original_open, original_replace = Path.open, Path.replace
+
+    def tracked_open(path, mode="r", *args, **kwargs):
+        if mode == "rb" and path in (target, partial):
+            reads.append(path)
+        return original_open(path, mode, *args, **kwargs)
+
+    def tracked_replace(path, destination):
+        renames.append((path, destination))
+        return original_replace(path, destination)
+
+    def fake_download(arguments, **kwargs):
+        assert arguments[0] == "curl" and arguments[-1].startswith("https://huggingface.co/")
+        assert Path(arguments[arguments.index("--output") + 1]) == partial
+        downloads.append(arguments)
+        partial.write_bytes(actual)
+
+    def local_path(value):
+        assert value == "/opt/aniflow/wan"
+        return root
+
+    def local_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "pathlib":
+            return SimpleNamespace(Path=local_path)
+        if name == "subprocess":
+            return SimpleNamespace(run=fake_download)
+        if name == "shutil":
+            return SimpleNamespace(disk_usage=lambda path: SimpleNamespace(free=20 * 1024**3))
+        return builtins.__import__(name, globals, locals, fromlist, level)
+
+    namespace = {"__builtins__": {**vars(builtins), "__import__": local_import}}
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "open", tracked_open)
+        patch.setattr(Path, "replace", tracked_replace)
+        if valid:
+            exec(compile(sections["ANIFLOW_MODELS"], "ANIFLOW_MODELS", "exec"), namespace)  # noqa: S102 -- Constant heredoc; curl replaced by local file writes.
+        else:
+            with pytest.raises(AssertionError):
+                exec(compile(sections["ANIFLOW_MODELS"], "ANIFLOW_MODELS", "exec"), namespace)  # noqa: S102 -- Constant heredoc; curl replaced by local file writes.
+    assert reads == [target if existing else partial]
+    assert len(downloads) == (0 if existing else 1)
+    if valid:
+        assert target.read_bytes() == expected
+        assert renames == ([] if existing else [(partial, target)])
+        report = json.loads((root / "verified-models.json").read_text())
+        assert report["models"] == [{**row, "verified": True}]
+    else:
+        assert renames == [] and not (root / "verified-models.json").exists()
+        assert target.exists() is existing
 
 
 def test_bundle_and_manifest_are_encoded_without_shell_interpretation():
