@@ -1,0 +1,36 @@
+{
+  "observed_at_utc": "2026-10-29T06:18:36Z",
+  "source": "AWS Bills page, read-only UI review",
+  "billing_period": "2026-10",
+  "bill_status": "Pending; estimated, not finalized",
+  "bill_page_last_refresh_displayed": "2026-10-29 14:05:27 GMT+8",
+  "expanded_service": "Elastic Compute Cloud",
+  "expansion_depth": "Expanded the EC2 service row once, to region-level rows only; did not expand a region row.",
+  "ec2_service_total_displayed_usd": 0,
+  "region_rows": [
+    {
+      "region": "No Region",
+      "displayed_amount": "(USD 45.38)",
+      "amount_usd": -45.38
+    },
+    {
+      "region": "Philippines (Manila)",
+      "displayed_amount": "USD 45.34",
+      "amount_usd": 45.34
+    },
+    {
+      "region": "US East (Ohio)",
+      "displayed_amount": "USD 0.04",
+      "amount_usd": 0.04
+    }
+  ],
+  "instance_level_usage": {
+    "ohio_g6_xlarge_line_item": "Not displayed",
+    "box_usage_g6_xlarge_hours": "Not displayed",
+    "box_usage_g6_xlarge_rate_usd": "Not displayed",
+    "box_usage_g6_xlarge_amount_usd": "Not displayed",
+    "ebs_gp3_capacity_line": "Not displayed",
+    "ebs_gp3_throughput_line": "Not displayed"
+  },
+  "conclusion": "The Ohio region row shows USD 0.04 at region level, but no BoxUsage:g6.xlarge item, hours, rate, or instance-specific amount was displayed. The USD 0.04 cannot be attributed to the retained G6 instance. No EBS gp3 capacity or throughput row was displayed after this one-level service expansion."
+}
