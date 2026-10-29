@@ -1,0 +1,23 @@
+{
+  "experiment_id": "aniflow-wan-ohio-20261027-retained-n",
+  "states": [
+    {
+      "at_utc": "2026-10-29T00:39:43.001412+00:00",
+      "state": "running"
+    },
+    {
+      "at_utc": "2026-10-29T00:42:54.575605+00:00",
+      "state": "stopping"
+    },
+    {
+      "at_utc": "2026-10-29T00:43:57.646854+00:00",
+      "state": "shutting-down"
+    }
+  ],
+  "gpu_preflight_passed": false,
+  "ssm_read_command_confirmed": false,
+  "models_downloaded": false,
+  "stop_requested_at_utc": "2026-10-29T00:42:54.575605+00:00",
+  "observed_not_running_within_10min": false,
+  "deadline_violation_requires_cleanup": true
+}

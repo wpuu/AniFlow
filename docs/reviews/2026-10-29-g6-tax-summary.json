@@ -1,0 +1,40 @@
+{
+  "source": "current_aws_billing_ui",
+  "observed_at_utc": "2026-10-29T00:39:44Z",
+  "tax_settings": {
+    "page_url": "https://us-east-1.console.aws.amazon.com/costmanagement/home?region=us-east-2#/tax-settings",
+    "page_status": "partial_content_unavailable",
+    "country_or_region": null,
+    "country_status": "not visible in the safe fields available on this page",
+    "tax_registration_status_label": "TRN 状态",
+    "tax_registration_status_display": "—",
+    "interpretation": "unknown; the dash is not treated as proof of exemption or non-registration",
+    "privacy_scope": "No address, tax identifier, or input accessibility label was read or recorded."
+  },
+  "billing_periods": [
+    {
+      "period": "2026-09-01/2026-09-30",
+      "total_tax_usd": 0.0,
+      "pretax_service_charges_usd": 0.0,
+      "tax_rate": null,
+      "rate_status": "not derivable from a zero taxable base",
+      "finalized_invoice_status": "not verified"
+    },
+    {
+      "period": "2026-08-01/2026-08-31",
+      "total_tax_usd": 0.0,
+      "pretax_service_charges_usd": 0.0,
+      "tax_rate": null,
+      "rate_status": "not derivable from a zero taxable base",
+      "finalized_invoice_status": "not verified"
+    }
+  ],
+  "current_period": {
+    "period": "2026-10-01/2026-10-31",
+    "total_tax_usd_displayed": 0.0,
+    "pretax_service_charges_usd_displayed": 0.0,
+    "status": "current estimate; not treated as final"
+  },
+  "tax_rate": null,
+  "tax_gate": "unknown; no exemption or tax rate inferred"
+}

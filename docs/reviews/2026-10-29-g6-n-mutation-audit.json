@@ -1,0 +1,257 @@
+{
+  "read_only": true,
+  "events": [
+    {
+      "time_utc": "2026-10-29T00:42:46Z",
+      "action": "StopInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:42:48Z",
+      "action": "StopInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:42:52Z",
+      "action": "StopInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:42:58Z",
+      "action": "StopInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:43:01Z",
+      "action": "StopInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:43:04Z",
+      "action": "StopInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:43:09Z",
+      "action": "StopInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:43:15Z",
+      "action": "StopInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:43:21Z",
+      "action": "StopInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:43:27Z",
+      "action": "StopInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:43:32Z",
+      "action": "StopInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:43:48Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:43:53Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:43:59Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:44:05Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:44:11Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:44:16Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:44:22Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:44:28Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:44:33Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:44:39Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:44:45Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:44:48Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:44:51Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:44:56Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:45:02Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:45:08Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:45:14Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:45:19Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:45:25Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:45:31Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:45:36Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:45:42Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:45:48Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:46:48Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    },
+    {
+      "time_utc": "2026-10-29T00:47:48Z",
+      "action": "TerminateInstances",
+      "force": true,
+      "skip_os_shutdown": true,
+      "error_code": null
+    }
+  ]
+}
