@@ -3,11 +3,45 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import re
 import subprocess
 from pathlib import Path
 from urllib.parse import urlsplit
+from uuid import uuid4
 
 import httpx
+
+DEFAULT_DOWNLOAD_BYTES = 1024**3
+FP8_DOWNLOAD_BYTES = 200 * 1024**2
+
+
+class DownloadBudgetError(ValueError):
+    """The existing cloud output needs recovery without another automatic media GET."""
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _save_download_receipt(path: Path, value: dict, *, exclusive: bool = False):
+    if path.is_symlink():
+        raise DownloadBudgetError("Unsafe download budget path")
+    target = path if exclusive else path.with_name(path.name + "." + uuid4().hex + ".tmp")
+    try:
+        with target.open("x", encoding="utf-8") as stream:
+            json.dump(value, stream, sort_keys=True)
+            stream.flush()
+            os.fsync(stream.fileno())
+        if not exclusive:
+            target.replace(path)
+    finally:
+        if not exclusive:
+            target.unlink(missing_ok=True)
 
 
 class ComfyProvider:
@@ -81,8 +115,9 @@ class ComfyProvider:
                 return candidate, "running", None
         return prompt_id, "submission_unknown", None
 
-    def download(self, history: dict, path: Path,
-                 profile: str | None = None) -> tuple[str, int, dict]:
+    def download(self, history: dict, path: Path, profile: str | None = None, *,
+                 max_download_bytes: int | None = None, budget_path: Path | None = None,
+                 request_key: str | None = None) -> tuple[str, int, dict]:
         candidates = []
         for output in history.get("outputs", {}).values():
             for values in output.values():
@@ -96,6 +131,11 @@ class ComfyProvider:
         if (Path(filename).name != filename or "\\" in filename or ".." in folder
                 or "\\" in folder or folder.startswith("/") or artifact.get("type") != "output"):
             raise ValueError("Unsafe ComfyUI output path")
+        if max_download_bytes is not None:
+            selected = {"filename": filename, "subfolder": folder, "type": "output"}
+            return self._limited_download(selected, path, profile, max_download_bytes, budget_path, request_key)
+        if budget_path is not None or request_key is not None:
+            raise ValueError("An explicit byte limit is required for a download budget")
         partial = path.with_suffix(".mp4.partial")
         path.parent.mkdir(parents=True, exist_ok=True)
         digest, size = hashlib.sha256(), 0
@@ -106,7 +146,7 @@ class ComfyProvider:
                 with partial.open("wb") as target:
                     for chunk in response.iter_bytes(1024 * 1024):
                         size += len(chunk)
-                        if size > 1024 * 1024 * 1024:
+                        if size > DEFAULT_DOWNLOAD_BYTES:
                             raise ValueError("MP4 exceeds the 1 GiB experiment limit")
                         target.write(chunk)
                         digest.update(chunk)
@@ -118,6 +158,80 @@ class ComfyProvider:
             return digest.hexdigest(), size, metadata
         finally:
             partial.unlink(missing_ok=True)
+
+    def _limited_download(self, artifact, path, profile, limit, budget_path, request_key):
+        if (type(limit) is not int or not 0 < limit <= DEFAULT_DOWNLOAD_BYTES
+                or not isinstance(budget_path, Path) or not isinstance(request_key, str)
+                or not re.fullmatch(r"[A-Za-z0-9_-]{8,128}", request_key)):
+            raise DownloadBudgetError("Invalid persistent download budget")
+        base = budget_path.parent.resolve()
+        if budget_path.is_symlink() or path.is_symlink() or not path.resolve().is_relative_to(base):
+            raise DownloadBudgetError("Download destination is outside its budget data directory")
+        partial = path.with_suffix(".mp4.partial")
+        if partial.is_symlink():
+            raise DownloadBudgetError("Unsafe partial download path")
+        binding = {"data_dir": str(base), "request_key": request_key, "destination": str(path.resolve()),
+                   "artifact": artifact, "verification_profile": profile, "limit_bytes": limit}
+        if budget_path.exists():
+            try:
+                state = json.loads(budget_path.read_text(encoding="utf-8"))
+            except (OSError, ValueError) as exc:
+                raise DownloadBudgetError("Download reservation is unconfirmed; retain cloud output") from exc
+            if state.get("binding") != binding or state.get("reserved_bytes") != limit:
+                raise DownloadBudgetError("Download budget belongs to another request or artifact")
+            verified = state.get("verified_source")
+            if state.get("phase") not in {"verified", "complete"} or not isinstance(verified, dict):
+                raise DownloadBudgetError("Prior media GET outcome is unknown; retain cloud output for recovery")
+            source = path if path.is_file() else partial
+            if (not source.is_file() or source.stat().st_size != verified.get("bytes")
+                    or _file_sha256(source) != verified.get("sha256")):
+                raise DownloadBudgetError("Previously verified source is missing or changed; retain cloud output")
+            metadata = verify_mp4(source, profile)
+            if metadata != verified.get("metadata"):
+                raise DownloadBudgetError("Previously verified source metadata changed")
+            if source == partial:
+                partial.replace(path)
+            state["phase"] = "complete"
+            _save_download_receipt(budget_path, state)
+            return verified["sha256"], verified["bytes"], metadata
+        if path.exists() or partial.exists():
+            raise DownloadBudgetError("Unknown existing media must not be overwritten")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        state = {"schema_version": 1, "binding": binding, "reserved_bytes": limit,
+                 "attempts": 1, "phase": "reserved"}
+        try:
+            _save_download_receipt(budget_path, state, exclusive=True)
+        except FileExistsError as exc:
+            raise DownloadBudgetError("Another process owns the download reservation") from exc
+        digest, size = hashlib.sha256(), 0
+        try:
+            with self.client.stream("GET", "/view", params=artifact) as response:
+                response.raise_for_status()
+                length = response.headers.get("content-length")
+                if length is not None and (not length.isdigit() or not 0 < int(length) <= limit):
+                    raise DownloadBudgetError("Cloud source exceeds the reserved transfer limit")
+                with partial.open("xb") as target:
+                    for chunk in response.iter_bytes(min(1024 * 1024, limit)):
+                        size += len(chunk)
+                        if size > limit:
+                            raise DownloadBudgetError("Cloud source exceeds the reserved transfer limit")
+                        target.write(chunk)
+                        digest.update(chunk)
+                        if length is None and size == limit:
+                            raise DownloadBudgetError("Unknown-length source reached its transfer limit; do not read more")
+                if length is not None and size != int(length):
+                    raise DownloadBudgetError("Media length is unconfirmed; do not repeat the GET")
+            metadata = verify_mp4(partial, profile)
+            state.update(phase="verified", verified_source={"sha256": digest.hexdigest(),
+                         "bytes": size, "metadata": metadata})
+            _save_download_receipt(budget_path, state)
+            partial.replace(path)
+            state["phase"] = "complete"
+            _save_download_receipt(budget_path, state)
+            return digest.hexdigest(), size, metadata
+        finally:
+            if state["phase"] == "reserved":
+                partial.unlink(missing_ok=True)
 
 
 def verify_mp4(path: Path, profile: str | None = None) -> dict:

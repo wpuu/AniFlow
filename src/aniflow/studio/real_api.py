@@ -25,7 +25,9 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse
 
 from aniflow.studio.comfy_provider import (
+    FP8_DOWNLOAD_BYTES,
     ComfyProvider,
+    DownloadBudgetError,
     postprocess_h3_portrait,
     postprocess_wan_portrait,
 )
@@ -102,6 +104,15 @@ class RealConfig:
                                   and type(gate.get("credit_budget_usd")) in (int, float)
                                   and 0 < gate["credit_budget_usd"] <= 20
                                   and type(gate.get("max_runtime_seconds")) is int)
+                precision = gate.get("precision_profile")
+                preparation = bundle.get("preparation")
+                bundle_precision = preparation.get("profile") if isinstance(preparation, dict) else None
+                if precision == "fp8-scaled" or bundle_precision == "fp8-scaled":
+                    resource_valid = (resource_valid and precision == bundle_precision == "fp8-scaled"
+                                      and type(gate.get("max_download_bytes")) is int
+                                      and gate["max_download_bytes"] == FP8_DOWNLOAD_BYTES)
+                elif precision not in {None, "fp16"}:
+                    resource_valid = False
                 required_checks = WAN_CHECKS
             elif service == "gameliftstreams":
                 resource_valid = (gate.get("instance_type") == "gen6n_pro"
@@ -247,7 +258,7 @@ def create_real_app(config: RealConfig | None = None,
     def refresh():
         with lock:
             for job in jobs():
-                if job["status"] in {"completed", "failed", "submitting"}:
+                if job["status"] in {"completed", "failed", "submitting"} or job.get("download_blocked"):
                     continue
                 try:
                     wan = job.get("provider") == WAN_PROVIDER
@@ -263,8 +274,16 @@ def create_real_app(config: RealConfig | None = None,
                         preset = "wan_native_5s_portrait_v1" if wan else "h3_native_5s_portrait_v1"
                         if job.get("postprocess") == {"preset": preset}:
                             source = videos / (job["id"] + ".source.mp4")
+                            download_options = {}
+                            if job.get("precision_profile") == "fp8-scaled":
+                                if not wan or job.get("max_download_bytes") != FP8_DOWNLOAD_BYTES:
+                                    raise DownloadBudgetError("Recovered FP8 transfer budget is invalid")
+                                download_options = {"max_download_bytes": FP8_DOWNLOAD_BYTES,
+                                    "budget_path": base / "download-budget.json",
+                                    "request_key": job["idempotency_key"]}
                             source_digest, source_size, source_metadata = provider.download(
-                                history, source, "wan_native_source" if wan else "h3_native_source")
+                                history, source, "wan_native_source" if wan else "h3_native_source",
+                                **download_options)
                             job.update(source_local_path=str(source), source_sha256=source_digest,
                                        source_bytes=source_size, source_video_metadata=source_metadata)
                             save(job)
@@ -277,6 +296,9 @@ def create_real_app(config: RealConfig | None = None,
                                    video_metadata=metadata, local_path=str(path),
                                    video_download_path=f"/api/studio/real/jobs/{job['id']}/video",
                                    elapsed_seconds=time.time() - job["created_at"])
+                except DownloadBudgetError:
+                    job.update(status="downloading", download_blocked=True, recovery_required=True,
+                        error="Download paused by the transfer budget; retain the cloud output and recover this exact task only. No automatic media retry.")
                 except (httpx.HTTPError, OSError, BotoCoreError, ClientError) as exc:
                     job["error"] = f"Read/download verification interrupted: {type(exc).__name__}; no resubmission"
                 except (ValueError, KeyError, TypeError, StopIteration, ZeroDivisionError,
@@ -444,6 +466,8 @@ def create_real_app(config: RealConfig | None = None,
                    "source_video_metadata": None, "postprocess": bundle.get("postprocess"),
                    "verified": False, "elapsed_seconds": None, "peak_vram_mb": None,
                    "actual_cost_usd": None, "video_download_path": None, "error": None}
+            if bundle["_local_audit"].get("precision_profile") == "fp8-scaled":
+                job.update(precision_profile="fp8-scaled", max_download_bytes=FP8_DOWNLOAD_BYTES)
             cx.execute("INSERT INTO jobs VALUES (?,?,?,?)", (job["id"], task.idempotency_key,
                                                             digest, json.dumps(job)))
         with lock:

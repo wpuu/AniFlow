@@ -844,3 +844,62 @@ def test_recovered_wan_with_wrong_preset_cannot_download_or_complete(tmp_path, p
     assert restored["status"] == "failed" and not restored["verified"]
     assert restored["local_path"] is None and restored["output_sha256"] is None
     assert upstream.posts == 1
+
+
+def enable_fp8_budget(cfg):
+    from aniflow.studio.comfy_provider import FP8_DOWNLOAD_BYTES
+    bundle = json.loads(cfg.workflow_path.read_text())
+    bundle['preparation'] = {'profile': 'fp8-scaled'}
+    cfg.workflow_path.write_text(json.dumps(bundle))
+    gate = json.loads(cfg.gate_path.read_text())
+    gate.update(precision_profile='fp8-scaled', max_download_bytes=FP8_DOWNLOAD_BYTES,
+                workflow_sha256=hashlib.sha256(cfg.workflow_path.read_bytes()).hexdigest())
+    cfg.gate_path.write_text(json.dumps(gate))
+
+
+@pytest.mark.parametrize('limit', [None, 0, True, 200 * 1024**2 + 1])
+def test_fp8_gate_requires_exact_explicit_transfer_limit(tmp_path, limit):
+    cfg = wan_config(tmp_path, 'g6.xlarge')
+    enable_fp8_budget(cfg)
+    assert not cfg.audited_workflow()[0]
+    gate = json.loads(cfg.gate_path.read_text())
+    gate['max_download_bytes'] = limit
+    cfg.gate_path.write_text(json.dumps(gate))
+    assert cfg.audited_workflow()[0]
+
+
+@pytest.mark.parametrize('preparation', [None, 'invalid', []])
+def test_fp8_gate_rejects_missing_or_non_object_precision_profile(tmp_path, preparation):
+    cfg = wan_config(tmp_path, 'g6.xlarge')
+    enable_fp8_budget(cfg)
+    bundle = json.loads(cfg.workflow_path.read_text())
+    bundle['preparation'] = preparation
+    cfg.workflow_path.write_text(json.dumps(bundle))
+    gate = json.loads(cfg.gate_path.read_text())
+    gate['workflow_sha256'] = hashlib.sha256(cfg.workflow_path.read_bytes()).hexdigest()
+    cfg.gate_path.write_text(json.dumps(gate))
+    assert cfg.audited_workflow()[0]
+
+
+def test_fp8_unknown_download_is_not_retried_by_polling_or_app_restart(tmp_path):
+    cfg, upstream = wan_config(tmp_path, 'g6.xlarge'), LocalComfyContract()
+    enable_fp8_budget(cfg)
+    upstream.devices = [{'type': 'cuda', 'name': 'NVIDIA L4', 'vram_total': 22888 * 1024**2}]
+    media_calls = []
+    def transport(request):
+        if request.url.path == '/view':
+            media_calls.append(request.method)
+            raise httpx.ReadError('Synthetic unknown media GET outcome')
+        return upstream(request)
+    with TestClient(create_real_app(cfg, httpx.MockTransport(transport))) as client:
+        created = client.post('/api/studio/real/jobs', json={**payload(client), 'provider': WAN_PROVIDER}).json()
+        assert created['precision_profile'] == 'fp8-scaled'
+        upstream.done = True
+        for _ in range(3):
+            job = client.get('/api/studio/real/requests/contract-request-001').json()
+        assert job['download_blocked'] and job['recovery_required'] and not job['verified']
+        assert job['status'] == 'downloading' and 'cloud output' in job['error']
+    with TestClient(create_real_app(cfg, httpx.MockTransport(transport))) as client:
+        restored = client.get('/api/studio/real/requests/contract-request-001').json()
+        assert restored['id'] == created['id'] and restored['download_blocked']
+    assert media_calls == ['GET'] and upstream.posts == 1
