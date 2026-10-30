@@ -1,0 +1,107 @@
+{
+  "verified_at_utc": "2026-10-30T06:40:38.465933+00:00",
+  "read_only_verification": true,
+  "experiment_stacks_remaining": 0,
+  "experiment_bucket_remaining": false,
+  "cloudwatch_log_groups_remaining": 0,
+  "public_function_urls_remaining": 0,
+  "preserved_function_code_unchanged": true,
+  "empty_template_buckets_retained": 2,
+  "empty_template_bucket_objects_versions_uploads": 0,
+  "all_previously_identified_cleanup_targets_resolved": true,
+  "finalized_bill_or_unconditional_zero_future_charges_certified": false,
+  "owner_approved_cleanup": true,
+  "enabled_region_count": 20,
+  "resource_totals": {
+    "instances": {
+      "total": 0,
+      "successful_regions": 20
+    },
+    "volumes": {
+      "total": 0,
+      "successful_regions": 20
+    },
+    "snapshots": {
+      "total": 0,
+      "successful_regions": 20
+    },
+    "addresses": {
+      "total": 0,
+      "successful_regions": 20
+    },
+    "nat_gateways": {
+      "total": 0,
+      "successful_regions": 20
+    },
+    "vpc_endpoints": {
+      "total": 0,
+      "successful_regions": 20
+    },
+    "log_groups": {
+      "total": 0,
+      "successful_regions": 20
+    },
+    "lambda_functions": {
+      "total": 1,
+      "successful_regions": 20
+    },
+    "event_rules": {
+      "total": 0,
+      "successful_regions": 20
+    },
+    "schedules": {
+      "total": 0,
+      "successful_regions": 20
+    },
+    "cloudformation_stacks": {
+      "total": 0,
+      "successful_regions": 20
+    }
+  },
+  "completed_steps": [
+    {
+      "step": "legacy_public_function_url_removed",
+      "at_utc": "2026-10-30T06:37:11.818966+00:00"
+    },
+    {
+      "step": "two_url_only_public_permissions_removed",
+      "at_utc": "2026-10-30T06:37:13.085650+00:00"
+    },
+    {
+      "step": "two_backed_up_legacy_log_groups_removed",
+      "at_utc": "2026-10-30T06:37:17.615979+00:00"
+    },
+    {
+      "step": "primary_and_backup_stack_deletions_requested",
+      "at_utc": "2026-10-30T06:37:22.909752+00:00"
+    },
+    {
+      "step": "backed_up_experiment_objects_removed_and_bucket_empty",
+      "at_utc": "2026-10-30T06:37:28.406186+00:00"
+    },
+    {
+      "step": "assets_stack_deletion_requested",
+      "at_utc": "2026-10-30T06:37:30.423089+00:00"
+    },
+    {
+      "step": "assets_stack_delete_complete",
+      "at_utc": "2026-10-30T06:37:54.159203+00:00"
+    },
+    {
+      "step": "primary_stack_delete_complete",
+      "at_utc": "2026-10-30T06:38:13.402187+00:00"
+    },
+    {
+      "step": "backup_stack_delete_complete",
+      "at_utc": "2026-10-30T06:38:16.297865+00:00"
+    }
+  ],
+  "temporary_auth_closeout": {
+    "completed_at_utc": "2026-10-30T06:41:09.878238+00:00",
+    "official_task_cli_logout": true,
+    "task_login_cache_empty": true,
+    "named_task_auth_files_removed": 4,
+    "global_user_aws_config_modified": false,
+    "browser_logout_invoked": false
+  }
+}
