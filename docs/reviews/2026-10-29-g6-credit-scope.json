@@ -1,0 +1,67 @@
+{
+  "source": "current_aws_billing_ui",
+  "observed_at_utc": "2026-10-29T00:28:41Z",
+  "all_required_services_confirmed": true,
+  "all_five_active": true,
+  "expiry_date": "2026-10-30",
+  "expiry_time_utc": null,
+  "estimated_remaining_usd": 42.64,
+  "booked_remaining_usd": 91.14,
+  "booked_used_usd": 8.86,
+  "estimated_used_usd": 57.36,
+  "sufficient_active_credit": {
+    "name": "Explore AWS: Create a web app using AWS Lambda",
+    "estimated_remaining_usd": 20.0,
+    "expiry_date": "2026-10-30",
+    "status": "Active"
+  },
+  "services": {
+    "ec2": {
+      "confirmed": true,
+      "billing_label": "Amazon Elastic Compute Cloud"
+    },
+    "vpc": {
+      "confirmed": true,
+      "billing_label": "Amazon Virtual Private Cloud"
+    },
+    "ssm": {
+      "confirmed": true,
+      "billing_label": "AWS Systems Manager"
+    },
+    "s3": {
+      "confirmed": true,
+      "billing_label": "Amazon Simple Storage Service"
+    },
+    "cloudformation": {
+      "confirmed": true,
+      "billing_label": "AWS CloudFormation"
+    },
+    "lambda": {
+      "confirmed": true,
+      "billing_label": "AWS Lambda"
+    },
+    "events": {
+      "confirmed": true,
+      "billing_label": "CloudWatch Events"
+    },
+    "kms": {
+      "confirmed": true,
+      "billing_label": "AWS Key Management Service"
+    },
+    "cloudwatch": {
+      "confirmed": true,
+      "billing_label": "AmazonCloudWatch"
+    },
+    "data_transfer": {
+      "confirmed": true,
+      "billing_label": "AWS Data Transfer"
+    }
+  },
+  "expiration_time_note": "The console shows the date 2026-10-30 only; exact time is unknown.",
+  "tax_summary_status": "pending",
+  "browser_evidence": {
+    "credits_url": "https://us-east-1.console.aws.amazon.com/costmanagement/home?region=us-east-2#/credits",
+    "credit_detail_route_verified": true,
+    "full_service_list_verified": true
+  }
+}

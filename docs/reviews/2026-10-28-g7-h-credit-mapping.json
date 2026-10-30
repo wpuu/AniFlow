@@ -1,0 +1,23 @@
+{
+  "source": "current_aws_billing_ui",
+  "observed_at_utc": "2026-10-28T12:00:06+08:00",
+  "all_required_services_confirmed": true,
+  "all_five_active": true,
+  "expiry_date": "2026-10-30",
+  "estimated_remaining_usd": 44.06,
+  "booked_remaining_usd": 91.14,
+  "additional_scope_grant_estimated_usd": 20.0,
+  "service_level_scope_only": true,
+  "line_item_ui_confirmation": false,
+  "native_ebs_service_code": "AmazonEC2 (fresh gp3 Price List query)",
+  "public_ipv4_billing_service": "AmazonVPC (AWS VPC documentation)",
+  "no_marketplace_image_product_codes": true,
+  "tax_exemption_inferred": false,
+  "source_file": "credit-scope-current.json",
+  "source_sha256": "1cb49ba5e814f264183581947a33f0d12616bb25dd5fbb3f6b1110335096d8b0",
+  "mapping_sources": [
+    "https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html",
+    "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/differences-billing-data-cost-explorer-data.html",
+    "https://aws.amazon.com/awscredits/"
+  ]
+}

@@ -1,0 +1,905 @@
+"""Offline contract tests only: local synthetic MP4, no real H3, AWS, or model calls."""
+import base64
+import hashlib
+import json
+import sqlite3
+import subprocess
+import time
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+
+import httpx
+import pytest
+from fastapi.testclient import TestClient
+
+from aniflow.studio.comfy_provider import (
+    ComfyProvider,
+    postprocess_h3_portrait,
+    postprocess_wan_portrait,
+    verify_mp4,
+)
+from aniflow.studio.real_api import (
+    CHECKS,
+    GAMELIFT_CHECKS,
+    WAN_CHECKS,
+    WAN_PROVIDER,
+    WORKSPACES_CHECKS,
+    RealConfig,
+    create_real_app,
+)
+
+PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO/6G7cAAAAASUVORK5CYII=")
+
+
+class LocalComfyContract:
+    def __init__(self):
+        self.posts = 0
+        self.key = None
+        self.lost_response = False
+        self.visible = True
+        self.done = False
+        self.content = b"bad media"
+        self.download_fails = False
+        self.devices = [{"type": "cuda", "name": "SYNTHETIC GPU FOR CONTRACT ONLY", "vram_total": 48 * 1024**3}]
+        self.uploads = 0
+        self.submitted_workflow = None
+
+    def __call__(self, request):
+        path = request.url.path
+        if path == "/system_stats":
+            return httpx.Response(200, json={"devices": self.devices})
+        if path == "/upload/image":
+            self.uploads += 1
+            return httpx.Response(200, json={"name": "contract.png", "subfolder": ""})
+        if path == "/prompt":
+            self.posts += 1
+            submitted = json.loads(request.content)
+            self.key = submitted["extra_data"]["aniflow_request_key"]
+            self.submitted_workflow = submitted["prompt"]
+            if self.lost_response:
+                raise httpx.ReadError("Synthetic accepted response loss")
+            return httpx.Response(200, json={"prompt_id": "server-returned-id"})
+        prompt = [1, "server-returned-id", {}, {"aniflow_request_key": self.key}]
+        if path == "/queue":
+            return httpx.Response(200, json={"queue_running": [], "queue_pending":
+                [prompt] if self.key and self.visible and not self.done else []})
+        if path.startswith("/history"):
+            history = {"server-returned-id": {"prompt": prompt,
+                "status": {"completed": True, "status_str": "success"}, "outputs": {
+                    "9": {"videos": [{"filename": "LOCAL_CONTRACT_NOT_H3.mp4",
+                                       "subfolder": "", "type": "output"}]}}}}
+            return httpx.Response(200, json=history if self.done else {})
+        if path == "/view":
+            if self.download_fails:
+                raise httpx.ReadError("Synthetic download outage")
+            return httpx.Response(200, content=self.content)
+        raise AssertionError(f"Unexpected local contract request {request.method} {path}")
+
+
+def config(tmp_path):
+    # Synthetic audit data is restricted to the test directory and MockTransport.
+    workflow = tmp_path / "synthetic-workflow.json"
+    workflow.write_text(json.dumps({"source_url": "https://github.com/Comfy-Org/ComfyUI/blob/TEST_ONLY/workflow.json",
+        "prompt": {"1": {"class_type": "LOCAL_CONTRACT_ONLY", "inputs": {"image": "", "text": ""}}},
+        "bindings": {"image": ["1", "image"], "prompt": ["1", "text"]}}), encoding="utf-8")
+    gate = tmp_path / "synthetic-gate.json"
+    gate.write_text(json.dumps({"launch_allowed": True, "region": "ap-northeast-1",
+        "instance_type": "g6e.2xlarge", "checks": dict.fromkeys(CHECKS, True),
+        "expires_at_unix": time.time() + 60, "max_runtime_seconds": 60,
+        "experiment_budget_usd": 1, "workflow_sha256": hashlib.sha256(workflow.read_bytes()).hexdigest()}),
+        encoding="utf-8")
+    return RealConfig(tmp_path / "data", gate_path=gate, workflow_path=workflow)
+
+
+def payload(client, key="contract-request-001"):
+    upload = client.post("/api/studio/real/assets", files={"file": ("frame.png", PNG, "image/png")})
+    assert upload.status_code == 200
+    return {"project_id": "ContractOnly", "shot_id": "One", "image_id": upload.json()["image_id"],
+            "prompt": "Synthetic contract, not real H3", "negative_prompt": "", "duration_seconds": 5,
+            "aspect_ratio": "9:16", "idempotency_key": key, "provider": "minimax-h3"}
+
+
+def test_default_real_is_blocked_and_rejects_cross_origin(tmp_path):
+    upstream = LocalComfyContract()
+    with TestClient(create_real_app(RealConfig(tmp_path), httpx.MockTransport(upstream))) as client:
+        health = client.get("/api/studio/real/health").json()
+        assert health["mode"] == "REAL_H3" and health["simulation"] is False
+        assert health["ready"] is False and health["blocked_reasons"]
+        p = payload(client)
+        assert client.post("/api/studio/real/jobs", json=p).status_code == 403
+        assert client.post("/api/studio/real/jobs", json=p,
+                           headers={"Origin": "https://unrelated.example"}).status_code == 403
+        assert client.post("/api/studio/mock/jobs", json=p).status_code == 404
+        assert client.get("/api/studio/real/jobs").json()["jobs"] == []
+        assert upstream.posts == 0
+
+
+def workspaces_config(tmp_path):
+    cfg = config(tmp_path)
+    gate = json.loads(cfg.gate_path.read_text())
+    gate.update(service="workspaces", instance_type="Graphics.g6.4xlarge",
+                cash_cap_usd=1, credit_budget_usd=20,
+                checks=dict.fromkeys(WORKSPACES_CHECKS, True))
+    del gate["experiment_budget_usd"]
+    cfg.gate_path.write_text(json.dumps(gate))
+    add_postprocess(cfg, {"preset": "h3_native_5s_portrait_v1"})
+    return cfg
+
+
+@pytest.mark.parametrize("cash_cap", [0, 1])
+def test_workspaces_gate_has_separate_credit_and_cash_budgets(tmp_path, cash_cap):
+    upstream, cfg = LocalComfyContract(), workspaces_config(tmp_path)
+    gate = json.loads(cfg.gate_path.read_text())
+    gate["cash_cap_usd"] = cash_cap
+    cfg.gate_path.write_text(json.dumps(gate))
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        assert client.get("/api/studio/real/health").json()["ready"] is True
+        assert client.post("/api/studio/real/jobs", json=payload(client)).status_code == 202
+        assert upstream.posts == 1
+
+
+@pytest.mark.parametrize(("field", "value"), [
+    ("service", "unknown"), ("service", "ec2"), ("instance_type", "g6e.2xlarge"),
+    ("region", "us-east-1"), ("cash_cap_usd", 1.01), ("cash_cap_usd", -1),
+    ("cash_cap_usd", None), ("credit_budget_usd", 20.01),
+    ("credit_budget_usd", 0), ("credit_budget_usd", None),
+    ("max_runtime_seconds", 14401), ("launch_allowed", False)])
+def test_workspaces_gate_rejects_resource_and_budget_mismatch(tmp_path, field, value):
+    upstream, cfg = LocalComfyContract(), workspaces_config(tmp_path)
+    gate = json.loads(cfg.gate_path.read_text())
+    gate[field] = value
+    cfg.gate_path.write_text(json.dumps(gate))
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        assert client.get("/api/studio/real/health").json()["ready"] is False
+        assert client.post("/api/studio/real/jobs", json=payload(client)).status_code == 403
+        assert upstream.posts == 0 and upstream.uploads == 0
+
+
+@pytest.mark.parametrize("check", WORKSPACES_CHECKS)
+def test_workspaces_gate_requires_each_service_specific_audit_check(tmp_path, check):
+    cfg = workspaces_config(tmp_path)
+    gate = json.loads(cfg.gate_path.read_text())
+    # EC2 eligibility cannot substitute for WorkSpaces credit/quota/account audits.
+    gate["checks"].update(dict.fromkeys(CHECKS, True))
+    gate["checks"].pop(check)
+    cfg.gate_path.write_text(json.dumps(gate))
+    assert cfg.audited_workflow()[0]
+
+
+def test_real_preflight_without_audit_is_unknown_not_mock(tmp_path):
+    upstream = LocalComfyContract()
+    with TestClient(create_real_app(RealConfig(tmp_path), httpx.MockTransport(upstream))) as client:
+        data = client.get("/api/studio/cloud/preflight").json()
+        assert data["mode"] == "LOCAL_AUDIT_PROJECTION" and data["service"] == "workspaces"
+        assert data["instance_type"] == "Graphics.g6.4xlarge" and data["region"] == "ap-northeast-1"
+        assert data["expected_gpu"] == "NVIDIA L4" and data["expected_gpu_vram_gib"] == 24
+        assert data["expected_ram_gib"] == 64 and data["account_plan"] == "unknown"
+        assert data["checks"] == dict.fromkeys(WORKSPACES_CHECKS)
+        assert data["launch_allowed"] is False and data["blocked_reasons"]
+        assert data["real_gpu_connected"] is True and data["tunnel_connected"] is True
+        assert data["estimated_credit_remaining_usd"] is None and data["hourly_price_usd"] is None
+        assert data["credit_settled_remaining_usd"] is None and data["credit_observed_at_utc"] is None
+        assert data["aws_queries"] == 0 and data["aws_writes"] == 0
+        assert upstream.posts == 0 and upstream.uploads == 0
+
+
+@pytest.mark.parametrize("expired", [False, True])
+def test_real_preflight_projects_only_valid_workspaces_audit(tmp_path, expired):
+    upstream, cfg = LocalComfyContract(), workspaces_config(tmp_path)
+    gate = json.loads(cfg.gate_path.read_text())
+    gate.update(account_plan="SYNTHETIC_TEST_PLAN", estimated_credit_remaining_usd=50,
+                credit_settled_remaining_usd=55, credit_observed_at_utc="2026-10-26T00:00:00Z",
+                hourly_price_usd=2.5)
+    if expired:
+        gate["expires_at_unix"] = time.time() - 1
+    cfg.gate_path.write_text(json.dumps(gate))
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        data = client.get("/api/studio/cloud/preflight").json()
+        assert data["launch_allowed"] is not expired
+        assert data["checks"] == dict.fromkeys(WORKSPACES_CHECKS, None if expired else True)
+        assert data["account_plan"] == ("unknown" if expired else "SYNTHETIC_TEST_PLAN")
+        for field in ("estimated_credit_remaining_usd", "credit_settled_remaining_usd",
+                      "credit_observed_at_utc", "hourly_price_usd"):
+            assert data[field] == (None if expired else gate[field])
+        assert upstream.posts == 0 and upstream.uploads == 0
+
+
+def test_real_preflight_does_not_treat_valid_audit_as_observed_gpu(tmp_path):
+    upstream, cfg = LocalComfyContract(), workspaces_config(tmp_path)
+    upstream.devices = [{"type": "cpu", "vram_total": 64 * 1024**3}]
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        data = client.get("/api/studio/cloud/preflight").json()
+        assert data["checks"] == dict.fromkeys(WORKSPACES_CHECKS, True)
+        assert data["launch_allowed"] is False and data["real_gpu_connected"] is False
+        assert data["tunnel_connected"] is True and data["blocked_reasons"]
+
+
+def test_real_preflight_preserves_ec2_gate_service_identity(tmp_path):
+    upstream, cfg = LocalComfyContract(), config(tmp_path)
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        data = client.get("/api/studio/cloud/preflight").json()
+        assert data["service"] == "ec2" and data["instance_type"] == "g6e.2xlarge"
+        assert data["checks"] == dict.fromkeys(CHECKS, True)
+        assert "credit_workspaces_eligible" not in data["checks"]
+        assert data["launch_allowed"] is True
+
+
+def test_workspaces_gate_cannot_omit_strict_postprocess(tmp_path):
+    cfg = workspaces_config(tmp_path)
+    bundle = json.loads(cfg.workflow_path.read_text())
+    del bundle["postprocess"]
+    cfg.workflow_path.write_text(json.dumps(bundle))
+    gate = json.loads(cfg.gate_path.read_text())
+    gate["workflow_sha256"] = hashlib.sha256(cfg.workflow_path.read_bytes()).hexdigest()
+    cfg.gate_path.write_text(json.dumps(gate))
+    assert cfg.audited_workflow()[0]
+
+
+def test_lost_submit_response_recovers_without_post_across_restart(tmp_path):
+    upstream, cfg = LocalComfyContract(), config(tmp_path)
+    upstream.lost_response, upstream.visible = True, False
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        p = payload(client)
+        first = client.post("/api/studio/real/jobs", json=p).json()
+        assert first["status"] == "submission_unknown" and first["comfy_prompt_id"] is None
+        assert client.get("/api/studio/real/requests/contract-request-001").json()["status"] == "submission_unknown"
+        assert client.post("/api/studio/real/jobs", json=p).json()["id"] == first["id"]
+        assert client.post("/api/studio/real/jobs", json={**p, "prompt": "different"}).status_code == 409
+        assert client.post("/api/studio/real/jobs", json={**p, "idempotency_key": "second-request"}).status_code == 409
+    upstream.visible = True
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        recovered = client.get("/api/studio/real/requests/contract-request-001").json()
+        assert recovered["id"] == first["id"]
+        assert recovered["comfy_prompt_id"] == "server-returned-id"
+        assert recovered["status"] == "queued"
+        assert upstream.posts == 1
+
+
+@pytest.mark.parametrize("devices", [[], [{"type": "cpu", "name": "CPU", "vram_total": 64 * 1024**3}],
+                                      [{"type": "cuda", "name": "unknown", "vram_total": 0}]])
+def test_cpu_only_tunnel_cannot_report_gpu_or_submit(tmp_path, devices):
+    upstream, cfg = LocalComfyContract(), config(tmp_path)
+    upstream.devices = devices
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        health = client.get("/api/studio/real/health").json()
+        assert health["tunnel_connected"] is True
+        assert health["gpu_connected"] is False and health["ready"] is False
+        assert client.post("/api/studio/real/jobs", json=payload(client)).status_code == 403
+        assert upstream.posts == 0 and upstream.uploads == 0
+        assert client.get("/api/studio/real/jobs").json()["jobs"] == []
+
+
+def test_gpu_truth_requires_device_evidence_and_audit_independently(tmp_path):
+    upstream, cfg = LocalComfyContract(), config(tmp_path)
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        health = client.get("/api/studio/real/health").json()
+        assert health["tunnel_connected"] is True and health["gpu_connected"] is True
+        assert health["ready"] is True
+        created = client.post("/api/studio/real/jobs", json=payload(client)).json()
+        assert created["gpu_connected"] is True
+    with TestClient(create_real_app(RealConfig(tmp_path / "disabled"), httpx.MockTransport(upstream))) as client:
+        health = client.get("/api/studio/real/health").json()
+        assert health["gpu_connected"] is True and health["ready"] is False
+
+
+def test_expired_or_modified_workflow_audit_cannot_submit(tmp_path):
+    upstream, cfg = LocalComfyContract(), config(tmp_path)
+    gate = json.loads(cfg.gate_path.read_text())
+    gate["expires_at_unix"] = time.time() - 1
+    cfg.gate_path.write_text(json.dumps(gate))
+    assert cfg.audited_workflow()[0]
+    gate["expires_at_unix"] = time.time() + 60
+    cfg.gate_path.write_text(json.dumps(gate))
+    cfg.workflow_path.write_text(cfg.workflow_path.read_text() + " ")
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        assert client.post("/api/studio/real/jobs", json=payload(client)).status_code == 403
+        assert upstream.posts == 0
+
+
+def test_concurrent_same_request_submits_only_once(tmp_path):
+    upstream, cfg = LocalComfyContract(), config(tmp_path)
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        p = payload(client)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            responses = list(pool.map(lambda _: client.post("/api/studio/real/jobs", json=p), range(2)))
+        assert all(response.status_code == 202 for response in responses)
+        assert len({response.json()["id"] for response in responses}) == 1
+        assert upstream.posts == 1
+
+
+def test_complete_download_is_verified_and_corruption_is_not_served(tmp_path):
+    upstream, cfg = LocalComfyContract(), config(tmp_path)
+    fixture = tmp_path / "LOCAL_CONTRACT_NOT_H3.mp4"
+    subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i",
+                    "color=c=blue:s=768x1360:r=1:d=5", "-c:v", "libx264", "-pix_fmt",
+                    "yuv420p", str(fixture)], check=True, timeout=60)
+    upstream.content = fixture.read_bytes()
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        first = client.post("/api/studio/real/jobs", json=payload(client)).json()
+        upstream.done, upstream.download_fails = True, True
+        interrupted = client.get(f"/api/studio/real/jobs/{first['id']}").json()
+        assert interrupted["verified"] is False and interrupted["local_path"] is None
+        upstream.download_fails = False
+        done = client.get(f"/api/studio/real/jobs/{first['id']}").json()
+        assert done["status"] == "completed" and done["verified"] is True
+        assert done["output_sha256"] == hashlib.sha256(upstream.content).hexdigest()
+        assert done["output_bytes"] == len(upstream.content)
+        assert done["video_metadata"]["duration_seconds"] == 5
+        assert done["actual_cost_usd"] is None and done["peak_vram_mb"] is None
+        assert Path(done["local_path"]).read_bytes() == upstream.content
+        assert not list(cfg.data_dir.rglob("*.partial"))
+        assert client.get(done["video_download_path"]).content == upstream.content
+        Path(done["local_path"]).write_bytes(b"corrupt")
+        assert client.get(done["video_download_path"]).status_code == 409
+        assert upstream.posts == 1
+
+
+def add_postprocess(cfg, postprocess):
+    bundle = json.loads(cfg.workflow_path.read_text())
+    bundle["postprocess"] = postprocess
+    cfg.workflow_path.write_text(json.dumps(bundle))
+    gate = json.loads(cfg.gate_path.read_text())
+    gate["workflow_sha256"] = hashlib.sha256(cfg.workflow_path.read_bytes()).hexdigest()
+    cfg.gate_path.write_text(json.dumps(gate))
+
+
+@pytest.fixture(scope="module", params=[True, False], ids=["with-audio", "without-audio"])
+def native_contract_video(tmp_path_factory, request):
+    fixture = tmp_path_factory.mktemp("synthetic-native") / "LOCAL_CONTRACT_NOT_H3.mp4"
+    audio = ["-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000"] if request.param else []
+    subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "testsrc2=s=800x1376:r=24",
+                    *audio, "-frames:v", "124", "-t", "5.166666667",
+                    "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
+                    "-pix_fmt", "yuv420p", "-c:a", "aac", str(fixture)], check=True, timeout=60)
+    return fixture
+
+
+def test_native_postprocess_preserves_source_and_verifies_final_after_download_recovery(tmp_path,
+                                                                                       native_contract_video):
+    upstream, cfg = LocalComfyContract(), config(tmp_path)
+    add_postprocess(cfg, {"preset": "h3_native_5s_portrait_v1"})
+    upstream.content = native_contract_video.read_bytes()
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        first = client.post("/api/studio/real/jobs", json=payload(client)).json()
+        upstream.done, upstream.download_fails = True, True
+        interrupted = client.get(f"/api/studio/real/jobs/{first['id']}").json()
+        assert interrupted["verified"] is False and interrupted["local_path"] is None
+        upstream.download_fails = False
+        done = client.get(f"/api/studio/real/jobs/{first['id']}").json()
+        assert done["status"] == "completed" and done["verified"] is True
+        assert Path(done["source_local_path"]).read_bytes() == upstream.content
+        assert done["source_sha256"] == hashlib.sha256(upstream.content).hexdigest()
+        assert done["source_bytes"] == len(upstream.content)
+        assert done["source_video_metadata"]["frame_count"] == 124
+        assert done["source_video_metadata"]["width"] == 800
+        assert done["source_video_metadata"]["fps"] == 24
+        assert done["video_metadata"] == {"duration_seconds": 5, "width": 774, "height": 1376,
+            "fps": 24, "frame_count": 120, "sample_aspect_ratio": "1:1",
+            "audio_present": done["source_video_metadata"]["audio_present"]}
+        final = Path(done["local_path"])
+        assert done["output_sha256"] == hashlib.sha256(final.read_bytes()).hexdigest()
+        assert done["output_bytes"] == final.stat().st_size
+        assert done["output_sha256"] != done["source_sha256"]
+        assert client.get(done["video_download_path"]).content == final.read_bytes()
+        assert not list(cfg.data_dir.rglob("*.partial"))
+        assert upstream.posts == 1
+
+
+@pytest.mark.parametrize("preset", [None, {}, {"preset": "unknown"},
+                                    {"preset": "h3_native_5s_portrait_v1", "width": 1}])
+def test_unknown_postprocess_rejects_before_upstream_submission(tmp_path, preset):
+    upstream, cfg = LocalComfyContract(), config(tmp_path)
+    add_postprocess(cfg, preset)
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        assert client.get("/api/studio/real/health").json()["ready"] is False
+        assert client.post("/api/studio/real/jobs", json=payload(client)).status_code == 403
+        assert upstream.posts == 0 and upstream.uploads == 0
+
+
+def test_failed_postprocess_keeps_source_evidence_without_completing(tmp_path, native_contract_video,
+                                                                    monkeypatch):
+    def fail_postprocess(source, path):
+        raise ValueError("Synthetic local postprocess failure")
+
+    monkeypatch.setattr("aniflow.studio.real_api.postprocess_h3_portrait", fail_postprocess)
+    upstream, cfg = LocalComfyContract(), config(tmp_path)
+    add_postprocess(cfg, {"preset": "h3_native_5s_portrait_v1"})
+    upstream.content = native_contract_video.read_bytes()
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        first = client.post("/api/studio/real/jobs", json=payload(client)).json()
+        upstream.done = True
+        failed = client.get(f"/api/studio/real/jobs/{first['id']}").json()
+        assert failed["status"] == "failed" and failed["verified"] is False
+        assert Path(failed["source_local_path"]).read_bytes() == upstream.content
+        assert failed["source_sha256"] == hashlib.sha256(upstream.content).hexdigest()
+        assert failed["local_path"] is None and failed["output_sha256"] is None
+        assert client.get(f"/api/studio/real/jobs/{first['id']}/video").status_code == 409
+        assert upstream.posts == 1
+
+
+@pytest.mark.parametrize(("dimensions", "fps", "frames"), [
+    ("768x1360", 24, 124), ("800x1376", 25, 124), ("800x1376", 24, 123)])
+def test_native_source_rejects_wrong_canvas_fps_or_short_frames(tmp_path, dimensions, fps, frames):
+    fixture = tmp_path / "INVALID_NATIVE_CONTRACT_NOT_H3.mp4"
+    subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i",
+                    f"color=c=blue:s={dimensions}:r={fps}", "-frames:v", str(frames),
+                    "-c:v", "libx264", "-preset", "ultrafast", str(fixture)], check=True, timeout=60)
+    with pytest.raises(ValueError):
+        verify_mp4(fixture, "h3_native_source")
+
+
+def test_bad_output_never_completes(tmp_path):
+    upstream, cfg = LocalComfyContract(), config(tmp_path)
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        first = client.post("/api/studio/real/jobs", json=payload(client)).json()
+        upstream.done = True
+        done = client.get(f"/api/studio/real/jobs/{first['id']}").json()
+        assert done["status"] == "failed" and done["verified"] is False
+        assert done["local_path"] is None and done["output_sha256"] is None
+        assert not list(cfg.data_dir.rglob("*.partial"))
+        assert client.get(f"/api/studio/real/jobs/{first['id']}/video").status_code == 409
+
+
+@pytest.mark.parametrize("url", ["https://127.0.0.1:8188", "http://remote.example:8188",
+                                "http://user:secret@localhost:8188", "http://localhost:8188/path"])
+def test_remote_comfy_urls_are_forbidden(url):
+    with pytest.raises(ValueError):
+        ComfyProvider(url)
+
+
+def test_blocked_gamelift_snapshot_cannot_borrow_an_unrelated_loopback_gpu(tmp_path):
+    snapshot = tmp_path / "blocked.json"
+    snapshot.write_text(json.dumps({"service": "gameliftstreams", "region": "ap-northeast-1",
+        "instance_type": "gen6n_pro", "snapshot_only": True, "launch_allowed": False,
+        "account_plan": "PAID / ACTIVE", "estimated_credit_remaining_usd": 47.25,
+        "checks": {name: False for name in GAMELIFT_CHECKS}}))
+    cfg = RealConfig(tmp_path / "local", gate_path=snapshot)
+    local = LocalComfyContract()
+    with TestClient(create_real_app(cfg, httpx.MockTransport(local))) as client:
+        health = client.get("/api/studio/real/health").json()
+        projection = client.get("/api/studio/cloud/preflight").json()
+    assert health["ready"] is False and health["gpu_connected"] is False
+    assert projection["service"] == "gameliftstreams"
+    assert projection["instance_type"] == "gen6n_pro"
+    assert projection["checks"]["tokyo_gamelift_quota"] is False
+    assert projection["launch_allowed"] is False and projection["aws_queries"] == 0
+    assert projection["real_gpu_connected"] is False
+
+
+def test_snapshot_only_never_authorizes_launch_even_with_other_valid_fields(tmp_path):
+    cfg = config(tmp_path)
+    gate = json.loads(cfg.gate_path.read_text())
+    gate["snapshot_only"] = True
+    cfg.gate_path.write_text(json.dumps(gate))
+    reasons, workflow = cfg.audited_workflow()
+    assert reasons and workflow is None
+
+
+def test_gr6_requires_full_audit_and_projects_its_actual_target_ram(tmp_path):
+    cfg = workspaces_config(tmp_path)
+    gate = json.loads(cfg.gate_path.read_text())
+    gate["instance_type"] = "Graphics.gr6.4xlarge"
+    cfg.gate_path.write_text(json.dumps(gate))
+    with TestClient(create_real_app(cfg, httpx.MockTransport(LocalComfyContract()))) as client:
+        projection = client.get("/api/studio/cloud/preflight").json()
+    assert projection["instance_type"] == "Graphics.gr6.4xlarge"
+    assert projection["expected_ram_gib"] == 128
+
+
+def test_blocked_gr6_snapshot_never_borrows_an_unrelated_local_gpu(tmp_path):
+    cfg = workspaces_config(tmp_path)
+    gate = json.loads(cfg.gate_path.read_text())
+    gate.update(instance_type="Graphics.gr6.4xlarge", snapshot_only=True, launch_allowed=False)
+    gate["checks"]["workspaces_account_eligible"] = None
+    cfg.gate_path.write_text(json.dumps(gate))
+    with TestClient(create_real_app(cfg, httpx.MockTransport(LocalComfyContract()))) as client:
+        projection = client.get("/api/studio/cloud/preflight").json()
+        health = client.get("/api/studio/real/health").json()
+    assert projection["instance_type"] == "Graphics.gr6.4xlarge"
+    assert projection["expected_ram_gib"] == 128
+    assert projection["checks"]["workspaces_account_eligible"] is None
+    assert not projection["launch_allowed"] and not projection["real_gpu_connected"]
+    assert not health["ready"] and not health["gpu_connected"]
+
+
+def wan_config(tmp_path, instance_type="g7e.2xlarge"):
+    cfg = config(tmp_path)
+    bundle = json.loads(cfg.workflow_path.read_text())
+    bundle["provider"] = WAN_PROVIDER
+    bundle["prompt"]["8"] = {"class_type": "LOCAL_CONTRACT_ONLY", "inputs": {"text": "NOT_REPLACED"}}
+    bundle["bindings"]["negative_prompt"] = ["8", "text"]
+    cfg.workflow_path.write_text(json.dumps(bundle))
+    gate = json.loads(cfg.gate_path.read_text())
+    gate.update(service="ec2", region="us-east-2", provider=WAN_PROVIDER,
+                instance_type=instance_type, cash_cap_usd=1, credit_budget_usd=20,
+                checks=dict.fromkeys(WAN_CHECKS, True))
+    gate.pop("experiment_budget_usd")
+    cfg.gate_path.write_text(json.dumps(gate))
+    add_postprocess(cfg, {"preset": "wan_native_5s_portrait_v1"})
+    return cfg
+
+
+def test_g6_xlarge_contract_projects_approved_hardware_and_recovers_without_duplicate_post(tmp_path):
+    # MockTransport and synthetic audit only; this is not a real GPU or video success.
+    upstream, cfg = LocalComfyContract(), wan_config(tmp_path, "g6.xlarge")
+    upstream.devices = [{"type": "cuda", "name": "NVIDIA L4", "vram_total": 22888 * 1024**2}]
+    upstream.lost_response, upstream.visible = True, False
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        health = client.get("/api/studio/real/health").json()
+        projection = client.get("/api/studio/cloud/preflight").json()
+        assert health["ready"] and health["provider"] == WAN_PROVIDER
+        assert projection["instance_type"] == "g6.xlarge"
+        assert projection["expected_gpu"] == "NVIDIA L4"
+        assert projection["expected_gpu_vram_gib"] == 22888 / 1024
+        assert projection["expected_ram_gib"] == 16
+        assert projection["checks"] == dict.fromkeys(WAN_CHECKS, True)
+        request = {**payload(client), "provider": WAN_PROVIDER}
+        first = client.post("/api/studio/real/jobs", json=request)
+        assert first.status_code == 202 and first.json()["status"] == "submission_unknown"
+        assert not first.json()["verified"] and first.json()["local_path"] is None
+        assert client.post("/api/studio/real/jobs", json=request).json()["id"] == first.json()["id"]
+    upstream.visible = True
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        recovered = client.get("/api/studio/real/requests/contract-request-001").json()
+        assert recovered["id"] == first.json()["id"]
+        assert recovered["status"] == "queued" and not recovered["verified"]
+        assert client.post("/api/studio/real/jobs", json=request).json()["id"] == first.json()["id"]
+    assert upstream.posts == 1
+
+
+@pytest.mark.parametrize("invalid", ["expired", "missing_primary_stop", "failed_independent_stop",
+                                    "changed_workflow_hash"])
+def test_invalidated_wan_gate_preserves_readonly_identity_without_gpu_queries_or_submission(tmp_path, invalid):
+    # Synthetic audit/MockTransport only; never a claim of real hardware/video validation.
+    cfg = wan_config(tmp_path, "g6.xlarge")
+    gate = json.loads(cfg.gate_path.read_text())
+    gate["snapshot_only"] = False
+    if invalid == "expired":
+        gate["expires_at_unix"] = time.time() - 1
+    elif invalid == "missing_primary_stop":
+        gate["checks"].pop("gpu_stop_safeguard")
+    elif invalid == "failed_independent_stop":
+        gate["checks"]["independent_stop_safeguard"] = False
+    else:
+        gate["workflow_sha256"] = "0" * 64
+    cfg.gate_path.write_text(json.dumps(gate))
+    original = cfg.gate_path.read_bytes()
+
+    def no_connection(request):
+        pytest.fail("Invalidated Wan gate must not query or submit to any GPU")
+
+    with TestClient(create_real_app(cfg, httpx.MockTransport(no_connection))) as client:
+        health = client.get("/api/studio/real/health").json()
+        projection = client.get("/api/studio/cloud/preflight").json()
+        assert health["mode"] == "REAL_WAN" and health["provider"] == WAN_PROVIDER
+        assert not health["ready"] and not health["gpu_connected"] and not health["tunnel_connected"]
+        assert projection["provider"] == WAN_PROVIDER and projection["region"] == "us-east-2"
+        assert projection["service"] == "ec2" and projection["instance_type"] == "g6.xlarge"
+        assert projection["expected_gpu"] == "NVIDIA L4" and projection["expected_ram_gib"] == 16
+        assert not projection["launch_allowed"] and not projection["real_gpu_connected"]
+        assert projection["checks"] == dict.fromkeys(WAN_CHECKS)
+        request = {**payload(client), "provider": WAN_PROVIDER}
+        assert client.post("/api/studio/real/jobs", json=request).status_code == 403
+        assert client.get("/api/studio/real/jobs").json()["jobs"] == []
+    assert cfg.gate_path.read_bytes() == original and cfg.audited_workflow()[0]
+    readonly = cfg.blocked_projection()
+    assert readonly["snapshot_only"] is True and readonly["launch_allowed"] is False
+
+
+@pytest.mark.parametrize("field,value", [("provider", "unknown"), ("provider", "minimax-h3"),
+                                         ("region", "ap-northeast-1"), ("instance_type", "g6.2xlarge"),
+                                         ("service", "workspaces")])
+def test_invalidated_wan_readonly_identity_rejects_unapproved_resource_combinations(tmp_path, field, value):
+    cfg = wan_config(tmp_path, "g6.xlarge")
+    gate = json.loads(cfg.gate_path.read_text())
+    gate.update(snapshot_only=False, expires_at_unix=time.time() - 1)
+    gate[field] = value
+    cfg.gate_path.write_text(json.dumps(gate))
+    assert cfg.blocked_projection() == {}
+
+    def no_connection(request):
+        pytest.fail("Invalid resource selection must not query an unrelated GPU")
+
+    with TestClient(create_real_app(cfg, httpx.MockTransport(no_connection))) as client:
+        assert not client.get("/api/studio/real/health").json()["ready"]
+        assert not client.get("/api/studio/cloud/preflight").json()["launch_allowed"]
+        assert client.post("/api/studio/real/jobs", json={**payload(client), "provider": WAN_PROVIDER}).status_code == 403
+
+
+@pytest.mark.parametrize("blocked", ["no_audit", "missing_primary_stop", "missing_independent_stop",
+                                    "expired", "no_cuda"])
+def test_g6_xlarge_still_requires_complete_current_audit_and_cuda_to_submit(tmp_path, blocked):
+    upstream, cfg = LocalComfyContract(), wan_config(tmp_path, "g6.xlarge")
+    upstream.devices = [{"type": "cuda", "name": "NVIDIA L4", "vram_total": 22888 * 1024**2}]
+    gate = json.loads(cfg.gate_path.read_text())
+    if blocked == "missing_primary_stop":
+        gate["checks"].pop("gpu_stop_safeguard")
+    elif blocked == "missing_independent_stop":
+        gate["checks"].pop("independent_stop_safeguard")
+    elif blocked == "expired":
+        gate["expires_at_unix"] = time.time() - 1
+    elif blocked == "no_cuda":
+        upstream.devices = [{"type": "cpu", "name": "CPU", "vram_total": 16 * 1024**3}]
+    cfg.gate_path.write_text(json.dumps(gate))
+    if blocked == "no_audit":
+        cfg.gate_path = None
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        health = client.get("/api/studio/real/health").json()
+        assert not health["ready"] and health["blocked_reasons"]
+        request = {**payload(client), "provider": WAN_PROVIDER}
+        assert client.post("/api/studio/real/jobs", json=request).status_code == 403
+        assert client.get("/api/studio/real/jobs").json()["jobs"] == []
+    assert upstream.posts == 0 and upstream.uploads == 0
+
+
+@pytest.mark.parametrize(("instance_type", "gpu", "vram_gib"), [
+    ("g7e.2xlarge", "NVIDIA RTX PRO Server 6000", 96),
+    ("g6e.2xlarge", "NVIDIA L40S", 44.703125)])
+def test_wan_identity_is_separate_and_repeated_submission_posts_once(
+        tmp_path, instance_type, gpu, vram_gib):
+    upstream, cfg = LocalComfyContract(), wan_config(tmp_path, instance_type)
+    upstream.devices = [{"type": "cuda", "name": gpu, "vram_total": int(vram_gib * 1024**3)}]
+    upstream.lost_response, upstream.visible = True, False
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        health = client.get("/api/studio/real/health").json()
+        projection = client.get("/api/studio/cloud/preflight").json()
+        assert health["mode"] == "REAL_WAN" and health["provider"] == WAN_PROVIDER
+        assert health["ready"] is True and health["simulation"] is False
+        assert projection["provider"] == WAN_PROVIDER and projection["service"] == "ec2"
+        assert projection["region"] == "us-east-2" and projection["instance_type"] == instance_type
+        assert projection["expected_ram_gib"] == 64 and projection["expected_gpu_vram_gib"] == vram_gib
+        assert projection["expected_gpu"] == gpu
+        assert projection["checks"] == dict.fromkeys(WAN_CHECKS, True)
+        assert projection["aws_queries"] == 0 and projection["aws_writes"] == 0
+        p = {**payload(client), "provider": WAN_PROVIDER, "negative_prompt": "Avoid synthetic blur"}
+        first = client.post("/api/studio/real/jobs", json=p)
+        assert first.status_code == 202 and first.json()["status"] == "submission_unknown"
+        assert first.json()["provider"] == WAN_PROVIDER
+        assert upstream.submitted_workflow["8"]["inputs"]["text"] == p["negative_prompt"]
+        assert client.post("/api/studio/real/jobs", json=p).json()["id"] == first.json()["id"]
+    upstream.visible = True
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        recovered = client.get("/api/studio/real/requests/contract-request-001").json()
+        assert recovered["provider"] == WAN_PROVIDER and recovered["comfy_prompt_id"] == "server-returned-id"
+    assert upstream.posts == 1
+
+
+@pytest.mark.parametrize("instance_type", ["g7e.2xlarge", "g6e.2xlarge"])
+@pytest.mark.parametrize(("field", "value"), [
+    ("service", "workspaces"), ("service", "gameliftstreams"),
+    ("region", "ap-northeast-1"), ("region", "us-east-1"),
+    ("instance_type", "g6e.xlarge"), ("instance_type", "g6e.4xlarge"),
+    ("provider", "minimax-h3"), ("provider", "unknown"),
+    ("cash_cap_usd", 1.01), ("cash_cap_usd", True), ("credit_budget_usd", 20.01),
+    ("credit_budget_usd", False), ("max_runtime_seconds", 14401),
+    ("max_runtime_seconds", True), ("snapshot_only", True),
+    ("expires_at_unix", 0), ("expires_at_unix", time.time() + 15000),
+    ("workflow_sha256", "0" * 64)])
+def test_wan_gate_mismatches_cannot_submit(tmp_path, instance_type, field, value):
+    cfg, upstream = wan_config(tmp_path, instance_type), LocalComfyContract()
+    gate = json.loads(cfg.gate_path.read_text())
+    gate[field] = value
+    cfg.gate_path.write_text(json.dumps(gate))
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        assert not client.get("/api/studio/real/health").json()["ready"]
+        assert client.post("/api/studio/real/jobs", json={**payload(client), "provider": WAN_PROVIDER}).status_code == 403
+    assert upstream.posts == 0 and upstream.uploads == 0
+
+
+@pytest.mark.parametrize("instance_type", ["g7e.2xlarge", "g6e.2xlarge"])
+@pytest.mark.parametrize("check", WAN_CHECKS)
+def test_wan_requires_every_separate_audit_check(tmp_path, instance_type, check):
+    cfg = wan_config(tmp_path, instance_type)
+    gate = json.loads(cfg.gate_path.read_text())
+    gate["checks"].update(dict.fromkeys(CHECKS, True))
+    gate["checks"].pop(check)
+    cfg.gate_path.write_text(json.dumps(gate))
+    assert cfg.audited_workflow()[0]
+
+
+@pytest.mark.parametrize("instance_type", ["g7e.2xlarge", "g6e.2xlarge"])
+@pytest.mark.parametrize("preset", [None, {"preset": "h3_native_5s_portrait_v1"},
+                                    {"preset": "wan_native_5s_portrait_v1", "fps": 16}])
+def test_wan_cannot_borrow_h3_or_unverified_postprocess(tmp_path, instance_type, preset):
+    cfg = wan_config(tmp_path, instance_type)
+    add_postprocess(cfg, preset)
+    assert cfg.audited_workflow()[0]
+
+
+def test_wan_requires_matching_bundle_provider_and_rejects_other_provider_requests(tmp_path):
+    cfg, upstream = wan_config(tmp_path), LocalComfyContract()
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        p = payload(client)
+        assert client.post("/api/studio/real/jobs", json=p).status_code == 403
+        assert client.post("/api/studio/real/jobs", json={**p, "provider": "unknown"}).status_code == 422
+    assert upstream.posts == 0 and upstream.uploads == 0
+    bundle = json.loads(cfg.workflow_path.read_text())
+    bundle["provider"] = "minimax-h3"
+    cfg.workflow_path.write_text(json.dumps(bundle))
+    gate = json.loads(cfg.gate_path.read_text())
+    gate["workflow_sha256"] = hashlib.sha256(cfg.workflow_path.read_bytes()).hexdigest()
+    cfg.gate_path.write_text(json.dumps(gate))
+    assert cfg.audited_workflow()[0]
+
+
+def test_optional_negative_binding_must_point_to_an_existing_input(tmp_path):
+    cfg = wan_config(tmp_path)
+    bundle = json.loads(cfg.workflow_path.read_text())
+    bundle["bindings"]["negative_prompt"] = ["8", "missing_text"]
+    cfg.workflow_path.write_text(json.dumps(bundle))
+    add_postprocess(cfg, {"preset": "wan_native_5s_portrait_v1"})
+    assert cfg.audited_workflow()[0]
+    bundle["bindings"].pop("negative_prompt")
+    cfg.workflow_path.write_text(json.dumps(bundle))
+    add_postprocess(cfg, {"preset": "wan_native_5s_portrait_v1"})
+    assert not cfg.audited_workflow()[0]
+
+
+@pytest.mark.parametrize(("instance_type", "gpu", "vram_gib"), [
+    ("g7e.2xlarge", "NVIDIA RTX PRO Server 6000", 96),
+    ("g6e.2xlarge", "NVIDIA L40S", 44.703125)])
+def test_wan_blocked_snapshot_cannot_use_a_local_gpu_or_claim_h3(
+        tmp_path, instance_type, gpu, vram_gib):
+    cfg, upstream = wan_config(tmp_path, instance_type), LocalComfyContract()
+    gate = json.loads(cfg.gate_path.read_text())
+    gate.update(snapshot_only=True, launch_allowed=False)
+    gate["checks"]["ssm_private_connectivity"] = None
+    cfg.gate_path.write_text(json.dumps(gate))
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        health = client.get("/api/studio/real/health").json()
+        projection = client.get("/api/studio/cloud/preflight").json()
+        assert health["mode"] == "REAL_WAN" and health["provider"] == WAN_PROVIDER
+        assert not health["ready"] and not health["gpu_connected"]
+        assert projection["region"] == "us-east-2" and projection["instance_type"] == instance_type
+        assert projection["expected_gpu"] == gpu and projection["expected_gpu_vram_gib"] == vram_gib
+        assert projection["expected_ram_gib"] == 64
+        assert projection["checks"]["ssm_private_connectivity"] is None
+        assert not projection["launch_allowed"] and not projection["real_gpu_connected"]
+        assert "ComfyUI loopback tunnel is unavailable" in projection["blocked_reasons"]
+        assert client.post("/api/studio/real/jobs", json={**payload(client), "provider": WAN_PROVIDER}).status_code == 403
+    assert upstream.posts == 0 and upstream.uploads == 0
+
+
+@pytest.mark.parametrize(("field", "value"), [("region", "ap-northeast-1"),
+                                             ("instance_type", "g6e.4xlarge"),
+                                             ("provider", "unknown")])
+def test_invalid_wan_snapshot_still_never_queries_an_unrelated_gpu(tmp_path, field, value):
+    cfg = wan_config(tmp_path)
+    gate = json.loads(cfg.gate_path.read_text())
+    gate.update(snapshot_only=True, launch_allowed=False)
+    gate[field] = value
+    cfg.gate_path.write_text(json.dumps(gate))
+
+    def no_connection_allowed(request):
+        raise AssertionError("A saved snapshot must not query any loopback GPU")
+
+    with TestClient(create_real_app(cfg, httpx.MockTransport(no_connection_allowed))) as client:
+        health = client.get("/api/studio/real/health").json()
+        assert not health["ready"] and not health["gpu_connected"]
+
+
+@pytest.mark.parametrize("instance_type", ["g7e.2xlarge", "g6e.2xlarge"])
+def test_wan_121_frame_source_is_not_accepted_as_h3_and_final_is_strict(tmp_path, instance_type):
+    upstream, cfg = LocalComfyContract(), wan_config(tmp_path, instance_type)
+    source = tmp_path / "LOCAL_SYNTHETIC_NOT_WAN.mp4"
+    subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "color=c=blue:s=800x1376:r=24",
+                    "-frames:v", "121", "-c:v", "libx264", "-preset", "ultrafast", str(source)],
+                   check=True, timeout=60)
+    assert verify_mp4(source, "wan_native_source")["frame_count"] == 121
+    with pytest.raises(ValueError):
+        verify_mp4(source, "h3_native_source")
+    upstream.content = source.read_bytes()
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        first = client.post("/api/studio/real/jobs", json={**payload(client), "provider": WAN_PROVIDER}).json()
+        upstream.done = True
+        done = client.get(f"/api/studio/real/jobs/{first['id']}").json()
+        assert done["status"] == "completed" and done["provider"] == WAN_PROVIDER
+        assert Path(done["source_local_path"]).read_bytes() == upstream.content
+        assert done["source_video_metadata"]["frame_count"] == 121
+        assert done["video_metadata"] == {"duration_seconds": 5, "width": 774, "height": 1376,
+            "fps": 24, "frame_count": 120, "sample_aspect_ratio": "1:1", "audio_present": False}
+        assert done["output_sha256"] == hashlib.sha256(Path(done["local_path"]).read_bytes()).hexdigest()
+        assert client.get(done["video_download_path"]).content == Path(done["local_path"]).read_bytes()
+    assert upstream.posts == 1
+
+
+@pytest.mark.parametrize("provider,crop", [(postprocess_wan_portrait, "774:1376:13:0:exact=1"),
+                                         (postprocess_h3_portrait, "774:1376:12:0")])
+def test_offline_postprocess_crop_contract_keeps_h3_and_matches_wan_export(
+        tmp_path, monkeypatch, provider, crop):
+    from aniflow.studio import comfy_provider
+
+    seen = []
+
+    def run_fixture(args, **kwargs):
+        seen.append(args)
+        Path(args[-1]).write_bytes(b"offline encoder fixture, not a real video")
+
+    monkeypatch.setattr(comfy_provider.subprocess, "run", run_fixture)
+    monkeypatch.setattr(comfy_provider, "verify_mp4", lambda *_: {"offline_fixture": True})
+    final = tmp_path / "offline.mp4"
+    provider(tmp_path / "offline-source.mp4", final)
+    assert seen[0][seen[0].index("-vf") + 1] == (
+        f"trim=start_frame=0:end_frame=120,setpts=PTS-STARTPTS,crop={crop},setsar=1")
+    assert final.read_bytes() == b"offline encoder fixture, not a real video"
+
+
+@pytest.mark.parametrize("preset", [None, {"preset": "h3_native_5s_portrait_v1"}])
+def test_recovered_wan_with_wrong_preset_cannot_download_or_complete(tmp_path, preset):
+    cfg, upstream = wan_config(tmp_path), LocalComfyContract()
+    with TestClient(create_real_app(cfg, httpx.MockTransport(upstream))) as client:
+        created = client.post("/api/studio/real/jobs", json={**payload(client), "provider": WAN_PROVIDER}).json()
+    with sqlite3.connect(cfg.data_dir / "tasks.sqlite3") as database:
+        persisted = json.loads(database.execute("SELECT data FROM jobs WHERE id=?", (created["id"],)).fetchone()[0])
+        persisted["postprocess"] = preset
+        database.execute("UPDATE jobs SET data=? WHERE id=?", (json.dumps(persisted), created["id"]))
+    upstream.done = True
+
+    def forbid_download(request):
+        assert request.url.path != "/view", "Invalid Wan recovery must never download through the permissive profile"
+        return upstream(request)
+
+    with TestClient(create_real_app(cfg, httpx.MockTransport(forbid_download))) as client:
+        restored = client.get(f"/api/studio/real/jobs/{created['id']}").json()
+    assert restored["status"] == "failed" and not restored["verified"]
+    assert restored["local_path"] is None and restored["output_sha256"] is None
+    assert upstream.posts == 1
+
+
+def enable_fp8_budget(cfg):
+    from aniflow.studio.comfy_provider import FP8_DOWNLOAD_BYTES
+    bundle = json.loads(cfg.workflow_path.read_text())
+    bundle['preparation'] = {'profile': 'fp8-scaled'}
+    cfg.workflow_path.write_text(json.dumps(bundle))
+    gate = json.loads(cfg.gate_path.read_text())
+    gate.update(precision_profile='fp8-scaled', max_download_bytes=FP8_DOWNLOAD_BYTES,
+                workflow_sha256=hashlib.sha256(cfg.workflow_path.read_bytes()).hexdigest())
+    cfg.gate_path.write_text(json.dumps(gate))
+
+
+@pytest.mark.parametrize('limit', [None, 0, True, 200 * 1024**2 + 1])
+def test_fp8_gate_requires_exact_explicit_transfer_limit(tmp_path, limit):
+    cfg = wan_config(tmp_path, 'g6.xlarge')
+    enable_fp8_budget(cfg)
+    assert not cfg.audited_workflow()[0]
+    gate = json.loads(cfg.gate_path.read_text())
+    gate['max_download_bytes'] = limit
+    cfg.gate_path.write_text(json.dumps(gate))
+    assert cfg.audited_workflow()[0]
+
+
+@pytest.mark.parametrize('preparation', [None, 'invalid', []])
+def test_fp8_gate_rejects_missing_or_non_object_precision_profile(tmp_path, preparation):
+    cfg = wan_config(tmp_path, 'g6.xlarge')
+    enable_fp8_budget(cfg)
+    bundle = json.loads(cfg.workflow_path.read_text())
+    bundle['preparation'] = preparation
+    cfg.workflow_path.write_text(json.dumps(bundle))
+    gate = json.loads(cfg.gate_path.read_text())
+    gate['workflow_sha256'] = hashlib.sha256(cfg.workflow_path.read_bytes()).hexdigest()
+    cfg.gate_path.write_text(json.dumps(gate))
+    assert cfg.audited_workflow()[0]
+
+
+def test_fp8_unknown_download_is_not_retried_by_polling_or_app_restart(tmp_path):
+    cfg, upstream = wan_config(tmp_path, 'g6.xlarge'), LocalComfyContract()
+    enable_fp8_budget(cfg)
+    upstream.devices = [{'type': 'cuda', 'name': 'NVIDIA L4', 'vram_total': 22888 * 1024**2}]
+    media_calls = []
+    def transport(request):
+        if request.url.path == '/view':
+            media_calls.append(request.method)
+            raise httpx.ReadError('Synthetic unknown media GET outcome')
+        return upstream(request)
+    with TestClient(create_real_app(cfg, httpx.MockTransport(transport))) as client:
+        created = client.post('/api/studio/real/jobs', json={**payload(client), 'provider': WAN_PROVIDER}).json()
+        assert created['precision_profile'] == 'fp8-scaled'
+        upstream.done = True
+        for _ in range(3):
+            job = client.get('/api/studio/real/requests/contract-request-001').json()
+        assert job['download_blocked'] and job['recovery_required'] and not job['verified']
+        assert job['status'] == 'downloading' and 'cloud output' in job['error']
+    with TestClient(create_real_app(cfg, httpx.MockTransport(transport))) as client:
+        restored = client.get('/api/studio/real/requests/contract-request-001').json()
+        assert restored['id'] == created['id'] and restored['download_blocked']
+    assert media_calls == ['GET'] and upstream.posts == 1

@@ -1,0 +1,2304 @@
+{
+  "started_at_utc": "2026-10-28T02:31:54.197640+00:00",
+  "read_only": true,
+  "cloud_resource_mutations": 0,
+  "run_instances_calls": 0,
+  "dry_run_calls": 0,
+  "model_downloads_started": 0,
+  "repeated_failed_types_not_attempted": [
+    "g7e.2xlarge",
+    "g6e.2xlarge",
+    "g6e.xlarge"
+  ],
+  "regional_quotas": [
+    {
+      "region": "ap-east-1",
+      "observed_at_utc": "2026-10-28T02:31:57.509223+00:00",
+      "on_demand_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-DB2E81BA",
+        "QuotaName": "Running On-Demand G and VT instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "spot_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-3819A6DF",
+        "QuotaName": "All G and VT Spot Instance Requests",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "on_demand_p": {
+        "status": "found",
+        "QuotaCode": "L-417A185B",
+        "QuotaName": "Running On-Demand P instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      }
+    },
+    {
+      "region": "ap-east-2",
+      "observed_at_utc": "2026-10-28T02:31:57.509748+00:00",
+      "on_demand_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-DB2E81BA",
+        "QuotaName": "Running On-Demand G and VT instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "spot_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-3819A6DF",
+        "QuotaName": "All G and VT Spot Instance Requests",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "on_demand_p": {
+        "status": "found",
+        "QuotaCode": "L-417A185B",
+        "QuotaName": "Running On-Demand P instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      }
+    },
+    {
+      "region": "ap-northeast-1",
+      "observed_at_utc": "2026-10-28T02:31:57.510276+00:00",
+      "on_demand_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-DB2E81BA",
+        "QuotaName": "Running On-Demand G and VT instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "spot_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-3819A6DF",
+        "QuotaName": "All G and VT Spot Instance Requests",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "on_demand_p": {
+        "status": "found",
+        "QuotaCode": "L-417A185B",
+        "QuotaName": "Running On-Demand P instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      }
+    },
+    {
+      "region": "ap-northeast-2",
+      "observed_at_utc": "2026-10-28T02:31:57.510932+00:00",
+      "on_demand_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-DB2E81BA",
+        "QuotaName": "Running On-Demand G and VT instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "spot_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-3819A6DF",
+        "QuotaName": "All G and VT Spot Instance Requests",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "on_demand_p": {
+        "status": "found",
+        "QuotaCode": "L-417A185B",
+        "QuotaName": "Running On-Demand P instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      }
+    },
+    {
+      "region": "ap-northeast-3",
+      "observed_at_utc": "2026-10-28T02:31:57.511459+00:00",
+      "on_demand_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-DB2E81BA",
+        "QuotaName": "Running On-Demand G and VT instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "spot_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-3819A6DF",
+        "QuotaName": "All G and VT Spot Instance Requests",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "on_demand_p": {
+        "status": "found",
+        "QuotaCode": "L-417A185B",
+        "QuotaName": "Running On-Demand P instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      }
+    },
+    {
+      "region": "ap-south-1",
+      "observed_at_utc": "2026-10-28T02:32:04.001878+00:00",
+      "on_demand_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-DB2E81BA",
+        "QuotaName": "Running On-Demand G and VT instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "spot_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-3819A6DF",
+        "QuotaName": "All G and VT Spot Instance Requests",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "on_demand_p": {
+        "status": "found",
+        "QuotaCode": "L-417A185B",
+        "QuotaName": "Running On-Demand P instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      }
+    },
+    {
+      "region": "ap-south-2",
+      "observed_at_utc": "2026-10-28T02:32:04.232165+00:00",
+      "on_demand_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-DB2E81BA",
+        "QuotaName": "Running On-Demand G and VT instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "spot_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-3819A6DF",
+        "QuotaName": "All G and VT Spot Instance Requests",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "on_demand_p": {
+        "status": "found",
+        "QuotaCode": "L-417A185B",
+        "QuotaName": "Running On-Demand P instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      }
+    },
+    {
+      "region": "ap-southeast-1",
+      "observed_at_utc": "2026-10-28T02:32:04.285606+00:00",
+      "on_demand_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-DB2E81BA",
+        "QuotaName": "Running On-Demand G and VT instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "spot_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-3819A6DF",
+        "QuotaName": "All G and VT Spot Instance Requests",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "on_demand_p": {
+        "status": "found",
+        "QuotaCode": "L-417A185B",
+        "QuotaName": "Running On-Demand P instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      }
+    },
+    {
+      "region": "ap-southeast-2",
+      "observed_at_utc": "2026-10-28T02:32:04.362493+00:00",
+      "on_demand_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-DB2E81BA",
+        "QuotaName": "Running On-Demand G and VT instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "spot_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-3819A6DF",
+        "QuotaName": "All G and VT Spot Instance Requests",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "on_demand_p": {
+        "status": "found",
+        "QuotaCode": "L-417A185B",
+        "QuotaName": "Running On-Demand P instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      }
+    },
+    {
+      "region": "ca-central-1",
+      "observed_at_utc": "2026-10-28T02:32:04.457948+00:00",
+      "on_demand_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-DB2E81BA",
+        "QuotaName": "Running On-Demand G and VT instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "spot_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-3819A6DF",
+        "QuotaName": "All G and VT Spot Instance Requests",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "on_demand_p": {
+        "status": "found",
+        "QuotaCode": "L-417A185B",
+        "QuotaName": "Running On-Demand P instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      }
+    },
+    {
+      "region": "eu-central-1",
+      "observed_at_utc": "2026-10-28T02:32:09.634030+00:00",
+      "on_demand_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-DB2E81BA",
+        "QuotaName": "Running On-Demand G and VT instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "spot_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-3819A6DF",
+        "QuotaName": "All G and VT Spot Instance Requests",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "on_demand_p": {
+        "status": "found",
+        "QuotaCode": "L-417A185B",
+        "QuotaName": "Running On-Demand P instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      }
+    },
+    {
+      "region": "eu-north-1",
+      "observed_at_utc": "2026-10-28T02:32:11.056281+00:00",
+      "on_demand_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-DB2E81BA",
+        "QuotaName": "Running On-Demand G and VT instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "spot_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-3819A6DF",
+        "QuotaName": "All G and VT Spot Instance Requests",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "on_demand_p": {
+        "status": "found",
+        "QuotaCode": "L-417A185B",
+        "QuotaName": "Running On-Demand P instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      }
+    },
+    {
+      "region": "eu-west-1",
+      "observed_at_utc": "2026-10-28T02:32:11.208945+00:00",
+      "on_demand_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-DB2E81BA",
+        "QuotaName": "Running On-Demand G and VT instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "spot_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-3819A6DF",
+        "QuotaName": "All G and VT Spot Instance Requests",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "on_demand_p": {
+        "status": "found",
+        "QuotaCode": "L-417A185B",
+        "QuotaName": "Running On-Demand P instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      }
+    },
+    {
+      "region": "eu-west-2",
+      "observed_at_utc": "2026-10-28T02:32:11.215613+00:00",
+      "on_demand_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-DB2E81BA",
+        "QuotaName": "Running On-Demand G and VT instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "spot_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-3819A6DF",
+        "QuotaName": "All G and VT Spot Instance Requests",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "on_demand_p": {
+        "status": "found",
+        "QuotaCode": "L-417A185B",
+        "QuotaName": "Running On-Demand P instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      }
+    },
+    {
+      "region": "eu-west-3",
+      "observed_at_utc": "2026-10-28T02:32:11.350075+00:00",
+      "on_demand_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-DB2E81BA",
+        "QuotaName": "Running On-Demand G and VT instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "spot_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-3819A6DF",
+        "QuotaName": "All G and VT Spot Instance Requests",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "on_demand_p": {
+        "status": "found",
+        "QuotaCode": "L-417A185B",
+        "QuotaName": "Running On-Demand P instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      }
+    },
+    {
+      "region": "sa-east-1",
+      "observed_at_utc": "2026-10-28T02:32:15.451822+00:00",
+      "on_demand_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-DB2E81BA",
+        "QuotaName": "Running On-Demand G and VT instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "spot_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-3819A6DF",
+        "QuotaName": "All G and VT Spot Instance Requests",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "on_demand_p": {
+        "status": "found",
+        "QuotaCode": "L-417A185B",
+        "QuotaName": "Running On-Demand P instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      }
+    },
+    {
+      "region": "us-east-1",
+      "observed_at_utc": "2026-10-28T02:32:16.983346+00:00",
+      "on_demand_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-DB2E81BA",
+        "QuotaName": "Running On-Demand G and VT instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "spot_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-3819A6DF",
+        "QuotaName": "All G and VT Spot Instance Requests",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "on_demand_p": {
+        "status": "found",
+        "QuotaCode": "L-417A185B",
+        "QuotaName": "Running On-Demand P instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      }
+    },
+    {
+      "region": "us-east-2",
+      "observed_at_utc": "2026-10-28T02:32:16.996082+00:00",
+      "on_demand_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-DB2E81BA",
+        "QuotaName": "Running On-Demand G and VT instances",
+        "Value": 8.0,
+        "GlobalQuota": false
+      },
+      "spot_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-3819A6DF",
+        "QuotaName": "All G and VT Spot Instance Requests",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "on_demand_p": {
+        "status": "found",
+        "QuotaCode": "L-417A185B",
+        "QuotaName": "Running On-Demand P instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      }
+    },
+    {
+      "region": "us-west-1",
+      "observed_at_utc": "2026-10-28T02:32:17.080328+00:00",
+      "on_demand_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-DB2E81BA",
+        "QuotaName": "Running On-Demand G and VT instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "spot_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-3819A6DF",
+        "QuotaName": "All G and VT Spot Instance Requests",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "on_demand_p": {
+        "status": "found",
+        "QuotaCode": "L-417A185B",
+        "QuotaName": "Running On-Demand P instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      }
+    },
+    {
+      "region": "us-west-2",
+      "observed_at_utc": "2026-10-28T02:32:17.124436+00:00",
+      "on_demand_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-DB2E81BA",
+        "QuotaName": "Running On-Demand G and VT instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "spot_g_vt": {
+        "status": "found",
+        "QuotaCode": "L-3819A6DF",
+        "QuotaName": "All G and VT Spot Instance Requests",
+        "Value": 0.0,
+        "GlobalQuota": false
+      },
+      "on_demand_p": {
+        "status": "found",
+        "QuotaCode": "L-417A185B",
+        "QuotaName": "Running On-Demand P instances",
+        "Value": 0.0,
+        "GlobalQuota": false
+      }
+    }
+  ],
+  "catalogs": [
+    {
+      "region": "us-east-2",
+      "catalog_gpu_type_count": 50,
+      "applied_g_vt_vcpus": 8.0,
+      "running_pending_g_default_vcpus": 0,
+      "remaining_g_vt_vcpus_estimate": 8.0,
+      "nonterminated_instance_count": 0,
+      "quota_fitting_candidates": [
+        {
+          "InstanceType": "g4dn.2xlarge",
+          "VCpuInfo": {
+            "DefaultVCpus": 8,
+            "DefaultCores": 4,
+            "DefaultThreadsPerCore": 2,
+            "ValidCores": [
+              2,
+              4
+            ],
+            "ValidThreadsPerCore": [
+              1,
+              2
+            ]
+          },
+          "MemoryInfo": {
+            "SizeInMiB": 32768
+          },
+          "GpuInfo": {
+            "Gpus": [
+              {
+                "Name": "T4",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 16384
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 16384
+          },
+          "ProcessorInfo": {
+            "SupportedArchitectures": [
+              "x86_64"
+            ],
+            "SustainedClockSpeedInGhz": 2.5,
+            "Manufacturer": "Intel"
+          },
+          "SupportedUsageClasses": [
+            "on-demand",
+            "spot"
+          ],
+          "offering_zones": [
+            "us-east-2a",
+            "us-east-2b",
+            "us-east-2c"
+          ],
+          "actual_capacity_verified": false,
+          "model_memory_fit_verified": false,
+          "original_video_quality_verified": false,
+          "linux_shared_on_demand_price": [
+            {
+              "sku": "5J6H3KYBDMQ87KDK",
+              "effective_date": "2026-10-01T00:00:00Z",
+              "unit": "Hrs",
+              "usd": "0.7520000000"
+            }
+          ]
+        },
+        {
+          "InstanceType": "g4dn.xlarge",
+          "VCpuInfo": {
+            "DefaultVCpus": 4,
+            "DefaultCores": 2,
+            "DefaultThreadsPerCore": 2,
+            "ValidCores": [
+              2
+            ],
+            "ValidThreadsPerCore": [
+              1,
+              2
+            ]
+          },
+          "MemoryInfo": {
+            "SizeInMiB": 16384
+          },
+          "GpuInfo": {
+            "Gpus": [
+              {
+                "Name": "T4",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 16384
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 16384
+          },
+          "ProcessorInfo": {
+            "SupportedArchitectures": [
+              "x86_64"
+            ],
+            "SustainedClockSpeedInGhz": 2.5,
+            "Manufacturer": "Intel"
+          },
+          "SupportedUsageClasses": [
+            "on-demand",
+            "spot"
+          ],
+          "offering_zones": [
+            "us-east-2a",
+            "us-east-2b",
+            "us-east-2c"
+          ],
+          "actual_capacity_verified": false,
+          "model_memory_fit_verified": false,
+          "original_video_quality_verified": false,
+          "linux_shared_on_demand_price": [
+            {
+              "sku": "83N2WX5GTM44UPK9",
+              "effective_date": "2026-10-01T00:00:00Z",
+              "unit": "Hrs",
+              "usd": "0.5260000000"
+            }
+          ]
+        },
+        {
+          "InstanceType": "g5.2xlarge",
+          "VCpuInfo": {
+            "DefaultVCpus": 8,
+            "DefaultCores": 4,
+            "DefaultThreadsPerCore": 2
+          },
+          "MemoryInfo": {
+            "SizeInMiB": 32768
+          },
+          "GpuInfo": {
+            "Gpus": [
+              {
+                "Name": "A10G",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 22888
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 22888
+          },
+          "ProcessorInfo": {
+            "SupportedArchitectures": [
+              "x86_64"
+            ],
+            "SustainedClockSpeedInGhz": 3.3,
+            "Manufacturer": "AMD"
+          },
+          "SupportedUsageClasses": [
+            "on-demand",
+            "spot"
+          ],
+          "offering_zones": [
+            "us-east-2a",
+            "us-east-2b",
+            "us-east-2c"
+          ],
+          "actual_capacity_verified": false,
+          "model_memory_fit_verified": false,
+          "original_video_quality_verified": false,
+          "linux_shared_on_demand_price": [
+            {
+              "sku": "6BKQGE374ZZN28NG",
+              "effective_date": "2026-10-01T00:00:00Z",
+              "unit": "Hrs",
+              "usd": "1.2120000000"
+            }
+          ]
+        },
+        {
+          "InstanceType": "g5.xlarge",
+          "VCpuInfo": {
+            "DefaultVCpus": 4,
+            "DefaultCores": 2,
+            "DefaultThreadsPerCore": 2
+          },
+          "MemoryInfo": {
+            "SizeInMiB": 16384
+          },
+          "GpuInfo": {
+            "Gpus": [
+              {
+                "Name": "A10G",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 22888
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 22888
+          },
+          "ProcessorInfo": {
+            "SupportedArchitectures": [
+              "x86_64"
+            ],
+            "SustainedClockSpeedInGhz": 3.3,
+            "Manufacturer": "AMD"
+          },
+          "SupportedUsageClasses": [
+            "on-demand",
+            "spot"
+          ],
+          "offering_zones": [
+            "us-east-2a",
+            "us-east-2b",
+            "us-east-2c"
+          ],
+          "actual_capacity_verified": false,
+          "model_memory_fit_verified": false,
+          "original_video_quality_verified": false,
+          "linux_shared_on_demand_price": [
+            {
+              "sku": "7DSWD9TUGHZ9KJB4",
+              "effective_date": "2026-10-01T00:00:00Z",
+              "unit": "Hrs",
+              "usd": "1.0060000000"
+            }
+          ]
+        },
+        {
+          "InstanceType": "g6.2xlarge",
+          "VCpuInfo": {
+            "DefaultVCpus": 8,
+            "DefaultCores": 4,
+            "DefaultThreadsPerCore": 2,
+            "ValidCores": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "ValidThreadsPerCore": [
+              1,
+              2
+            ]
+          },
+          "MemoryInfo": {
+            "SizeInMiB": 32768
+          },
+          "GpuInfo": {
+            "Gpus": [
+              {
+                "Name": "L4",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 22888
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 22888
+          },
+          "ProcessorInfo": {
+            "SupportedArchitectures": [
+              "x86_64"
+            ],
+            "SustainedClockSpeedInGhz": 3.4,
+            "Manufacturer": "AMD"
+          },
+          "SupportedUsageClasses": [
+            "on-demand",
+            "spot"
+          ],
+          "offering_zones": [
+            "us-east-2a",
+            "us-east-2b",
+            "us-east-2c"
+          ],
+          "actual_capacity_verified": false,
+          "model_memory_fit_verified": false,
+          "original_video_quality_verified": false,
+          "linux_shared_on_demand_price": [
+            {
+              "sku": "QU23QP46J3B7WM7Z",
+              "effective_date": "2026-10-01T00:00:00Z",
+              "unit": "Hrs",
+              "usd": "0.9776000000"
+            }
+          ]
+        },
+        {
+          "InstanceType": "g6.xlarge",
+          "VCpuInfo": {
+            "DefaultVCpus": 4,
+            "DefaultCores": 2,
+            "DefaultThreadsPerCore": 2,
+            "ValidCores": [
+              1,
+              2
+            ],
+            "ValidThreadsPerCore": [
+              1,
+              2
+            ]
+          },
+          "MemoryInfo": {
+            "SizeInMiB": 16384
+          },
+          "GpuInfo": {
+            "Gpus": [
+              {
+                "Name": "L4",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 22888
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 22888
+          },
+          "ProcessorInfo": {
+            "SupportedArchitectures": [
+              "x86_64"
+            ],
+            "SustainedClockSpeedInGhz": 3.4,
+            "Manufacturer": "AMD"
+          },
+          "SupportedUsageClasses": [
+            "on-demand",
+            "spot"
+          ],
+          "offering_zones": [
+            "us-east-2a",
+            "us-east-2b",
+            "us-east-2c"
+          ],
+          "actual_capacity_verified": false,
+          "model_memory_fit_verified": false,
+          "original_video_quality_verified": false,
+          "linux_shared_on_demand_price": [
+            {
+              "sku": "NES344FTJTVN47RU",
+              "effective_date": "2026-10-01T00:00:00Z",
+              "unit": "Hrs",
+              "usd": "0.8048000000"
+            }
+          ]
+        },
+        {
+          "InstanceType": "g6e.2xlarge",
+          "VCpuInfo": {
+            "DefaultVCpus": 8,
+            "DefaultCores": 4,
+            "DefaultThreadsPerCore": 2,
+            "ValidCores": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "ValidThreadsPerCore": [
+              1,
+              2
+            ]
+          },
+          "MemoryInfo": {
+            "SizeInMiB": 65536
+          },
+          "GpuInfo": {
+            "Gpus": [
+              {
+                "Name": "L40S",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 45776
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 45776
+          },
+          "ProcessorInfo": {
+            "SupportedArchitectures": [
+              "x86_64"
+            ],
+            "SustainedClockSpeedInGhz": 3.4,
+            "Manufacturer": "AMD"
+          },
+          "SupportedUsageClasses": [
+            "on-demand",
+            "spot"
+          ],
+          "offering_zones": [
+            "us-east-2a",
+            "us-east-2b",
+            "us-east-2c"
+          ],
+          "actual_capacity_verified": false,
+          "model_memory_fit_verified": false,
+          "original_video_quality_verified": false,
+          "linux_shared_on_demand_price": [
+            {
+              "sku": "SGD6XGUMSRGVZCNQ",
+              "effective_date": "2026-10-01T00:00:00Z",
+              "unit": "Hrs",
+              "usd": "2.2420800000"
+            }
+          ]
+        },
+        {
+          "InstanceType": "g6e.xlarge",
+          "VCpuInfo": {
+            "DefaultVCpus": 4,
+            "DefaultCores": 2,
+            "DefaultThreadsPerCore": 2,
+            "ValidCores": [
+              1,
+              2
+            ],
+            "ValidThreadsPerCore": [
+              1,
+              2
+            ]
+          },
+          "MemoryInfo": {
+            "SizeInMiB": 32768
+          },
+          "GpuInfo": {
+            "Gpus": [
+              {
+                "Name": "L40S",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 45776
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 45776
+          },
+          "ProcessorInfo": {
+            "SupportedArchitectures": [
+              "x86_64"
+            ],
+            "SustainedClockSpeedInGhz": 3.4,
+            "Manufacturer": "AMD"
+          },
+          "SupportedUsageClasses": [
+            "on-demand",
+            "spot"
+          ],
+          "offering_zones": [
+            "us-east-2a",
+            "us-east-2b",
+            "us-east-2c"
+          ],
+          "actual_capacity_verified": false,
+          "model_memory_fit_verified": false,
+          "original_video_quality_verified": false,
+          "linux_shared_on_demand_price": [
+            {
+              "sku": "U8RNZPYWBGZY88NB",
+              "effective_date": "2026-10-01T00:00:00Z",
+              "unit": "Hrs",
+              "usd": "1.8610000000"
+            }
+          ]
+        },
+        {
+          "InstanceType": "g6f.2xlarge",
+          "VCpuInfo": {
+            "DefaultVCpus": 8,
+            "DefaultCores": 4,
+            "DefaultThreadsPerCore": 2,
+            "ValidCores": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "ValidThreadsPerCore": [
+              1,
+              2
+            ]
+          },
+          "MemoryInfo": {
+            "SizeInMiB": 32768
+          },
+          "GpuInfo": {
+            "Gpus": [
+              {
+                "Name": "L4",
+                "Manufacturer": "NVIDIA",
+                "Count": 0,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 0.25,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 5722
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 5722
+          },
+          "ProcessorInfo": {
+            "SupportedArchitectures": [
+              "x86_64"
+            ],
+            "SustainedClockSpeedInGhz": 3.4,
+            "Manufacturer": "AMD"
+          },
+          "SupportedUsageClasses": [
+            "on-demand",
+            "spot"
+          ],
+          "offering_zones": [
+            "us-east-2a",
+            "us-east-2b",
+            "us-east-2c"
+          ],
+          "actual_capacity_verified": false,
+          "model_memory_fit_verified": false,
+          "original_video_quality_verified": false,
+          "linux_shared_on_demand_price": [
+            {
+              "sku": "DB62RFJP74E4BUY3",
+              "effective_date": "2026-10-01T00:00:00Z",
+              "unit": "Hrs",
+              "usd": "0.4750000000"
+            }
+          ]
+        },
+        {
+          "InstanceType": "g6f.large",
+          "VCpuInfo": {
+            "DefaultVCpus": 2,
+            "DefaultCores": 1,
+            "DefaultThreadsPerCore": 2,
+            "ValidCores": [
+              1
+            ],
+            "ValidThreadsPerCore": [
+              1,
+              2
+            ]
+          },
+          "MemoryInfo": {
+            "SizeInMiB": 8192
+          },
+          "GpuInfo": {
+            "Gpus": [
+              {
+                "Name": "L4",
+                "Manufacturer": "NVIDIA",
+                "Count": 0,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 0.125,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 2861
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 2861
+          },
+          "ProcessorInfo": {
+            "SupportedArchitectures": [
+              "x86_64"
+            ],
+            "SustainedClockSpeedInGhz": 3.4,
+            "Manufacturer": "AMD"
+          },
+          "SupportedUsageClasses": [
+            "on-demand",
+            "spot"
+          ],
+          "offering_zones": [
+            "us-east-2a",
+            "us-east-2b",
+            "us-east-2c"
+          ],
+          "actual_capacity_verified": false,
+          "model_memory_fit_verified": false,
+          "original_video_quality_verified": false,
+          "linux_shared_on_demand_price": [
+            {
+              "sku": "PQT2672ECA8J7Y6H",
+              "effective_date": "2026-10-01T00:00:00Z",
+              "unit": "Hrs",
+              "usd": "0.2020000000"
+            }
+          ]
+        },
+        {
+          "InstanceType": "g6f.xlarge",
+          "VCpuInfo": {
+            "DefaultVCpus": 4,
+            "DefaultCores": 2,
+            "DefaultThreadsPerCore": 2,
+            "ValidCores": [
+              1,
+              2
+            ],
+            "ValidThreadsPerCore": [
+              1,
+              2
+            ]
+          },
+          "MemoryInfo": {
+            "SizeInMiB": 16384
+          },
+          "GpuInfo": {
+            "Gpus": [
+              {
+                "Name": "L4",
+                "Manufacturer": "NVIDIA",
+                "Count": 0,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 0.125,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 2861
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 2861
+          },
+          "ProcessorInfo": {
+            "SupportedArchitectures": [
+              "x86_64"
+            ],
+            "SustainedClockSpeedInGhz": 3.4,
+            "Manufacturer": "AMD"
+          },
+          "SupportedUsageClasses": [
+            "on-demand",
+            "spot"
+          ],
+          "offering_zones": [
+            "us-east-2a",
+            "us-east-2b",
+            "us-east-2c"
+          ],
+          "actual_capacity_verified": false,
+          "model_memory_fit_verified": false,
+          "original_video_quality_verified": false,
+          "linux_shared_on_demand_price": [
+            {
+              "sku": "QV7UHDMEPK6U6MBK",
+              "effective_date": "2026-10-01T00:00:00Z",
+              "unit": "Hrs",
+              "usd": "0.2375000000"
+            }
+          ]
+        },
+        {
+          "InstanceType": "g7.2xlarge",
+          "VCpuInfo": {
+            "DefaultVCpus": 8,
+            "DefaultCores": 8,
+            "DefaultThreadsPerCore": 1,
+            "ValidCores": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "ValidThreadsPerCore": [
+              1
+            ]
+          },
+          "MemoryInfo": {
+            "SizeInMiB": 32768
+          },
+          "GpuInfo": {
+            "Gpus": [
+              {
+                "Name": "RTX PRO 4500",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 32768
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 32768
+          },
+          "ProcessorInfo": {
+            "SupportedArchitectures": [
+              "x86_64"
+            ],
+            "SustainedClockSpeedInGhz": 3.9,
+            "Manufacturer": "Intel"
+          },
+          "SupportedUsageClasses": [
+            "on-demand",
+            "spot"
+          ],
+          "offering_zones": [
+            "us-east-2a",
+            "us-east-2b",
+            "us-east-2c"
+          ],
+          "actual_capacity_verified": false,
+          "model_memory_fit_verified": false,
+          "original_video_quality_verified": false,
+          "linux_shared_on_demand_price": [
+            {
+              "sku": "K8THXKWVZBS6746Y",
+              "effective_date": "2026-10-01T00:00:00Z",
+              "unit": "Hrs",
+              "usd": "2.5200000000"
+            }
+          ]
+        },
+        {
+          "InstanceType": "g7e.2xlarge",
+          "VCpuInfo": {
+            "DefaultVCpus": 8,
+            "DefaultCores": 4,
+            "DefaultThreadsPerCore": 2,
+            "ValidCores": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "ValidThreadsPerCore": [
+              1,
+              2
+            ]
+          },
+          "MemoryInfo": {
+            "SizeInMiB": 65536
+          },
+          "GpuInfo": {
+            "Gpus": [
+              {
+                "Name": "RTX PRO Server 6000",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 98304
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 98304
+          },
+          "ProcessorInfo": {
+            "SupportedArchitectures": [
+              "x86_64"
+            ],
+            "SustainedClockSpeedInGhz": 2.4,
+            "Manufacturer": "Intel"
+          },
+          "SupportedUsageClasses": [
+            "on-demand",
+            "spot"
+          ],
+          "offering_zones": [
+            "us-east-2a",
+            "us-east-2b",
+            "us-east-2c"
+          ],
+          "actual_capacity_verified": false,
+          "model_memory_fit_verified": false,
+          "original_video_quality_verified": false,
+          "linux_shared_on_demand_price": [
+            {
+              "sku": "84MJTJ2X73HAYM9Q",
+              "effective_date": "2026-10-01T00:00:00Z",
+              "unit": "Hrs",
+              "usd": "3.3631200000"
+            }
+          ]
+        }
+      ],
+      "excluded_types": [
+        {
+          "instance_type": "g4dn.12xlarge",
+          "default_vcpus": 48,
+          "ram_mib": 196608,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "T4",
+                "Manufacturer": "NVIDIA",
+                "Count": 4,
+                "LogicalGpuCount": 4,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 16384
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 65536
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g4dn.16xlarge",
+          "default_vcpus": 64,
+          "ram_mib": 262144,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "T4",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 16384
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 16384
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g4dn.4xlarge",
+          "default_vcpus": 16,
+          "ram_mib": 65536,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "T4",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 16384
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 16384
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g4dn.8xlarge",
+          "default_vcpus": 32,
+          "ram_mib": 131072,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "T4",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 16384
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 16384
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g4dn.metal",
+          "default_vcpus": 96,
+          "ram_mib": 393216,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "T4",
+                "Manufacturer": "NVIDIA",
+                "Count": 8,
+                "LogicalGpuCount": 8,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 16384
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 131072
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g5.12xlarge",
+          "default_vcpus": 48,
+          "ram_mib": 196608,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "A10G",
+                "Manufacturer": "NVIDIA",
+                "Count": 4,
+                "LogicalGpuCount": 4,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 22888
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 91552
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g5.16xlarge",
+          "default_vcpus": 64,
+          "ram_mib": 262144,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "A10G",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 22888
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 22888
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g5.24xlarge",
+          "default_vcpus": 96,
+          "ram_mib": 393216,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "A10G",
+                "Manufacturer": "NVIDIA",
+                "Count": 4,
+                "LogicalGpuCount": 4,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 22888
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 91552
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g5.48xlarge",
+          "default_vcpus": 192,
+          "ram_mib": 786432,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "A10G",
+                "Manufacturer": "NVIDIA",
+                "Count": 8,
+                "LogicalGpuCount": 8,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 22888
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 183104
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g5.4xlarge",
+          "default_vcpus": 16,
+          "ram_mib": 65536,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "A10G",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 22888
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 22888
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g5.8xlarge",
+          "default_vcpus": 32,
+          "ram_mib": 131072,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "A10G",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 22888
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 22888
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g6.12xlarge",
+          "default_vcpus": 48,
+          "ram_mib": 196608,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "L4",
+                "Manufacturer": "NVIDIA",
+                "Count": 4,
+                "LogicalGpuCount": 4,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 22888
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 91552
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g6.16xlarge",
+          "default_vcpus": 64,
+          "ram_mib": 262144,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "L4",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 22888
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 22888
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g6.24xlarge",
+          "default_vcpus": 96,
+          "ram_mib": 393216,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "L4",
+                "Manufacturer": "NVIDIA",
+                "Count": 4,
+                "LogicalGpuCount": 4,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 22888
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 91552
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g6.48xlarge",
+          "default_vcpus": 192,
+          "ram_mib": 786432,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "L4",
+                "Manufacturer": "NVIDIA",
+                "Count": 8,
+                "LogicalGpuCount": 8,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 22888
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 183104
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g6.4xlarge",
+          "default_vcpus": 16,
+          "ram_mib": 65536,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "L4",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 22888
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 22888
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g6.8xlarge",
+          "default_vcpus": 32,
+          "ram_mib": 131072,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "L4",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 22888
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 22888
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g6e.12xlarge",
+          "default_vcpus": 48,
+          "ram_mib": 393216,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "L40S",
+                "Manufacturer": "NVIDIA",
+                "Count": 4,
+                "LogicalGpuCount": 4,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 45776
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 183104
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g6e.16xlarge",
+          "default_vcpus": 64,
+          "ram_mib": 524288,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "L40S",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 45776
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 45776
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g6e.24xlarge",
+          "default_vcpus": 96,
+          "ram_mib": 786432,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "L40S",
+                "Manufacturer": "NVIDIA",
+                "Count": 4,
+                "LogicalGpuCount": 4,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 45776
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 183104
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g6e.48xlarge",
+          "default_vcpus": 192,
+          "ram_mib": 1572864,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "L40S",
+                "Manufacturer": "NVIDIA",
+                "Count": 8,
+                "LogicalGpuCount": 8,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 45776
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 366208
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g6e.4xlarge",
+          "default_vcpus": 16,
+          "ram_mib": 131072,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "L40S",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 45776
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 45776
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g6e.8xlarge",
+          "default_vcpus": 32,
+          "ram_mib": 262144,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "L40S",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 45776
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 45776
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g6f.4xlarge",
+          "default_vcpus": 16,
+          "ram_mib": 65536,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "L4",
+                "Manufacturer": "NVIDIA",
+                "Count": 0,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 0.5,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 11444
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 11444
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g7.12xlarge",
+          "default_vcpus": 48,
+          "ram_mib": 196608,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "RTX PRO 4500",
+                "Manufacturer": "NVIDIA",
+                "Count": 2,
+                "LogicalGpuCount": 2,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 32768
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 65536
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g7.24xlarge",
+          "default_vcpus": 96,
+          "ram_mib": 393216,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "RTX PRO 4500",
+                "Manufacturer": "NVIDIA",
+                "Count": 4,
+                "LogicalGpuCount": 4,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 32768
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 131072
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g7.48xlarge",
+          "default_vcpus": 192,
+          "ram_mib": 786432,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "RTX PRO 4500",
+                "Manufacturer": "NVIDIA",
+                "Count": 8,
+                "LogicalGpuCount": 8,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 32768
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 262144
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g7.4xlarge",
+          "default_vcpus": 16,
+          "ram_mib": 65536,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "RTX PRO 4500",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 32768
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 32768
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g7.8xlarge",
+          "default_vcpus": 32,
+          "ram_mib": 131072,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "RTX PRO 4500",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 32768
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 32768
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g7e.12xlarge",
+          "default_vcpus": 48,
+          "ram_mib": 524288,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "RTX PRO Server 6000",
+                "Manufacturer": "NVIDIA",
+                "Count": 2,
+                "LogicalGpuCount": 2,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 98304
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 196608
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g7e.24xlarge",
+          "default_vcpus": 96,
+          "ram_mib": 1048576,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "RTX PRO Server 6000",
+                "Manufacturer": "NVIDIA",
+                "Count": 4,
+                "LogicalGpuCount": 4,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 98304
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 393216
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g7e.48xlarge",
+          "default_vcpus": 192,
+          "ram_mib": 2097152,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "RTX PRO Server 6000",
+                "Manufacturer": "NVIDIA",
+                "Count": 8,
+                "LogicalGpuCount": 8,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 98304
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 786432
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g7e.4xlarge",
+          "default_vcpus": 16,
+          "ram_mib": 131072,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "RTX PRO Server 6000",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "ml-ai",
+                  "graphics"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 98304
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 98304
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "g7e.8xlarge",
+          "default_vcpus": 32,
+          "ram_mib": 262144,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "RTX PRO Server 6000",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 98304
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 98304
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "gr6.4xlarge",
+          "default_vcpus": 16,
+          "ram_mib": 131072,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "L4",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 22888
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 22888
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "gr6.8xlarge",
+          "default_vcpus": 32,
+          "ram_mib": 262144,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "L4",
+                "Manufacturer": "NVIDIA",
+                "Count": 1,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 1.0,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 22888
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 22888
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        },
+        {
+          "instance_type": "gr6f.4xlarge",
+          "default_vcpus": 16,
+          "ram_mib": 131072,
+          "gpu_info": {
+            "Gpus": [
+              {
+                "Name": "L4",
+                "Manufacturer": "NVIDIA",
+                "Count": 0,
+                "LogicalGpuCount": 1,
+                "GpuPartitionSize": 0.5,
+                "Workloads": [
+                  "graphics",
+                  "ml-ai"
+                ],
+                "MemoryInfo": {
+                  "SizeInMiB": 11444
+                }
+              }
+            ],
+            "TotalGpuMemoryInMiB": 11444
+          },
+          "reason": "default_vcpus_exceed_applied_quota"
+        }
+      ],
+      "offerings_are_not_capacity_confirmation": true
+    }
+  ],
+  "account_plan": {
+    "accountPlanType": "PAID",
+    "accountPlanStatus": "ACTIVE",
+    "accountPlanRemainingCredits": {
+      "amount": 44.43,
+      "unit": "USD"
+    }
+  },
+  "completed_at_utc": "2026-10-28T02:32:38.960833+00:00"
+}

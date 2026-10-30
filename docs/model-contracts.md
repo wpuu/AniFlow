@@ -227,3 +227,20 @@ HTTP 503
 **Agnes 全线没有 TTS / 语音合成 / 语音克隆模型。** 文档索引只有 Text / Image / Video 三类。
 
 → AniFlow 的配音必须外接。见接管审计文档中的 TTS 选型结论。
+
+## 6. 用户授权的 AWS 自托管 Wan 候选（2026-10-27）
+
+用户已要求继续俄亥俄州 EC2＋Wan2.2 候选核查；这不改变前述 Agnes API 的独立参数。此节仅记录公开源码契约与待验证目标，尚无真实 GPU 或视频证据。
+
+- 模型标识：`wan2.2-i2v-a14b`，非TI2V-5B；原模型及代码依据为 [Wan官方仓库](https://github.com/Wan-Video/Wan2.2)。不得将Wan输出标成H3。
+- Comfy固定修订：`63be2f9b82ad0dac88a7ceaa28a9cf3154125a18`；普通分支来源为[官方14B I2V模板](https://raw.githubusercontent.com/Comfy-Org/workflow_templates/e7cd011d4ded3411c2f481200544f0be6fdc962e/templates/video_wan2_2_14B_i2v.json)，模板SHA256 `0bc0bee732181a0f5a5a0807b9e2cef883a1409bca4cdb70eca6b2e2e87e5c19`。
+- 普通分支20步、10/10切换、CFG3.5、euler/simple；不用Lightx2v LoRA及4步分支。原Wan脚本示例40步，不能把Comfy20步配置写成同一基准。
+- 节点使用`WanImageToVideo`及`wan_2.1_vae.safetensors`；`Wan22ImageToVideoLatent`为5B路径，不适用于14B。
+- 本轮候选目标：原生800×1376、121帧、24fps；仅裁边至774×1376并取前120帧，形成9:16、严格5秒，不放大生成的视频、不插帧。官方模板默认640×640/81帧/16fps，官方模型说明480P/720P；目标配置虽符合16像素及4n+1帧网格，仍无目标显存、耗时或H3等效画质的实测保证。
+- 首选试验权重为官方两份FP16专家＋FP16 UMT5＋Wan2.1 VAE，总68,776,044,287字节。来源库`Comfy-Org/Wan-2.2`固定`ee6f4a40737a995bf5818954cfce6d59443b0f04`；采用Comfy默认safetensors内存映射及`--highvram`GPU优先加载，64GiB主存是否足够须实测，不能声称能全驻留CPU。若失败停止，官方FP8作为需明确告知的后续备选，不自动切换。
+- API工作流必须用所有者确认的图片和动作替换占位符，真实`object_info`验证后才允许单次提交；未知提交只恢复已知关联，不重发。独立后处理标识为`wan_native_5s_portrait_v1`，不能放宽H3的124帧源校验。
+- AWS目标为`us-east-2`的`g7e.2xlarge`，8vCPU/64GiB RAM/96GiB显存；所有赠金、自付≤USD1、双保护及真实GPU门槛须独立通过。当前登录恢复及完整服务清单复核未完成，创建授权仍受这些条件限制。
+
+### 2026-10-27 已获同意的L40S第二候选
+
+用户已明确同意按[已审阅方案](reviews/2026-10-27-wan-l40s-proposal.md)改试Ohio `g6e.2xlarge`，8vCPU/64GiB RAM，规格接口45776MiB显存（44.703125GiB，名义48GB）。保持同四份FP16权重和全部生成参数；去掉`--highvram`，默认mmap与动态显存管理须实测启用，CPU仅暂存权重，T5/专家/VAE均在CUDA执行。不使用`--lowvram`、`--cpu`、`--cpu-vae`或`--gpu-only`，不自动改精度或画质。原g7e和H3严格门槛保留。最新执行优先级为：先落实赠金与双保护并实际启动实例，再做模型部署；同意不等于已获得库存、预检或视频成功。

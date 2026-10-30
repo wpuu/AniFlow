@@ -1,0 +1,14 @@
+{
+  "observed_at_utc": "2026-10-28T11:22:58.290031+00:00",
+  "create_fleet_api_called": true,
+  "fleet_created": false,
+  "fleet_absence_confirmed_by_exact_validation_proof": true,
+  "launch_template_actually_created_then_absent": true,
+  "actual_gpu_created": false,
+  "real_gpu_preflight_completed": false,
+  "model_downloads_started": false,
+  "real_video_count": 0,
+  "prior_capacity_rejections_unchanged": 28,
+  "current_validation_refusals": 1,
+  "six_pool_capacity_results_available": false
+}

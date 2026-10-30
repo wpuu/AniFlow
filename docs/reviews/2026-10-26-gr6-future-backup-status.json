@@ -1,0 +1,32 @@
+{
+  "execution_id": "88953ad2-72b0-4672-a721-202610260005",
+  "status": "InProgress",
+  "steps": [
+    {
+      "name": "WaitUntilCleanup",
+      "status": "InProgress",
+      "action": "aws:sleep",
+      "inputs": {
+        "Timestamp": "\"2026-10-26T17:13:57Z\""
+      }
+    },
+    {
+      "name": "IndependentCleanup1",
+      "status": "Pending",
+      "action": "aws:executeScript",
+      "inputs": {}
+    },
+    {
+      "name": "IndependentCleanup2",
+      "status": "Pending",
+      "action": "aws:executeScript",
+      "inputs": {}
+    },
+    {
+      "name": "IndependentCleanup3",
+      "status": "Pending",
+      "action": "aws:executeScript",
+      "inputs": {}
+    }
+  ]
+}

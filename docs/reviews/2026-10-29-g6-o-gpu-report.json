@@ -1,0 +1,42 @@
+{
+  "observed_at_utc": "2026-10-29T01:00:15.726153+00:00",
+  "model_loaded": false,
+  "video_generated": false,
+  "region": "us-east-2",
+  "experiment_id": "aniflow-wan-ohio-20261027-retained-o",
+  "cpu_count": 4,
+  "python": "3.13.17",
+  "checks": {
+    "cpu_and_system_memory": true,
+    "real_fp16_cuda_matmul": true,
+    "local_fixed_deadline_armed": true,
+    "private_s3_role_roundtrip": true
+  },
+  "system_memory_total_bytes": 16109846528,
+  "torch_version": "2.11.0+cu130",
+  "cuda_build": "13.0",
+  "gpu_name": "NVIDIA L4",
+  "gpu_total_bytes": 23661248512,
+  "compute_capability": [
+    8,
+    9
+  ],
+  "supported_architectures": [
+    "sm_75",
+    "sm_80",
+    "sm_86",
+    "sm_90",
+    "sm_100",
+    "sm_120"
+  ],
+  "physical_cpu_cores": 2,
+  "threads_per_core": 2,
+  "nvidia_smi": "NVIDIA L4, 595.112.07, 23034",
+  "cuda_smoke_seconds": 10.690482376999995,
+  "cuda_smoke_peak_allocated_bytes": 46268416,
+  "cuda_smoke_peak_reserved_bytes": 65011712,
+  "ffmpeg": null,
+  "ffprobe": null,
+  "system_python": "Python 3.12.3",
+  "gpu_smoke_passed": true
+}

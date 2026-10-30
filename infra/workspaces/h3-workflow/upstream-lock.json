@@ -1,0 +1,100 @@
+{
+  "status": "PUBLIC_SOURCE_PREPARATION_ONLY",
+  "retrieved_at_utc": "2026-10-26T03:03:16.929312+00:00",
+  "comfyui": {
+    "tag": "v0.42.1",
+    "commit": "63be2f9b82ad0dac88a7ceaa28a9cf3154125a18"
+  },
+  "workflow_packages": {
+    "comfyui-workflow-templates": "0.11.89",
+    "comfyui-workflow-templates-json": "0.1.115",
+    "json_wheel_url": "https://files.pythonhosted.org/packages/1b/78/b496053c60c9f3b9bfca29e1a5d2bcfdf9c6e3905ad2f4c0ba042f0b07ac/comfyui_workflow_templates_json-0.1.115-py3-none-any.whl",
+    "json_wheel_sha256": "4e6e607a1a060b32d3a28da5185808796470633609e27dbecc64122391ac23c5",
+    "original_template_path_in_wheel": "comfyui_workflow_templates_json/templates/video_minimax_h3_i2v.json"
+  },
+  "files": {
+    "nodes.py": {
+      "bytes": 109595,
+      "sha256": "a6db3d4ea52220db85bf92a01e27a3e8b17545f7d1c6d2fc6c929f1eb27b111e",
+      "url": "https://raw.githubusercontent.com/Comfy-Org/ComfyUI/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/nodes.py"
+    },
+    "nodes_minimax_h3.py": {
+      "bytes": 30934,
+      "sha256": "108ceff11e5a5c9a34a57bbc380447cf9941beb673a1bd421abc818de54ccd5c",
+      "url": "https://raw.githubusercontent.com/Comfy-Org/ComfyUI/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/comfy_extras/nodes_minimax_h3.py"
+    },
+    "nodes_custom_sampler.py": {
+      "bytes": 49739,
+      "sha256": "b0ba1521c72475e06fed15db004274ed7c8bb2bf73f1d58849faf6f9f9d264fe",
+      "url": "https://raw.githubusercontent.com/Comfy-Org/ComfyUI/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/comfy_extras/nodes_custom_sampler.py"
+    },
+    "nodes_audio.py": {
+      "bytes": 35175,
+      "sha256": "483466af050a43bf96f9fcdfa56ab2759dbf8611dd6a14a9543f6d136ecbdf43",
+      "url": "https://raw.githubusercontent.com/Comfy-Org/ComfyUI/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/comfy_extras/nodes_audio.py"
+    },
+    "nodes_video.py": {
+      "bytes": 23647,
+      "sha256": "9d01f3f5cc392a475fcf1422366a66d5ea665c59e391a9c0d6374e6b84ed8a0c",
+      "url": "https://raw.githubusercontent.com/Comfy-Org/ComfyUI/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/comfy_extras/nodes_video.py"
+    },
+    "_io.py": {
+      "bytes": 106208,
+      "sha256": "c2a5aded4895a1adf1acb2df6c011fdfb74e15b0d4fd331ec00ea7562d91d91d",
+      "url": "https://raw.githubusercontent.com/Comfy-Org/ComfyUI/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/comfy_api/latest/_io.py"
+    },
+    "execution.py": {
+      "bytes": 64652,
+      "sha256": "bf61eed32e9db0fe87ab8c108ea21adeb948e0596242c9cc55334de4a6e451a1",
+      "url": "https://raw.githubusercontent.com/Comfy-Org/ComfyUI/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/execution.py"
+    },
+    "samplers.py": {
+      "bytes": 64383,
+      "sha256": "f2c264ca9d394612f828e3ffe167c856a278a10e1711b269f0ba65dccb66393f",
+      "url": "https://raw.githubusercontent.com/Comfy-Org/ComfyUI/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/comfy/samplers.py"
+    },
+    "dynamic_inputs_test.py": {
+      "bytes": 8337,
+      "sha256": "5f1206ba337a8334e8c38b245635c2fd988c6ed85a8399e9032ffc077d505bff",
+      "url": "https://raw.githubusercontent.com/Comfy-Org/ComfyUI/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/tests-unit/execution_test/dynamic_inputs_test.py"
+    },
+    "Image to Video (MiniMax H3).json": {
+      "bytes": 56283,
+      "sha256": "1bb1f7b80f0cae83f339f5d9f995eb5ff28f99d0db679859532253d44baf1fcd",
+      "url": "https://raw.githubusercontent.com/Comfy-Org/ComfyUI/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/blueprints/Image%20to%20Video%20%28MiniMax%20H3%29.json"
+    },
+    "LICENSE.ComfyUI": {
+      "bytes": 35149,
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+      "url": "https://raw.githubusercontent.com/Comfy-Org/ComfyUI/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/LICENSE"
+    },
+    "video_minimax_h3_i2v.json": {
+      "bytes": 71812,
+      "sha256": "34ee39544808fd3b0dc8de9df082940d4d41c3771beb80d3988c1ea5531cec0d",
+      "origin": "Pinned PyPI wheel listed above"
+    },
+    "comfyui_workflow_templates_json-0.1.115-py3-none-any.whl": {
+      "bytes": 3977771,
+      "sha256": "4e6e607a1a060b32d3a28da5185808796470633609e27dbecc64122391ac23c5",
+      "origin": "Pinned PyPI wheel listed above"
+    },
+    "utils.py": {
+      "bytes": 64183,
+      "sha256": "9320cf5c624e96acc1d9ec92ff120ed6387a2142707f3194cb21dd0d11ac2500",
+      "url": "https://raw.githubusercontent.com/Comfy-Org/ComfyUI/63be2f9b82ad0dac88a7ceaa28a9cf3154125a18/comfy/utils.py"
+    }
+  },
+  "repository_archive": {
+    "status": "STATIC_PREPARATION_ONLY_NOT_RUNTIME_VERIFIED",
+    "included_files": [
+      "workflow-bundle.template.json",
+      "node-schema-evidence.json",
+      "postprocess-plan.template.json",
+      "video_minimax_h3_i2v.json",
+      "LICENSE.ComfyUI"
+    ],
+    "upstream_files_manifest_note": "The files mapping records observed fixed upstream inputs and hashes. Full source files and the 4 MB wheel remain outside this repository archive; URLs and hashes remain as evidence.",
+    "model_weights_downloaded_by_this_preparation": false,
+    "source_wheel_included": false
+  }
+}

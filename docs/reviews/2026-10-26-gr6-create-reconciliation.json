@@ -1,0 +1,16 @@
+{
+  "observed_at_utc": "2026-10-26T15:50:04.199748+00:00",
+  "region": "ap-northeast-1",
+  "workspaces_count_after": 0,
+  "applied_gr6_quota_after": 1.0,
+  "quota_code": "L-EF6817EC",
+  "bundle_id": "wsb-5mpqp50vv",
+  "compute_type": "GRAPHICS_GR6_4XLARGE",
+  "request_id": "88083dc2-77ad-4c6a-bab7-0682564eeb48",
+  "error": {
+    "code": "ResourceLimitExceededException",
+    "message": "You cannot create more than 0 number of Graphics.gr6.4xlarge WorkSpaces in this region. Request a limit increase by contacting AWS Support."
+  },
+  "real_gpu_preflight_passed": false,
+  "real_video_generated": false
+}

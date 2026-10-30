@@ -1,0 +1,13 @@
+{
+  "observed_at_utc": "2026-10-26T04:21:12.714Z",
+  "scrollTop": 481.1778564453125,
+  "scrollHeight": 1183,
+  "clientHeight": 701,
+  "hasAccountEligibility": true,
+  "hasIndependentStop": true,
+  "realMode": true,
+  "real_mode_top_after_fix": 24,
+  "close_button_top_after_fix": 44.58588790893555,
+  "generate_disabled": true,
+  "classification": "LOCAL_UI_ONLY_NOT_H3_SUCCESS"
+}

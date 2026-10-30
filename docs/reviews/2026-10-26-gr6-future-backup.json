@@ -1,0 +1,14 @@
+{
+  "start_intent": true,
+  "document": "aniflow-h3-gr6-backup-20261026-Document-OdNN5XYnFqa8",
+  "cleanup_utc": "2026-10-26T15:34:13Z",
+  "primary_actual_armed_read": {
+    "matched_workspaces": 0,
+    "states": [],
+    "stop_due": false,
+    "cleanup_due": false,
+    "all_resources_absent": false
+  },
+  "execution_id": "88953ad2-72b0-4672-a721-202610260003",
+  "observed_at_utc": "2026-10-26T13:50:54.431883+00:00"
+}

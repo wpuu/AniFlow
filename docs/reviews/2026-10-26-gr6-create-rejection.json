@@ -1,0 +1,44 @@
+{
+  "intent_at_utc": "2026-10-26T15:48:59.971092+00:00",
+  "submission_intent": true,
+  "request": {
+    "DirectoryId": "d-95679b0534",
+    "UserName": "aniflowh3",
+    "BundleId": "wsb-5mpqp50vv",
+    "WorkspaceProperties": {
+      "RunningMode": "AUTO_STOP",
+      "RunningModeAutoStopTimeoutInMinutes": 60,
+      "RootVolumeSizeGib": 250,
+      "UserVolumeSizeGib": 200,
+      "GlobalAccelerator": {
+        "Mode": "DISABLED"
+      }
+    },
+    "Tags": [
+      {
+        "Key": "Project",
+        "Value": "AniFlow"
+      },
+      {
+        "Key": "ExperimentId",
+        "Value": "aniflow-h3-gr6-20261026-b"
+      }
+    ]
+  },
+  "primary_armed_read": {
+    "matched_workspaces": 0,
+    "states": [],
+    "stop_due": false,
+    "cleanup_due": false,
+    "all_resources_absent": false
+  },
+  "backup_wait_verified": true,
+  "known_gr6_quota_before_submit": 1,
+  "real_video_count": 0,
+  "api_error": {
+    "code": "ResourceLimitExceededException",
+    "message": "You cannot create more than 0 number of Graphics.gr6.4xlarge WorkSpaces in this region. Request a limit increase by contacting AWS Support."
+  },
+  "request_id": "88083dc2-77ad-4c6a-bab7-0682564eeb48",
+  "requires_read_only_reconciliation": true
+}

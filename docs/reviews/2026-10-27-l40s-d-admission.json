@@ -1,0 +1,66 @@
+{
+  "experiment_id": "aniflow-wan-ohio-20261027-l40s-d",
+  "actual_request_count": 4,
+  "actual_gpu_created": false,
+  "real_gpu_preflight_completed": false,
+  "models_downloaded_or_deployed": false,
+  "real_video_count": 0,
+  "requests": [
+    {
+      "created_at_utc": "2026-10-27T19:41:53.557874+08:00",
+      "region": "us-east-2",
+      "zone": "auto",
+      "instance_type": "g6e.2xlarge",
+      "error_code": "InsufficientInstanceCapacity",
+      "reconciled_at_utc": "2026-10-27T19:42:31.358239+08:00",
+      "confirmed_nonterminated_instances": 0,
+      "confirmed_tagged_volumes": 0,
+      "stop_utc": "2026-10-27T11:49:36Z",
+      "cleanup_utc": "2026-10-27T11:54:36Z",
+      "root_encrypted_gb": 180,
+      "video_submitted": false
+    },
+    {
+      "created_at_utc": "2026-10-27T19:42:54.711349+08:00",
+      "region": "us-east-2",
+      "zone": "us-east-2a",
+      "instance_type": "g6e.2xlarge",
+      "error_code": "InsufficientInstanceCapacity",
+      "reconciled_at_utc": "2026-10-27T19:43:16.869469+08:00",
+      "confirmed_nonterminated_instances": 0,
+      "confirmed_tagged_volumes": 0,
+      "stop_utc": "2026-10-27T11:49:36Z",
+      "cleanup_utc": "2026-10-27T11:54:36Z",
+      "root_encrypted_gb": 180,
+      "video_submitted": false
+    },
+    {
+      "created_at_utc": "2026-10-27T19:43:35.150682+08:00",
+      "region": "us-east-2",
+      "zone": "us-east-2b",
+      "instance_type": "g6e.2xlarge",
+      "error_code": "InsufficientInstanceCapacity",
+      "reconciled_at_utc": "2026-10-27T19:43:59.878147+08:00",
+      "confirmed_nonterminated_instances": 0,
+      "confirmed_tagged_volumes": 0,
+      "stop_utc": "2026-10-27T11:49:36Z",
+      "cleanup_utc": "2026-10-27T11:54:36Z",
+      "root_encrypted_gb": 180,
+      "video_submitted": false
+    },
+    {
+      "created_at_utc": "2026-10-27T19:44:20.986168+08:00",
+      "region": "us-east-2",
+      "zone": "us-east-2c",
+      "instance_type": "g6e.2xlarge",
+      "error_code": "InsufficientInstanceCapacity",
+      "reconciled_at_utc": "2026-10-27T19:44:48.689366+08:00",
+      "confirmed_nonterminated_instances": 0,
+      "confirmed_tagged_volumes": 0,
+      "stop_utc": "2026-10-27T11:49:36Z",
+      "cleanup_utc": "2026-10-27T11:54:36Z",
+      "root_encrypted_gb": 180,
+      "video_submitted": false
+    }
+  ]
+}

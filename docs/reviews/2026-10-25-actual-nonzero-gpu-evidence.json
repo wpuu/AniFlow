@@ -1,0 +1,3032 @@
+{
+  "date": "2026-10-25",
+  "source": "User-authorized Ego account UI; official public price lists for WorkSpaces",
+  "enabled_region_count": 20,
+  "default_enabled_regions": 17,
+  "additional_enabled_regions": [
+    "ap-east-1",
+    "ap-east-2",
+    "ap-south-2"
+  ],
+  "ec2_gpu_matrix": [
+    {
+      "region": "us-east-1",
+      "on-demand_g": 0,
+      "on-demand_p": 0,
+      "spot_g": 0,
+      "spot_p": 0
+    },
+    {
+      "region": "us-east-2",
+      "on-demand_g": 8,
+      "on-demand_p": 0,
+      "spot_g": 0,
+      "spot_p": 0
+    },
+    {
+      "region": "us-west-1",
+      "on-demand_g": 0,
+      "on-demand_p": 0,
+      "spot_g": 0,
+      "spot_p": 0
+    },
+    {
+      "region": "us-west-2",
+      "on-demand_g": 0,
+      "on-demand_p": 0,
+      "spot_g": 0,
+      "spot_p": 0
+    },
+    {
+      "region": "ap-east-1",
+      "on-demand_g": 0,
+      "on-demand_p": 0,
+      "spot_g": 0,
+      "spot_p": 0
+    },
+    {
+      "region": "ap-east-2",
+      "on-demand_g": 0,
+      "on-demand_p": 0,
+      "spot_g": 0,
+      "spot_p": 0
+    },
+    {
+      "region": "ap-south-1",
+      "on-demand_g": 0,
+      "on-demand_p": 0,
+      "spot_g": 0,
+      "spot_p": 0
+    },
+    {
+      "region": "ap-south-2",
+      "on-demand_g": 0,
+      "on-demand_p": 0,
+      "spot_g": 0,
+      "spot_p": 0
+    },
+    {
+      "region": "ap-northeast-1",
+      "on-demand_g": 0,
+      "on-demand_p": 0,
+      "spot_g": 0,
+      "spot_p": 0
+    },
+    {
+      "region": "ap-northeast-2",
+      "on-demand_g": 0,
+      "on-demand_p": 0,
+      "spot_g": 0,
+      "spot_p": 0
+    },
+    {
+      "region": "ap-northeast-3",
+      "on-demand_g": 0,
+      "on-demand_p": 0,
+      "spot_g": 0,
+      "spot_p": 0
+    },
+    {
+      "region": "ap-southeast-1",
+      "on-demand_g": 0,
+      "on-demand_p": 0,
+      "spot_g": 0,
+      "spot_p": 0
+    },
+    {
+      "region": "ap-southeast-2",
+      "on-demand_g": 0,
+      "on-demand_p": 0,
+      "spot_g": 0,
+      "spot_p": 0
+    },
+    {
+      "region": "ca-central-1",
+      "on-demand_g": 0,
+      "on-demand_p": 0,
+      "spot_g": 0,
+      "spot_p": 0
+    },
+    {
+      "region": "eu-central-1",
+      "on-demand_g": 0,
+      "on-demand_p": 0,
+      "spot_g": 0,
+      "spot_p": 0
+    },
+    {
+      "region": "eu-west-1",
+      "on-demand_g": 0,
+      "on-demand_p": 0,
+      "spot_g": 0,
+      "spot_p": 0
+    },
+    {
+      "region": "eu-west-2",
+      "on-demand_g": 0,
+      "on-demand_p": 0,
+      "spot_g": 0,
+      "spot_p": 0
+    },
+    {
+      "region": "eu-west-3",
+      "on-demand_g": 0,
+      "on-demand_p": 0,
+      "spot_g": 0,
+      "spot_p": 0
+    },
+    {
+      "region": "eu-north-1",
+      "on-demand_g": 0,
+      "on-demand_p": 0,
+      "spot_g": 0,
+      "spot_p": 0
+    },
+    {
+      "region": "sa-east-1",
+      "on-demand_g": 0,
+      "on-demand_p": 0,
+      "spot_g": 0,
+      "spot_p": 0
+    }
+  ],
+  "ec2_full_quota_rows": [
+    {
+      "region": "us-east-1",
+      "kind": "on-demand",
+      "observations": [
+        {
+          "name": "Running On-Demand DL instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6E869C2A"
+        },
+        {
+          "name": "Running On-Demand F instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-74FC7D96"
+        },
+        {
+          "name": "Running On-Demand G and VT instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+        },
+        {
+          "name": "Running On-Demand High Memory instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-43DA4232"
+        },
+        {
+          "name": "Running On-Demand HPC instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-F7808C92"
+        },
+        {
+          "name": "Running On-Demand Inf instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1945791B"
+        },
+        {
+          "name": "Running On-Demand P instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-417A185B"
+        },
+        {
+          "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+        },
+        {
+          "name": "Running On-Demand Trn instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-2C3B7624"
+        },
+        {
+          "name": "Running On-Demand X instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7295265B"
+        }
+      ]
+    },
+    {
+      "region": "us-east-1",
+      "kind": "spot",
+      "observations": [
+        {
+          "name": "All DL Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
+        },
+        {
+          "name": "All F Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-88CF9481"
+        },
+        {
+          "name": "All G and VT Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+        },
+        {
+          "name": "All Inf Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-B5D1601B"
+        },
+        {
+          "name": "All P Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7212CCBC"
+        },
+        {
+          "name": "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-34B43A08"
+        },
+        {
+          "name": "All Trn Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6B0D517C"
+        },
+        {
+          "name": "All X Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-E3A00192"
+        }
+      ]
+    },
+    {
+      "region": "us-east-2",
+      "kind": "on-demand",
+      "observations": [
+        {
+          "name": "Running On-Demand DL instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://us-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6E869C2A"
+        },
+        {
+          "name": "Running On-Demand F instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://us-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-74FC7D96"
+        },
+        {
+          "name": "Running On-Demand G and VT instances",
+          "applied_vcpus": 8,
+          "default_vcpus": 0,
+          "url": "https://us-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+        },
+        {
+          "name": "Running On-Demand High Memory instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://us-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-43DA4232"
+        },
+        {
+          "name": "Running On-Demand HPC instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://us-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-F7808C92"
+        },
+        {
+          "name": "Running On-Demand Inf instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://us-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1945791B"
+        },
+        {
+          "name": "Running On-Demand P instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://us-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-417A185B"
+        },
+        {
+          "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "url": "https://us-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+        },
+        {
+          "name": "Running On-Demand Trn instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://us-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-2C3B7624"
+        },
+        {
+          "name": "Running On-Demand X instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://us-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7295265B"
+        }
+      ]
+    },
+    {
+      "region": "us-east-2",
+      "kind": "spot",
+      "observations": [
+        {
+          "name": "All DL Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://us-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
+        },
+        {
+          "name": "All F Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://us-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-88CF9481"
+        },
+        {
+          "name": "All G and VT Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://us-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+        },
+        {
+          "name": "All Inf Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://us-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-B5D1601B"
+        },
+        {
+          "name": "All P Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://us-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7212CCBC"
+        },
+        {
+          "name": "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "url": "https://us-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-34B43A08"
+        },
+        {
+          "name": "All Trn Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://us-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6B0D517C"
+        },
+        {
+          "name": "All X Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://us-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-E3A00192"
+        }
+      ]
+    },
+    {
+      "region": "us-west-1",
+      "kind": "on-demand",
+      "observations": [
+        {
+          "name": "Running On-Demand DL instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6E869C2A"
+        },
+        {
+          "name": "Running On-Demand F instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-74FC7D96"
+        },
+        {
+          "name": "Running On-Demand G and VT instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+        },
+        {
+          "name": "Running On-Demand High Memory instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-43DA4232"
+        },
+        {
+          "name": "Running On-Demand HPC instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-F7808C92"
+        },
+        {
+          "name": "Running On-Demand Inf instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1945791B"
+        },
+        {
+          "name": "Running On-Demand P instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-417A185B"
+        },
+        {
+          "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://us-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+        },
+        {
+          "name": "Running On-Demand Trn instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-2C3B7624"
+        },
+        {
+          "name": "Running On-Demand X instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7295265B"
+        }
+      ]
+    },
+    {
+      "region": "us-west-1",
+      "kind": "spot",
+      "observations": [
+        {
+          "name": "All DL Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
+        },
+        {
+          "name": "All F Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-88CF9481"
+        },
+        {
+          "name": "All G and VT Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+        },
+        {
+          "name": "All Inf Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-B5D1601B"
+        },
+        {
+          "name": "All P Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7212CCBC"
+        },
+        {
+          "name": "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://us-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-34B43A08"
+        },
+        {
+          "name": "All Trn Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6B0D517C"
+        },
+        {
+          "name": "All X Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-E3A00192"
+        }
+      ]
+    },
+    {
+      "region": "us-west-2",
+      "kind": "on-demand",
+      "observations": [
+        {
+          "name": "Running On-Demand DL instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6E869C2A"
+        },
+        {
+          "name": "Running On-Demand F instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-74FC7D96"
+        },
+        {
+          "name": "Running On-Demand G and VT instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+        },
+        {
+          "name": "Running On-Demand High Memory instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-43DA4232"
+        },
+        {
+          "name": "Running On-Demand HPC instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-F7808C92"
+        },
+        {
+          "name": "Running On-Demand Inf instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1945791B"
+        },
+        {
+          "name": "Running On-Demand P instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-417A185B"
+        },
+        {
+          "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://us-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+        },
+        {
+          "name": "Running On-Demand Trn instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-2C3B7624"
+        },
+        {
+          "name": "Running On-Demand X instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7295265B"
+        }
+      ]
+    },
+    {
+      "region": "us-west-2",
+      "kind": "spot",
+      "observations": [
+        {
+          "name": "All DL Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
+        },
+        {
+          "name": "All F Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-88CF9481"
+        },
+        {
+          "name": "All G and VT Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+        },
+        {
+          "name": "All Inf Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-B5D1601B"
+        },
+        {
+          "name": "All P Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7212CCBC"
+        },
+        {
+          "name": "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://us-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-34B43A08"
+        },
+        {
+          "name": "All Trn Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6B0D517C"
+        },
+        {
+          "name": "All X Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://us-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-E3A00192"
+        }
+      ]
+    },
+    {
+      "region": "ap-east-1",
+      "kind": "on-demand",
+      "observations": [
+        {
+          "name": "Running On-Demand DL instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6E869C2A"
+        },
+        {
+          "name": "Running On-Demand F instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-74FC7D96"
+        },
+        {
+          "name": "Running On-Demand G and VT instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+        },
+        {
+          "name": "Running On-Demand High Memory instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-43DA4232"
+        },
+        {
+          "name": "Running On-Demand HPC instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-F7808C92"
+        },
+        {
+          "name": "Running On-Demand Inf instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1945791B"
+        },
+        {
+          "name": "Running On-Demand P instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-417A185B"
+        },
+        {
+          "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://ap-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+        },
+        {
+          "name": "Running On-Demand Trn instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-2C3B7624"
+        },
+        {
+          "name": "Running On-Demand X instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7295265B"
+        }
+      ]
+    },
+    {
+      "region": "ap-east-1",
+      "kind": "spot",
+      "observations": [
+        {
+          "name": "All DL Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
+        },
+        {
+          "name": "All F Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-88CF9481"
+        },
+        {
+          "name": "All G and VT Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+        },
+        {
+          "name": "All Inf Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-B5D1601B"
+        },
+        {
+          "name": "All P Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7212CCBC"
+        },
+        {
+          "name": "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://ap-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-34B43A08"
+        },
+        {
+          "name": "All Trn Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6B0D517C"
+        },
+        {
+          "name": "All X Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-E3A00192"
+        }
+      ]
+    },
+    {
+      "region": "ap-east-2",
+      "kind": "on-demand",
+      "observations": [
+        {
+          "name": "Running On-Demand DL instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6E869C2A"
+        },
+        {
+          "name": "Running On-Demand F instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-74FC7D96"
+        },
+        {
+          "name": "Running On-Demand G and VT instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+        },
+        {
+          "name": "Running On-Demand High Memory instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-43DA4232"
+        },
+        {
+          "name": "Running On-Demand HPC instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-F7808C92"
+        },
+        {
+          "name": "Running On-Demand Inf instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1945791B"
+        },
+        {
+          "name": "Running On-Demand P instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-417A185B"
+        },
+        {
+          "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+          "applied_vcpus": 5,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://ap-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+        },
+        {
+          "name": "Running On-Demand Trn instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-2C3B7624"
+        },
+        {
+          "name": "Running On-Demand X instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7295265B"
+        }
+      ]
+    },
+    {
+      "region": "ap-east-2",
+      "kind": "spot",
+      "observations": [
+        {
+          "name": "All DL Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
+        },
+        {
+          "name": "All F Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-88CF9481"
+        },
+        {
+          "name": "All G and VT Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+        },
+        {
+          "name": "All Inf Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-B5D1601B"
+        },
+        {
+          "name": "All P Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7212CCBC"
+        },
+        {
+          "name": "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests",
+          "applied_vcpus": 5,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://ap-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-34B43A08"
+        },
+        {
+          "name": "All Trn Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6B0D517C"
+        },
+        {
+          "name": "All X Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-east-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-E3A00192"
+        }
+      ]
+    },
+    {
+      "region": "ap-south-1",
+      "kind": "on-demand",
+      "observations": [
+        {
+          "name": "Running On-Demand DL instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6E869C2A"
+        },
+        {
+          "name": "Running On-Demand F instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-74FC7D96"
+        },
+        {
+          "name": "Running On-Demand G and VT instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+        },
+        {
+          "name": "Running On-Demand High Memory instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-43DA4232"
+        },
+        {
+          "name": "Running On-Demand HPC instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-F7808C92"
+        },
+        {
+          "name": "Running On-Demand Inf instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1945791B"
+        },
+        {
+          "name": "Running On-Demand P instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-417A185B"
+        },
+        {
+          "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://ap-south-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+        },
+        {
+          "name": "Running On-Demand Trn instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-2C3B7624"
+        },
+        {
+          "name": "Running On-Demand X instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7295265B"
+        }
+      ]
+    },
+    {
+      "region": "ap-south-1",
+      "kind": "spot",
+      "observations": [
+        {
+          "name": "All DL Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
+        },
+        {
+          "name": "All F Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-88CF9481"
+        },
+        {
+          "name": "All G and VT Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+        },
+        {
+          "name": "All Inf Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-B5D1601B"
+        },
+        {
+          "name": "All P Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7212CCBC"
+        },
+        {
+          "name": "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://ap-south-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-34B43A08"
+        },
+        {
+          "name": "All Trn Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6B0D517C"
+        },
+        {
+          "name": "All X Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-E3A00192"
+        }
+      ]
+    },
+    {
+      "region": "ap-south-2",
+      "kind": "on-demand",
+      "observations": [
+        {
+          "name": "Running On-Demand DL instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6E869C2A"
+        },
+        {
+          "name": "Running On-Demand F instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-74FC7D96"
+        },
+        {
+          "name": "Running On-Demand G and VT instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+        },
+        {
+          "name": "Running On-Demand High Memory instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-43DA4232"
+        },
+        {
+          "name": "Running On-Demand HPC instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-F7808C92"
+        },
+        {
+          "name": "Running On-Demand Inf instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1945791B"
+        },
+        {
+          "name": "Running On-Demand P instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-417A185B"
+        },
+        {
+          "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+          "applied_vcpus": 5,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://ap-south-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+        },
+        {
+          "name": "Running On-Demand Trn instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-2C3B7624"
+        },
+        {
+          "name": "Running On-Demand X instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7295265B"
+        }
+      ]
+    },
+    {
+      "region": "ap-south-2",
+      "kind": "spot",
+      "observations": [
+        {
+          "name": "All DL Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
+        },
+        {
+          "name": "All F Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-88CF9481"
+        },
+        {
+          "name": "All G and VT Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+        },
+        {
+          "name": "All Inf Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-B5D1601B"
+        },
+        {
+          "name": "All P Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7212CCBC"
+        },
+        {
+          "name": "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests",
+          "applied_vcpus": 5,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://ap-south-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-34B43A08"
+        },
+        {
+          "name": "All Trn Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6B0D517C"
+        },
+        {
+          "name": "All X Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-south-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-E3A00192"
+        }
+      ]
+    },
+    {
+      "region": "ap-northeast-1",
+      "kind": "on-demand",
+      "observations": [
+        {
+          "name": "Running On-Demand DL instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6E869C2A"
+        },
+        {
+          "name": "Running On-Demand F instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-74FC7D96"
+        },
+        {
+          "name": "Running On-Demand G and VT instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+        },
+        {
+          "name": "Running On-Demand High Memory instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-43DA4232"
+        },
+        {
+          "name": "Running On-Demand HPC instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-F7808C92"
+        },
+        {
+          "name": "Running On-Demand Inf instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1945791B"
+        },
+        {
+          "name": "Running On-Demand P instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-417A185B"
+        },
+        {
+          "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+          "applied_vcpus": 5,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+        },
+        {
+          "name": "Running On-Demand Trn instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-2C3B7624"
+        },
+        {
+          "name": "Running On-Demand X instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7295265B"
+        }
+      ]
+    },
+    {
+      "region": "ap-northeast-1",
+      "kind": "spot",
+      "observations": [
+        {
+          "name": "All DL Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
+        },
+        {
+          "name": "All F Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-88CF9481"
+        },
+        {
+          "name": "All G and VT Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+        },
+        {
+          "name": "All Inf Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-B5D1601B"
+        },
+        {
+          "name": "All P Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7212CCBC"
+        },
+        {
+          "name": "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests",
+          "applied_vcpus": 5,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-34B43A08"
+        },
+        {
+          "name": "All Trn Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6B0D517C"
+        },
+        {
+          "name": "All X Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-E3A00192"
+        }
+      ]
+    },
+    {
+      "region": "ap-northeast-2",
+      "kind": "on-demand",
+      "observations": [
+        {
+          "name": "Running On-Demand DL instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6E869C2A"
+        },
+        {
+          "name": "Running On-Demand F instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-74FC7D96"
+        },
+        {
+          "name": "Running On-Demand G and VT instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+        },
+        {
+          "name": "Running On-Demand High Memory instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-43DA4232"
+        },
+        {
+          "name": "Running On-Demand HPC instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-F7808C92"
+        },
+        {
+          "name": "Running On-Demand Inf instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1945791B"
+        },
+        {
+          "name": "Running On-Demand P instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-417A185B"
+        },
+        {
+          "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "url": "https://ap-northeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+        },
+        {
+          "name": "Running On-Demand Trn instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-2C3B7624"
+        },
+        {
+          "name": "Running On-Demand X instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7295265B"
+        }
+      ]
+    },
+    {
+      "region": "ap-northeast-2",
+      "kind": "spot",
+      "observations": [
+        {
+          "name": "All DL Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
+        },
+        {
+          "name": "All F Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-88CF9481"
+        },
+        {
+          "name": "All G and VT Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+        },
+        {
+          "name": "All Inf Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-B5D1601B"
+        },
+        {
+          "name": "All P Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7212CCBC"
+        },
+        {
+          "name": "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "url": "https://ap-northeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-34B43A08"
+        },
+        {
+          "name": "All Trn Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6B0D517C"
+        },
+        {
+          "name": "All X Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-E3A00192"
+        }
+      ]
+    },
+    {
+      "region": "ap-northeast-3",
+      "kind": "on-demand",
+      "observations": [
+        {
+          "name": "Running On-Demand DL instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6E869C2A"
+        },
+        {
+          "name": "Running On-Demand F instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-74FC7D96"
+        },
+        {
+          "name": "Running On-Demand G and VT instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+        },
+        {
+          "name": "Running On-Demand High Memory instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-43DA4232"
+        },
+        {
+          "name": "Running On-Demand HPC instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-F7808C92"
+        },
+        {
+          "name": "Running On-Demand Inf instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1945791B"
+        },
+        {
+          "name": "Running On-Demand P instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-417A185B"
+        },
+        {
+          "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "url": "https://ap-northeast-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+        },
+        {
+          "name": "Running On-Demand Trn instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-2C3B7624"
+        },
+        {
+          "name": "Running On-Demand X instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7295265B"
+        }
+      ]
+    },
+    {
+      "region": "ap-northeast-3",
+      "kind": "spot",
+      "observations": [
+        {
+          "name": "All DL Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
+        },
+        {
+          "name": "All F Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-88CF9481"
+        },
+        {
+          "name": "All G and VT Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+        },
+        {
+          "name": "All Inf Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-B5D1601B"
+        },
+        {
+          "name": "All P Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7212CCBC"
+        },
+        {
+          "name": "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "url": "https://ap-northeast-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-34B43A08"
+        },
+        {
+          "name": "All Trn Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6B0D517C"
+        },
+        {
+          "name": "All X Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "url": "https://ap-northeast-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-E3A00192"
+        }
+      ]
+    },
+    {
+      "region": "ap-southeast-1",
+      "kind": "on-demand",
+      "observations": [
+        {
+          "name": "Running On-Demand DL instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6E869C2A"
+        },
+        {
+          "name": "Running On-Demand F instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-74FC7D96"
+        },
+        {
+          "name": "Running On-Demand G and VT instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+        },
+        {
+          "name": "Running On-Demand High Memory instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-43DA4232"
+        },
+        {
+          "name": "Running On-Demand HPC instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-F7808C92"
+        },
+        {
+          "name": "Running On-Demand Inf instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1945791B"
+        },
+        {
+          "name": "Running On-Demand P instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-417A185B"
+        },
+        {
+          "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "usage_display": "2",
+          "url": "https://ap-southeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+        },
+        {
+          "name": "Running On-Demand Trn instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-2C3B7624"
+        },
+        {
+          "name": "Running On-Demand X instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7295265B"
+        }
+      ]
+    },
+    {
+      "region": "ap-southeast-1",
+      "kind": "spot",
+      "observations": [
+        {
+          "name": "All DL Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
+        },
+        {
+          "name": "All F Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-88CF9481"
+        },
+        {
+          "name": "All G and VT Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+        },
+        {
+          "name": "All Inf Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-B5D1601B"
+        },
+        {
+          "name": "All P Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7212CCBC"
+        },
+        {
+          "name": "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://ap-southeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-34B43A08"
+        },
+        {
+          "name": "All Trn Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6B0D517C"
+        },
+        {
+          "name": "All X Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-E3A00192"
+        }
+      ]
+    },
+    {
+      "region": "ap-southeast-2",
+      "kind": "on-demand",
+      "observations": [
+        {
+          "name": "Running On-Demand DL instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6E869C2A"
+        },
+        {
+          "name": "Running On-Demand F instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-74FC7D96"
+        },
+        {
+          "name": "Running On-Demand G and VT instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+        },
+        {
+          "name": "Running On-Demand High Memory instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-43DA4232"
+        },
+        {
+          "name": "Running On-Demand HPC instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-F7808C92"
+        },
+        {
+          "name": "Running On-Demand Inf instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1945791B"
+        },
+        {
+          "name": "Running On-Demand P instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-417A185B"
+        },
+        {
+          "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://ap-southeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+        },
+        {
+          "name": "Running On-Demand Trn instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-2C3B7624"
+        },
+        {
+          "name": "Running On-Demand X instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7295265B"
+        }
+      ]
+    },
+    {
+      "region": "ap-southeast-2",
+      "kind": "spot",
+      "observations": [
+        {
+          "name": "All DL Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
+        },
+        {
+          "name": "All F Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-88CF9481"
+        },
+        {
+          "name": "All G and VT Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+        },
+        {
+          "name": "All Inf Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-B5D1601B"
+        },
+        {
+          "name": "All P Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7212CCBC"
+        },
+        {
+          "name": "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://ap-southeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-34B43A08"
+        },
+        {
+          "name": "All Trn Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6B0D517C"
+        },
+        {
+          "name": "All X Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ap-southeast-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-E3A00192"
+        }
+      ]
+    },
+    {
+      "region": "ca-central-1",
+      "kind": "on-demand",
+      "observations": [
+        {
+          "name": "Running On-Demand DL instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ca-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6E869C2A"
+        },
+        {
+          "name": "Running On-Demand F instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ca-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-74FC7D96"
+        },
+        {
+          "name": "Running On-Demand G and VT instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ca-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+        },
+        {
+          "name": "Running On-Demand High Memory instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ca-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-43DA4232"
+        },
+        {
+          "name": "Running On-Demand HPC instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ca-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-F7808C92"
+        },
+        {
+          "name": "Running On-Demand Inf instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ca-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1945791B"
+        },
+        {
+          "name": "Running On-Demand P instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ca-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-417A185B"
+        },
+        {
+          "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+          "applied_vcpus": 5,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://ca-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+        },
+        {
+          "name": "Running On-Demand Trn instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ca-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-2C3B7624"
+        },
+        {
+          "name": "Running On-Demand X instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ca-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7295265B"
+        }
+      ]
+    },
+    {
+      "region": "ca-central-1",
+      "kind": "spot",
+      "observations": [
+        {
+          "name": "All DL Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ca-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
+        },
+        {
+          "name": "All F Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ca-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-88CF9481"
+        },
+        {
+          "name": "All G and VT Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ca-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+        },
+        {
+          "name": "All Inf Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ca-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-B5D1601B"
+        },
+        {
+          "name": "All P Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ca-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7212CCBC"
+        },
+        {
+          "name": "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests",
+          "applied_vcpus": 5,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://ca-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-34B43A08"
+        },
+        {
+          "name": "All Trn Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ca-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6B0D517C"
+        },
+        {
+          "name": "All X Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://ca-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-E3A00192"
+        }
+      ]
+    },
+    {
+      "region": "eu-central-1",
+      "kind": "on-demand",
+      "observations": [
+        {
+          "name": "Running On-Demand DL instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6E869C2A"
+        },
+        {
+          "name": "Running On-Demand F instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-74FC7D96"
+        },
+        {
+          "name": "Running On-Demand G and VT instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+        },
+        {
+          "name": "Running On-Demand High Memory instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-43DA4232"
+        },
+        {
+          "name": "Running On-Demand HPC instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-F7808C92"
+        },
+        {
+          "name": "Running On-Demand Inf instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1945791B"
+        },
+        {
+          "name": "Running On-Demand P instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-417A185B"
+        },
+        {
+          "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+          "applied_vcpus": 5,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://eu-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+        },
+        {
+          "name": "Running On-Demand Trn instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-2C3B7624"
+        },
+        {
+          "name": "Running On-Demand X instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7295265B"
+        }
+      ]
+    },
+    {
+      "region": "eu-central-1",
+      "kind": "spot",
+      "observations": [
+        {
+          "name": "All DL Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
+        },
+        {
+          "name": "All F Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-88CF9481"
+        },
+        {
+          "name": "All G and VT Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+        },
+        {
+          "name": "All Inf Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-B5D1601B"
+        },
+        {
+          "name": "All P Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7212CCBC"
+        },
+        {
+          "name": "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests",
+          "applied_vcpus": 5,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://eu-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-34B43A08"
+        },
+        {
+          "name": "All Trn Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6B0D517C"
+        },
+        {
+          "name": "All X Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-central-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-E3A00192"
+        }
+      ]
+    },
+    {
+      "region": "eu-west-1",
+      "kind": "on-demand",
+      "observations": [
+        {
+          "name": "Running On-Demand DL instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6E869C2A"
+        },
+        {
+          "name": "Running On-Demand F instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-74FC7D96"
+        },
+        {
+          "name": "Running On-Demand G and VT instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+        },
+        {
+          "name": "Running On-Demand High Memory instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-43DA4232"
+        },
+        {
+          "name": "Running On-Demand HPC instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-F7808C92"
+        },
+        {
+          "name": "Running On-Demand Inf instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1945791B"
+        },
+        {
+          "name": "Running On-Demand P instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-417A185B"
+        },
+        {
+          "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://eu-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+        },
+        {
+          "name": "Running On-Demand Trn instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-2C3B7624"
+        },
+        {
+          "name": "Running On-Demand X instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7295265B"
+        }
+      ]
+    },
+    {
+      "region": "eu-west-1",
+      "kind": "spot",
+      "observations": [
+        {
+          "name": "All DL Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
+        },
+        {
+          "name": "All F Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-88CF9481"
+        },
+        {
+          "name": "All G and VT Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+        },
+        {
+          "name": "All Inf Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-B5D1601B"
+        },
+        {
+          "name": "All P Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7212CCBC"
+        },
+        {
+          "name": "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://eu-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-34B43A08"
+        },
+        {
+          "name": "All Trn Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6B0D517C"
+        },
+        {
+          "name": "All X Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-E3A00192"
+        }
+      ]
+    },
+    {
+      "region": "eu-west-2",
+      "kind": "on-demand",
+      "observations": [
+        {
+          "name": "Running On-Demand DL instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6E869C2A"
+        },
+        {
+          "name": "Running On-Demand F instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-74FC7D96"
+        },
+        {
+          "name": "Running On-Demand G and VT instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+        },
+        {
+          "name": "Running On-Demand High Memory instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-43DA4232"
+        },
+        {
+          "name": "Running On-Demand HPC instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-F7808C92"
+        },
+        {
+          "name": "Running On-Demand Inf instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1945791B"
+        },
+        {
+          "name": "Running On-Demand P instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-417A185B"
+        },
+        {
+          "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://eu-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+        },
+        {
+          "name": "Running On-Demand Trn instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-2C3B7624"
+        },
+        {
+          "name": "Running On-Demand X instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7295265B"
+        }
+      ]
+    },
+    {
+      "region": "eu-west-2",
+      "kind": "spot",
+      "observations": [
+        {
+          "name": "All DL Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
+        },
+        {
+          "name": "All F Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-88CF9481"
+        },
+        {
+          "name": "All G and VT Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+        },
+        {
+          "name": "All Inf Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-B5D1601B"
+        },
+        {
+          "name": "All P Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7212CCBC"
+        },
+        {
+          "name": "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://eu-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-34B43A08"
+        },
+        {
+          "name": "All Trn Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6B0D517C"
+        },
+        {
+          "name": "All X Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-2.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-E3A00192"
+        }
+      ]
+    },
+    {
+      "region": "eu-west-3",
+      "kind": "on-demand",
+      "observations": [
+        {
+          "name": "Running On-Demand DL instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6E869C2A"
+        },
+        {
+          "name": "Running On-Demand F instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-74FC7D96"
+        },
+        {
+          "name": "Running On-Demand G and VT instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+        },
+        {
+          "name": "Running On-Demand High Memory instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-43DA4232"
+        },
+        {
+          "name": "Running On-Demand HPC instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-F7808C92"
+        },
+        {
+          "name": "Running On-Demand Inf instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1945791B"
+        },
+        {
+          "name": "Running On-Demand P instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-417A185B"
+        },
+        {
+          "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://eu-west-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+        },
+        {
+          "name": "Running On-Demand Trn instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-2C3B7624"
+        },
+        {
+          "name": "Running On-Demand X instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7295265B"
+        }
+      ]
+    },
+    {
+      "region": "eu-west-3",
+      "kind": "spot",
+      "observations": [
+        {
+          "name": "All DL Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
+        },
+        {
+          "name": "All F Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-88CF9481"
+        },
+        {
+          "name": "All G and VT Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+        },
+        {
+          "name": "All Inf Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-B5D1601B"
+        },
+        {
+          "name": "All P Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7212CCBC"
+        },
+        {
+          "name": "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests",
+          "applied_vcpus": 8,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://eu-west-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-34B43A08"
+        },
+        {
+          "name": "All Trn Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6B0D517C"
+        },
+        {
+          "name": "All X Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-west-3.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-E3A00192"
+        }
+      ]
+    },
+    {
+      "region": "eu-north-1",
+      "kind": "on-demand",
+      "observations": [
+        {
+          "name": "Running On-Demand DL instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-north-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6E869C2A"
+        },
+        {
+          "name": "Running On-Demand F instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-north-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-74FC7D96"
+        },
+        {
+          "name": "Running On-Demand G and VT instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-north-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+        },
+        {
+          "name": "Running On-Demand High Memory instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-north-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-43DA4232"
+        },
+        {
+          "name": "Running On-Demand HPC instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-north-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-F7808C92"
+        },
+        {
+          "name": "Running On-Demand Inf instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-north-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1945791B"
+        },
+        {
+          "name": "Running On-Demand P instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-north-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-417A185B"
+        },
+        {
+          "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+          "applied_vcpus": 5,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://eu-north-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+        },
+        {
+          "name": "Running On-Demand Trn instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-north-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-2C3B7624"
+        },
+        {
+          "name": "Running On-Demand X instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-north-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7295265B"
+        }
+      ]
+    },
+    {
+      "region": "eu-north-1",
+      "kind": "spot",
+      "observations": [
+        {
+          "name": "All DL Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-north-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
+        },
+        {
+          "name": "All F Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-north-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-88CF9481"
+        },
+        {
+          "name": "All G and VT Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-north-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+        },
+        {
+          "name": "All Inf Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-north-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-B5D1601B"
+        },
+        {
+          "name": "All P Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-north-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7212CCBC"
+        },
+        {
+          "name": "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests",
+          "applied_vcpus": 5,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://eu-north-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-34B43A08"
+        },
+        {
+          "name": "All Trn Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-north-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6B0D517C"
+        },
+        {
+          "name": "All X Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://eu-north-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-E3A00192"
+        }
+      ]
+    },
+    {
+      "region": "sa-east-1",
+      "kind": "on-demand",
+      "observations": [
+        {
+          "name": "Running On-Demand DL instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://sa-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6E869C2A"
+        },
+        {
+          "name": "Running On-Demand F instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://sa-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-74FC7D96"
+        },
+        {
+          "name": "Running On-Demand G and VT instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://sa-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-DB2E81BA"
+        },
+        {
+          "name": "Running On-Demand High Memory instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://sa-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-43DA4232"
+        },
+        {
+          "name": "Running On-Demand HPC instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://sa-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-F7808C92"
+        },
+        {
+          "name": "Running On-Demand Inf instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://sa-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1945791B"
+        },
+        {
+          "name": "Running On-Demand P instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://sa-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-417A185B"
+        },
+        {
+          "name": "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
+          "applied_vcpus": 5,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://sa-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-1216C47A"
+        },
+        {
+          "name": "Running On-Demand Trn instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://sa-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-2C3B7624"
+        },
+        {
+          "name": "Running On-Demand X instances",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://sa-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7295265B"
+        }
+      ]
+    },
+    {
+      "region": "sa-east-1",
+      "kind": "spot",
+      "observations": [
+        {
+          "name": "All DL Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://sa-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
+        },
+        {
+          "name": "All F Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://sa-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-88CF9481"
+        },
+        {
+          "name": "All G and VT Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://sa-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-3819A6DF"
+        },
+        {
+          "name": "All Inf Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://sa-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-B5D1601B"
+        },
+        {
+          "name": "All P Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://sa-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-7212CCBC"
+        },
+        {
+          "name": "All Standard (A, C, D, H, I, M, R, T, Z) Spot Instance Requests",
+          "applied_vcpus": 5,
+          "default_vcpus": 5,
+          "usage_display": "0",
+          "url": "https://sa-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-34B43A08"
+        },
+        {
+          "name": "All Trn Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://sa-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-6B0D517C"
+        },
+        {
+          "name": "All X Spot Instance Requests",
+          "applied_vcpus": 0,
+          "default_vcpus": 0,
+          "usage_display": "0",
+          "url": "https://sa-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-E3A00192"
+        }
+      ]
+    }
+  ],
+  "ohio": {
+    "g_on_demand_applied_vcpus": 8,
+    "g_on_demand_default_vcpus": 0,
+    "utilization_display": "0",
+    "instance_list_empty": true,
+    "g7e_2xlarge_linux_hourly_usd": 3.36312,
+    "compute_4h_usd": 13.45248,
+    "wizard_gpu_type_selected_without_submission": true,
+    "capacity_verified": false,
+    "account_plan_explicitly_verified": false
+  },
+  "workspaces_tokyo_graphics": [
+    {
+      "name": "Graphics.g6.4xlarge WorkSpaces",
+      "applied_instances": 1,
+      "default_instances": 0,
+      "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/workspaces/quotas/L-40A36AF9"
+    },
+    {
+      "name": "Graphics.g6.16xlarge WorkSpaces",
+      "applied_instances": 1,
+      "default_instances": 0,
+      "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/workspaces/quotas/L-BD784BE1"
+    },
+    {
+      "name": "Graphics.g6f.2xlarge WorkSpaces",
+      "applied_instances": 1,
+      "default_instances": 0,
+      "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/workspaces/quotas/L-6E205E73"
+    },
+    {
+      "name": "GraphicsPro.g4dn WorkSpaces",
+      "applied_instances": 1,
+      "default_instances": 0,
+      "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/workspaces/quotas/L-BE9A8466"
+    },
+    {
+      "name": "Graphics.gr6.4xlarge WorkSpaces",
+      "applied_instances": 1,
+      "default_instances": 0,
+      "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/workspaces/quotas/L-EF6817EC"
+    },
+    {
+      "name": "Graphics.gr6.8xlarge WorkSpaces",
+      "applied_instances": 1,
+      "default_instances": 0,
+      "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/workspaces/quotas/L-337DA39D"
+    },
+    {
+      "name": "Graphics.g4dn WorkSpaces",
+      "applied_instances": 1,
+      "default_instances": 0,
+      "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/workspaces/quotas/L-BCACAEBC"
+    },
+    {
+      "name": "Graphics.g6.2xlarge WorkSpaces",
+      "applied_instances": 1,
+      "default_instances": 0,
+      "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/workspaces/quotas/L-925915DC"
+    },
+    {
+      "name": "Graphics.g6f.4xlarge WorkSpaces",
+      "applied_instances": 1,
+      "default_instances": 0,
+      "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/workspaces/quotas/L-34D55C89"
+    },
+    {
+      "name": "Graphics.g6.xlarge WorkSpaces",
+      "applied_instances": 1,
+      "default_instances": 0,
+      "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/workspaces/quotas/L-3AC69A9E"
+    },
+    {
+      "name": "Graphics.g6f.large WorkSpaces",
+      "applied_instances": 1,
+      "default_instances": 0,
+      "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/workspaces/quotas/L-18F1706C"
+    },
+    {
+      "name": "Graphics.gr6f.4xlarge WorkSpaces",
+      "applied_instances": 1,
+      "default_instances": 0,
+      "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/workspaces/quotas/L-C76331EA"
+    },
+    {
+      "name": "Graphics.g6.8xlarge WorkSpaces",
+      "applied_instances": 1,
+      "default_instances": 0,
+      "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/workspaces/quotas/L-158CE743"
+    },
+    {
+      "name": "Graphics.g6f.xlarge WorkSpaces",
+      "applied_instances": 1,
+      "default_instances": 0,
+      "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/workspaces/quotas/L-70A02F17"
+    },
+    {
+      "name": "GraphicsPro WorkSpaces",
+      "applied_instances": 0,
+      "default_instances": 0,
+      "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/workspaces/quotas/L-254B485B"
+    },
+    {
+      "name": "Graphics.g4dn 4xlarge streaming instances for WorkSpaces Pools",
+      "applied_instances": 0,
+      "default_instances": 0,
+      "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/workspaces/quotas/L-0B7D5CA2"
+    },
+    {
+      "name": "Graphics.g4dn xlarge streaming instances for WorkSpaces Pools",
+      "applied_instances": 0,
+      "default_instances": 0,
+      "url": "https://ap-northeast-1.console.aws.amazon.com/servicequotas/home/services/workspaces/quotas/L-D34D6523"
+    }
+  ],
+  "workspaces_tokyo_registered_directory_count": 0,
+  "workspaces_directory_service_unregistered_directories_checked": false,
+  "workspaces_price_source": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonWorkSpaces/current/ap-northeast-1/index.json",
+  "workspaces_price_publication_date": "2026-10-16",
+  "workspaces_prices_windows_license_included_autostop": [
+    {
+      "type": "Graphics.g6.2xlarge",
+      "vcpus": 8,
+      "ram_gib": 32,
+      "gpu": "NVIDIA L4",
+      "gpu_memory_gib": 24,
+      "root_gb": 150,
+      "user_gb": 100,
+      "hourly_usd": 3.25,
+      "monthly_base_usd": 25
+    },
+    {
+      "type": "Graphics.g6.4xlarge",
+      "vcpus": 16,
+      "ram_gib": 64,
+      "gpu": "NVIDIA L4",
+      "gpu_memory_gib": 24,
+      "root_gb": 200,
+      "user_gb": 150,
+      "hourly_usd": 4.83,
+      "monthly_base_usd": 30,
+      "monthly_sku": "Z96C2WJKZNER3APT",
+      "hourly_sku": "J5Q45MDCTVDSN8HH"
+    },
+    {
+      "type": "Graphics.gr6.4xlarge",
+      "vcpus": 16,
+      "ram_gib": 128,
+      "gpu": "NVIDIA L4",
+      "gpu_memory_gib": 24,
+      "root_gb": 250,
+      "user_gb": 200,
+      "hourly_usd": 5.4,
+      "monthly_base_usd": 35
+    }
+  ],
+  "all_five_credit_product_matches": {
+    "Amazon Elastic Compute Cloud": true,
+    "Amazon WorkSpaces": true,
+    "AWS Directory Service": true,
+    "AWS Systems Manager": true,
+    "Amazon Virtual Private Cloud": true
+  },
+  "appstream_tokyo_g6_g6e_max_applied_observed": 0,
+  "cloud_resources_created": 0,
+  "quota_requests_submitted": 0,
+  "account_plan_upgraded": false,
+  "primary_shutdown_deployed": false,
+  "independent_backup_shutdown_deployed": false,
+  "h3_on_ohio_community_license_passed": false,
+  "real_videos": 0
+}

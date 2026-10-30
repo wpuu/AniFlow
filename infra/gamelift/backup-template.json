@@ -1,0 +1,144 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Parameters": {
+    "GroupId": {
+      "Type": "String",
+      "AllowedPattern": "sg-[a-zA-Z0-9]+"
+    },
+    "ApplicationId": {
+      "Type": "String",
+      "Default": "",
+      "AllowedPattern": "(|a-[a-zA-Z0-9]+)"
+    },
+    "DeadlineUtc": {
+      "Type": "String",
+      "AllowedPattern": "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"
+    }
+  },
+  "Conditions": {
+    "HasApplication": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "ApplicationId"
+            },
+            ""
+          ]
+        }
+      ]
+    }
+  },
+  "Resources": {
+    "GuardRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ssm.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "DeleteExactTokyoGroupOnly",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "gameliftstreams:GetStreamGroup",
+                    "gameliftstreams:DeleteStreamGroup"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:gameliftstreams:ap-northeast-1:${AWS::AccountId}:streamgroup/${GroupId}"
+                  }
+                },
+                {
+                  "Fn::If": [
+                    "HasApplication",
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "gameliftstreams:GetApplication",
+                        "gameliftstreams:DeleteApplication"
+                      ],
+                      "Resource": {
+                        "Fn::Sub": "arn:${AWS::Partition}:gameliftstreams:ap-northeast-1:${AWS::AccountId}:application/${ApplicationId}"
+                      }
+                    },
+                    {
+                      "Ref": "AWS::NoValue"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "Document": {
+      "Type": "AWS::SSM::Document",
+      "Properties": {
+        "DocumentType": "Automation",
+        "UpdateMethod": "NewVersion",
+        "Content": {
+          "schemaVersion": "0.3",
+          "description": "Independent fixed-deadline deletion of one Tokyo GameLift group",
+          "assumeRole": {
+            "Fn::GetAtt": [
+              "GuardRole",
+              "Arn"
+            ]
+          },
+          "mainSteps": [
+            {
+              "name": "WaitUntilDeadline",
+              "action": "aws:sleep",
+              "inputs": {
+                "Timestamp": {
+                  "Ref": "DeadlineUtc"
+                }
+              },
+              "nextStep": "DeleteAndVerify"
+            },
+            {
+              "name": "DeleteAndVerify",
+              "action": "aws:executeScript",
+              "timeoutSeconds": 600,
+              "isEnd": true,
+              "inputs": {
+                "Runtime": "python3.11",
+                "Handler": "handler",
+                "InputPayload": {
+                  "GroupId": {
+                    "Ref": "GroupId"
+                  },
+                  "ApplicationId": {
+                    "Ref": "ApplicationId"
+                  }
+                },
+                "Script": "\"\"\"Independent Singapore SSM Automation step; no Lambda dependency.\"\"\"\nimport time\n\nimport boto3\nfrom botocore.exceptions import ClientError\n\n\ndef handler(events, context):\n    client = boto3.client(\"gameliftstreams\", region_name=\"ap-northeast-1\")\n    group = events[\"GroupId\"]\n    application = events.get(\"ApplicationId\")\n    for _ in range(50):\n        try:\n            current = client.get_stream_group(Identifier=group)\n            if current[\"Status\"] != \"DELETING\":\n                client.delete_stream_group(Identifier=group)\n        except ClientError as exc:\n            if exc.response[\"Error\"][\"Code\"] == \"ResourceNotFoundException\":\n                if not application:\n                    return {\"state\": \"released\", \"group_id\": group}\n                try:\n                    current = client.get_application(Identifier=application)\n                    if current[\"Status\"] != \"DELETING\":\n                        client.delete_application(Identifier=application)\n                except ClientError as app_exc:\n                    if app_exc.response[\"Error\"][\"Code\"] == \"ResourceNotFoundException\":\n                        return {\"state\": \"released\", \"group_id\": group, \"application_id\": application}\n                    raise\n                time.sleep(10)\n                continue\n            if exc.response[\"Error\"][\"Code\"] not in {\"ConflictException\", \"ThrottlingException\"}:\n                raise\n        time.sleep(10)\n    raise RuntimeError(\"Group deletion was not confirmed; retain guards and investigate\")\n"
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "Document": {
+      "Value": {
+        "Ref": "Document"
+      }
+    }
+  }
+}

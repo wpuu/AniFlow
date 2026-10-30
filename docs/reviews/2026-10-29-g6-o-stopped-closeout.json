@@ -1,0 +1,59 @@
+{
+  "observed_at_utc": "2026-10-29T05:58:53.081725+00:00",
+  "instance_state": "stopped",
+  "instance_retained": true,
+  "root_volume_retained": true,
+  "root_volume_gb": 180,
+  "volume_type": "gp3",
+  "volume_throughput_mibps": 375,
+  "root_volume_encrypted": true,
+  "public_ipv4_present": false,
+  "experiment_elastic_ip_count": 0,
+  "real_video_count": 0,
+  "model_files_verified_before_stop": 4,
+  "backup_executions": {
+    "production": "Failed",
+    "final": "Success"
+  },
+  "next_start_requires_new_primary_backup_and_guest_deadlines": true,
+  "expired_primary_rule_disabled": true,
+  "account_plan": {
+    "accountPlanType": "PAID",
+    "accountPlanStatus": "ACTIVE",
+    "accountPlanRemainingCredits": {
+      "amount": 42.19,
+      "unit": "USD"
+    }
+  },
+  "final_verification_and_auth_cleanup": {
+    "verified_at_utc": "2026-10-29T06:00:24.061145+00:00",
+    "instance_state": "stopped",
+    "instance_retained": true,
+    "root_volume_retained": true,
+    "expired_primary_rule_disabled": true,
+    "cloud_resource_creates_this_closeout": 0,
+    "gpu_starts_this_closeout": 0,
+    "real_video_count": 0,
+    "logout_completed_at_utc": "2026-10-29T06:00:24.614734+00:00",
+    "official_task_cli_logout": true,
+    "cached_auth_files_remaining": 0,
+    "named_task_auth_files_removed": 4,
+    "global_user_aws_config_modified": false,
+    "browser_logout_invoked": false
+  },
+  "local_read_only_check": {
+    "observed_at_utc": "2026-10-29T05:56:51.795216+00:00",
+    "mode": "REAL_WAN",
+    "simulation": false,
+    "ready": false,
+    "launch_allowed": false,
+    "target_instance_type": "g6.xlarge",
+    "target_gpu": "NVIDIA L4",
+    "target_ram_gib": 16,
+    "job_count": 0,
+    "not_live_cloud_eligibility": true
+  },
+  "no_gpu_start_or_video_submission_this_closeout": true,
+  "full_model_inference_verified": false,
+  "complete_windows_wan_archive_verified": false
+}

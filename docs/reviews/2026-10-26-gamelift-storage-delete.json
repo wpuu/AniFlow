@@ -1,0 +1,11 @@
+{
+  "verified_at_utc": "2026-10-26T12:42:58.596420+00:00",
+  "local_directory": "D:\\AniFlow-H3-Archive-20261026",
+  "local_full_hashes_verified_again": 9,
+  "source_objects_deleted": 15,
+  "source_bytes_deleted": 47406157066,
+  "storage_stack": "aniflow-h3-gamelift-storage-20261026",
+  "storage_stack_delete_requested": true,
+  "real_video_count": 0,
+  "gpu_allocation_requested": false
+}

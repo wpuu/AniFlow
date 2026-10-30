@@ -1,0 +1,12 @@
+{
+  "instance_type": "g6.2xlarge",
+  "vcpus": 8,
+  "ram_gib": 32,
+  "gpu_name": "L4",
+  "expected_gpu_mib": 22888,
+  "owner_accepted_insufficient_memory_risk": true,
+  "quality_change_authorized": false,
+  "cpu_inference_authorized": false,
+  "models_remain_paused_before_gpu_preflight": true,
+  "authorization_scope": "single admission, current budget net cash <=1, independent dual stop, at most10min real GPU preflight; no models"
+}

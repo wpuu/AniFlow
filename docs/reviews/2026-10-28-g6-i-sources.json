@@ -1,0 +1,37 @@
+{
+  "experiment_id": "aniflow-wan-ohio-20261027-g6-i",
+  "actual_execution_date": "2026-10-28",
+  "runtime_proofs_copied": 0,
+  "captured_after_execution": true,
+  "sources_sha256": {
+    "arm_preflight.py": "8f81c8662914b559c698a04b4788a265b06d9ffb5496adadd2cfe898f4e10a18",
+    "aws_session.py": "6f7754b18840aefacfe7d39bd214fdafc8c39f922bd1f0facb9e5b7422b94292",
+    "check_protection_proof.py": "f4a1c04a1c75c9a5058c4fadddd68a704ee69fbbf0f73fc84a03b4eabd1d8b07",
+    "cleanup_after_preflight.py": "8674e6cfefad96b5d8350d2781411b935813ebf183dd83b8addada68ba8561e2",
+    "cleanup_capacity_only.py": "a58bab24547a70ed760091217b30450d7ece2b8d32cb31b36a93e2a2fa20f0c2",
+    "deploy_protection.py": "6480dd65f86043823bd232caebbdddb35f5db9102db0a8a83a4f5a096acf14d9",
+    "execute_admission.py": "e5499236a946c81244b864d3f912d4dbff0712d49c951abba985538382016861",
+    "finish_gpu_preflight.py": "9961265661897533af47f6334e34f180acfcbf84c26d9789766e9b55e17a5a7c",
+    "launch_preflight.py": "2794ac7789851e9e800759de41dfc1962c9eca95dc571a08b65fdcf091312457",
+    "login_aws.py": "7c0cf31fc86a71160deef11c17e041980b80fc469fd2112d3b5b951fffff9e02",
+    "logout_after_capacity.py": "0d281261c2eecf85b23b004a2e5b581314a69edf7abdba1bc335eba5bc33ffe7",
+    "next_zone.py": "9b60d99fdab5b61ccca90661e94c71292552fe21b8cbf24441ffaa75e89dace0",
+    "observe_gpu.py": "d78558c76eb8cd4902e6904fcd126bf0a3eee6a9ae205cfd7893bd773cb410e2",
+    "preflight_cuda.py": "fe735e7c4ddb320bbfdf40fc13f863b0421f0048d2035ced33b27058742594f4",
+    "prepare_inputs.py": "2a4ae6f2977287f94a435c6199d4bd9f502e0abceee2414d8b5640bd8283bcc8",
+    "prepare_templates.py": "450d79dca4eec32e9f4e10647301afb0d47639e7857dd6f4a0a3400112107f28",
+    "prove_protection.py": "4ff962770515b1116d49a2ca0a515d21650a95584b2a557e2134042c1f2682a7",
+    "read_ohio_eligibility.py": "8f86f9ed6099d2ccd804d74783c8235272fb4be85ce27a5d26bb7f97c79e6969",
+    "read_preflight_backup.py": "42f47551d2dca4ca5efcccb52eb73ca1b13bf4e1f0f4e33a63f91aee98c29aa3",
+    "read_protection.py": "3d4cf0a4675aea2992088db718516ba48685dc13b9a7451d3086829657e338e6",
+    "refresh_readonly.py": "6d422d196feade50a9acace905f0e7e817182368c11ae26464d2b55b8b60e991",
+    "ssm_read_probe.py": "eb64931a25961a6b84d6bc922b2a77f8b8272344104e1daf099a5eb374f48749",
+    "start_preflight_backup.py": "cc3f3891c3fa0c6fe5c40a8fea4c9e73f6506a8ad664bc81e3135f283f5085ae",
+    "verify_cleanup.py": "d4a63b957c6ef80a9da4b23e9a697ad337a441b7ccd1aa928f53e0d875e8c377"
+  },
+  "shared_protection_sources_sha256": {
+    "g7_guard.py": "ca6a8173d7e8acef4bdc33e0809fe3df57c2d07ec205182f1bbd231a69ba03cc",
+    "g7_templates.py": "348a96d2792cb289e534dca96d75775989c0853a5ae49799d6fcdc6239248337",
+    "wan_deadline.py": "c927f09a8876f6a862b6293cbcea9a8cee53465114d3f022f661aeed4652e0ae"
+  }
+}

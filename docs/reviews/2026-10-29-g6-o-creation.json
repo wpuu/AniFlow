@@ -1,0 +1,84 @@
+{
+  "request_at_utc": "2026-10-29T00:58:57.193726+00:00",
+  "region": "us-east-2",
+  "zone": "us-east-2a",
+  "instance_type": "g6.xlarge",
+  "actual_outcome": "created",
+  "instance_reference_sha256": "a5230e471cd13c7c07a517adefc415075cea0af7c56c09658e85b777e7ecb9e7",
+  "actual_real_request_count": 1,
+  "observed_at_utc": "2026-10-29T01:08:29.503462+00:00",
+  "actual_states": [
+    "stopping"
+  ],
+  "primary_real_no_target_invocation": true,
+  "iam_scope_cases": {
+    "primary": {
+      "owned": {
+        "ec2:StopInstances": "allowed",
+        "ec2:TerminateInstances": "allowed",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      },
+      "wrong_tag": {
+        "ec2:StopInstances": "implicitDeny",
+        "ec2:TerminateInstances": "implicitDeny",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      },
+      "wrong_region": {
+        "ec2:StopInstances": "implicitDeny",
+        "ec2:TerminateInstances": "implicitDeny",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      },
+      "wrong_phase": {
+        "ec2:StopInstances": "implicitDeny",
+        "ec2:TerminateInstances": "implicitDeny",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      },
+      "missing_phase": {
+        "ec2:StopInstances": "implicitDeny",
+        "ec2:TerminateInstances": "implicitDeny",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      }
+    },
+    "backup": {
+      "owned": {
+        "ec2:StopInstances": "allowed",
+        "ec2:TerminateInstances": "allowed",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      },
+      "wrong_tag": {
+        "ec2:StopInstances": "implicitDeny",
+        "ec2:TerminateInstances": "implicitDeny",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      },
+      "wrong_region": {
+        "ec2:StopInstances": "implicitDeny",
+        "ec2:TerminateInstances": "implicitDeny",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      },
+      "wrong_phase": {
+        "ec2:StopInstances": "implicitDeny",
+        "ec2:TerminateInstances": "implicitDeny",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      },
+      "missing_phase": {
+        "ec2:StopInstances": "implicitDeny",
+        "ec2:TerminateInstances": "implicitDeny",
+        "ec2:StartInstances": "implicitDeny",
+        "ec2:RunInstances": "implicitDeny"
+      }
+    }
+  },
+  "independent_real_no_target_execution": "Success",
+  "not_a_video_success": true,
+  "models_downloaded": false,
+  "real_video_count": 0
+}

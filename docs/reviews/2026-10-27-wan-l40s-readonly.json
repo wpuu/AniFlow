@@ -1,0 +1,61 @@
+{
+  "observed_at_utc": "2026-10-27T05:55:21.625746+00:00",
+  "read_only": true,
+  "region": "us-east-2",
+  "spec": {
+    "InstanceType": "g6e.2xlarge",
+    "VCpuInfo": {
+      "DefaultVCpus": 8,
+      "DefaultCores": 4,
+      "DefaultThreadsPerCore": 2,
+      "ValidCores": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "ValidThreadsPerCore": [
+        1,
+        2
+      ]
+    },
+    "MemoryInfo": {
+      "SizeInMiB": 65536
+    },
+    "GpuInfo": {
+      "Gpus": [
+        {
+          "Name": "L40S",
+          "Manufacturer": "NVIDIA",
+          "Count": 1,
+          "LogicalGpuCount": 1,
+          "GpuPartitionSize": 1.0,
+          "Workloads": [
+            "graphics",
+            "ml-ai"
+          ],
+          "MemoryInfo": {
+            "SizeInMiB": 45776
+          }
+        }
+      ],
+      "TotalGpuMemoryInMiB": 45776
+    }
+  },
+  "offering_zones": [
+    "us-east-2b",
+    "us-east-2a",
+    "us-east-2c"
+  ],
+  "prices": [
+    {
+      "unit": "Hrs",
+      "usd": "2.2420800000",
+      "description": "$2.24208 per On Demand Linux g6e.2xlarge Instance Hour"
+    }
+  ],
+  "actual_capacity_checked": false,
+  "actual_memory_fit_checked": false,
+  "creation_authorized": false,
+  "no_fallback_or_quality_change_performed": true
+}

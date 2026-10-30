@@ -1,0 +1,16 @@
+{
+  "phase": "BLOCKED_AWS_LOGIN_AND_ARCHIVE_DESTINATION_CONFIRMATION",
+  "candidate": "Ohio EC2 g7e.2xlarge plus Wan2.2-I2V-A14B FP16",
+  "new_cloud_resources_created": 0,
+  "real_gpu_preflight_passed": false,
+  "real_video_generated": false,
+  "aws_browser_control": "Handed off to user after AWS signed-out dialog",
+  "last_observed_browser_space_id": 2,
+  "archive_destination_confirmed": false,
+  "proposed_archive_destination": "G:/AniFlow-Wan-Archive-20261027",
+  "archive_plan_reason": "D free about 22 GB; complete new model/runtime exceeds D capacity",
+  "full_credit_eligibility_rechecked": false,
+  "aws_image_and_paid_product_codes_verified": false,
+  "aws_guards_deployed": false,
+  "owner_input_image_and_motion_confirmed": false
+}

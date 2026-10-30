@@ -1,0 +1,10 @@
+{
+  "instance_type": "g7.2xlarge",
+  "vcpus": 8,
+  "ram_gib": 32,
+  "owner_accepted_insufficient_memory_risk": true,
+  "quality_change_authorized": false,
+  "cpu_inference_authorized": false,
+  "models_remain_paused_before_gpu_preflight": true,
+  "authorization_scope": "budget and independently verified dual-stop first; at most 10-minute real GPU preflight; net cash <= USD1"
+}

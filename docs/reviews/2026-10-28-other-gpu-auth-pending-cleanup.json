@@ -1,0 +1,14 @@
+{
+  "task": "gpu-alternatives-readonly-20261028",
+  "session_ended": true,
+  "official_cli_child_ended": true,
+  "login_successful": false,
+  "login_result": "not produced",
+  "business_queries": 0,
+  "resource_changes": 0,
+  "authorization_artifacts_removed": true,
+  "credentials_file_nonempty": false,
+  "login_cache_file_count": 0,
+  "private_auth_file_count_after_cleanup": 0,
+  "secrets_included": false
+}

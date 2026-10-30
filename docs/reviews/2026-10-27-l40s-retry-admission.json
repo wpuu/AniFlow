@@ -1,0 +1,22 @@
+{
+  "created_at_utc": "2026-10-27T08:42:50.625594+00:00",
+  "experiment_id": "aniflow-wan-ohio-20261027-l40s-c",
+  "region": "us-east-2",
+  "zone": "auto",
+  "instance_type": "g6e.2xlarge",
+  "image": "ami-0698f85d0713011e7",
+  "stop_utc": "2026-10-27T08:51:29Z",
+  "cleanup_utc": "2026-10-27T08:56:29Z",
+  "error_code": "InsufficientInstanceCapacity",
+  "capacity_message": "Insufficient capacity.",
+  "request_count": 1,
+  "video_submitted": false,
+  "ego_subagent_model_explicitly_requested": "gpt-6-luna",
+  "ego_subagent_reasoning_effort": "high",
+  "independent_short_context": true,
+  "actual_gpu_count": 0,
+  "model_deployments": 0,
+  "real_videos": 0,
+  "all_current_resources_verified_absent": true,
+  "actual_net_cash_invoice_usd": null
+}

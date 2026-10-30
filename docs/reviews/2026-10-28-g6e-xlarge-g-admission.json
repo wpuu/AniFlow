@@ -1,0 +1,78 @@
+{
+  "experiment_id": "aniflow-wan-ohio-20261027-g6x-g",
+  "china_execution_date": "2026-10-28",
+  "actual_gpu_request_count": 4,
+  "actual_gpu_created": false,
+  "real_gpu_preflight_completed": false,
+  "model_downloads_started": false,
+  "real_video_count": 0,
+  "requests": [
+    {
+      "created_at_utc": "2026-10-27T16:43:36.512528+00:00",
+      "region": "us-east-2",
+      "zone": "auto",
+      "instance_type": "g6e.xlarge",
+      "error_code": "InsufficientInstanceCapacity",
+      "reconciled_at_utc": "2026-10-27T16:43:48.354586+00:00",
+      "confirmed_nonterminated_instances": 0,
+      "confirmed_tagged_volumes": 0,
+      "stop_utc": "2026-10-27T16:52:16Z",
+      "cleanup_utc": "2026-10-27T16:57:16Z",
+      "root_encrypted_gb": 180,
+      "video_submitted": false
+    },
+    {
+      "created_at_utc": "2026-10-27T16:44:00.520737+00:00",
+      "region": "us-east-2",
+      "zone": "us-east-2a",
+      "instance_type": "g6e.xlarge",
+      "error_code": "InsufficientInstanceCapacity",
+      "reconciled_at_utc": "2026-10-27T16:44:12.050723+00:00",
+      "confirmed_nonterminated_instances": 0,
+      "confirmed_tagged_volumes": 0,
+      "stop_utc": "2026-10-27T16:52:16Z",
+      "cleanup_utc": "2026-10-27T16:57:16Z",
+      "root_encrypted_gb": 180,
+      "video_submitted": false
+    },
+    {
+      "created_at_utc": "2026-10-27T16:44:20.884822+00:00",
+      "region": "us-east-2",
+      "zone": "us-east-2b",
+      "instance_type": "g6e.xlarge",
+      "error_code": "InsufficientInstanceCapacity",
+      "reconciled_at_utc": "2026-10-27T16:44:30.905918+00:00",
+      "confirmed_nonterminated_instances": 0,
+      "confirmed_tagged_volumes": 0,
+      "stop_utc": "2026-10-27T16:52:16Z",
+      "cleanup_utc": "2026-10-27T16:57:16Z",
+      "root_encrypted_gb": 180,
+      "video_submitted": false
+    },
+    {
+      "created_at_utc": "2026-10-27T16:44:42.821134+00:00",
+      "region": "us-east-2",
+      "zone": "us-east-2c",
+      "instance_type": "g6e.xlarge",
+      "error_code": "InsufficientInstanceCapacity",
+      "reconciled_at_utc": "2026-10-27T16:44:54.531648+00:00",
+      "confirmed_nonterminated_instances": 0,
+      "confirmed_tagged_volumes": 0,
+      "stop_utc": "2026-10-27T16:52:16Z",
+      "cleanup_utc": "2026-10-27T16:57:16Z",
+      "root_encrypted_gb": 180,
+      "video_submitted": false
+    }
+  ],
+  "backup_wait_observed_at_utc": "2026-10-27T16:43:23.827670+00:00",
+  "correct_fixed_deadline_waiting": true,
+  "private_source_sha256": {
+    "rejected-auto\\gpu-launch-intent.json": "27ac6f34050cc91e35424daaf57e007b2233e884e83753d9323c09aa41ad8bdd",
+    "rejected-us-east-2a\\gpu-launch-intent.json": "180d631bb1711cfd35257800678225978211384d3bc453eff4808c59208baa41",
+    "rejected-us-east-2b\\gpu-launch-intent.json": "4999d89a96dfe10792f61248f52c63400fee9d7908721ce01eec077668dd3884",
+    "rejected-us-east-2c\\gpu-launch-intent.json": "9c0f2165f190caaaad048f4343c13964abe9f389200dae450406064a6b252faa",
+    "protection-proofs-private.json": "0b568ea24a5078b02bff0beacfdd326c37fcab5ab251348e8dbfe26c6589258f",
+    "protection-state-private.json": "8323236d2181a2c118ef7e0289df8814a01d3901eac7b86de9037fecec73c77c",
+    "preflight-backup-waiting-private.json": "580a6ca3818328f08c669df259bc57dab6d2779c9ca630303aed76315a3a9cb7"
+  }
+}

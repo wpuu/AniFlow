@@ -1,0 +1,17 @@
+{
+  "instance_types": [
+    "g6.xlarge",
+    "g5.xlarge"
+  ],
+  "maximum_instance_count": 1,
+  "request_type": "instant",
+  "vcpus": 4,
+  "ram_gib": 16,
+  "expected_gpu_mib": 22888,
+  "owner_accepted_insufficient_memory_risk": true,
+  "owner_accepted_timeout_risk": true,
+  "quality_change_authorized": false,
+  "cpu_inference_authorized": false,
+  "models_remain_paused_before_gpu_preflight": true,
+  "authorization_scope": "Owner explicitly agreed G6.xlarge/G5.xlarge one instant Fleet across3OhioAZ choosing at most1 instance, accepted16GiB risk, unchanged quality, fresh independent double stop, <=10min real preflight, no models/quota increase/upgrade; estimate before credits plus equal reserve <=0.50USD and net cash<=1USD"
+}

@@ -1,0 +1,16 @@
+{
+  "observed_at_utc": "2026-10-27T12:23:15Z",
+  "region": "us-east-2",
+  "source": "AWS Service Quotas console in existing space2 p2",
+  "read_only": true,
+  "resource_created": false,
+  "requested_filter": ["g6e.2xlarge", "g7e.2xlarge"],
+  "requested_usage_families": ["endpoint", "transform", "training", "processing", "cluster", "notebook"],
+  "status": "unknown_page_unavailable",
+  "observations": [
+    "Service-list navigation committed but page.goto timed out after 15 seconds waiting for load.",
+    "One bounded continuation snapshot failed with CdpRequestTimeoutError: Page.getFrameTree."
+  ],
+  "quota_values": null,
+  "no_repeat_or_reauthentication": true
+}

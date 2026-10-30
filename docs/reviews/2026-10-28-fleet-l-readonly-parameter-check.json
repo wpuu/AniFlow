@@ -1,0 +1,23 @@
+{
+  "observed_at_utc": "2026-10-28T12:32:57.277937+00:00",
+  "explicit_dry_run": true,
+  "real_capacity_requests_in_this_script": 0,
+  "aws_create_fleet_dry_run_calls": 2,
+  "cases": {
+    "original_invalid_combination": {
+      "error_code": "DryRunOperation",
+      "allocation": "prioritized",
+      "hourly_limit": "1.006",
+      "dry_run": true,
+      "interpretation": "permission check passed; no capacity or complete parameter proof"
+    },
+    "corrected_lowest_price": {
+      "error_code": "DryRunOperation",
+      "allocation": "lowest-price",
+      "hourly_limit": "1.006",
+      "dry_run": true,
+      "interpretation": "permission check passed; no capacity or complete parameter proof"
+    }
+  },
+  "dry_run_is_not_capacity_or_full_launch_compatibility_proof": true
+}

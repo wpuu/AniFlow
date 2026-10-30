@@ -1,0 +1,25 @@
+{
+  "instance_types": [
+    "g6.xlarge",
+    "g5.xlarge"
+  ],
+  "maximum_instance_count": 1,
+  "request_type": "instant",
+  "vcpus": 4,
+  "ram_gib": 16,
+  "expected_gpu_mib": 22888,
+  "owner_accepted_insufficient_memory_risk": true,
+  "owner_accepted_timeout_risk": true,
+  "quality_change_authorized": false,
+  "cpu_inference_authorized": false,
+  "models_remain_paused_before_gpu_preflight": true,
+  "maximum_real_create_fleet_calls": 3,
+  "maximum_parameter_corrections": 2,
+  "maximum_capacity_results": 1,
+  "allowed_correction_errors": [
+    "InvalidParameter",
+    "InvalidParameterCombination"
+  ],
+  "correction_requires_exact_cloudtrail_request_binding_and_complete_zero_inventory": true,
+  "authorization_scope": "Owner explicitly agreed bounded parameter correction, at most2 confirmed zero-resource validation repairs and3realAPIcalls, first capacity result or creation ends furtherrequests, unknown neverreplayed; same2types4CPU16GiB/max1/10min/no models or quality change/quota increase/upgrade; combined previousk+laux plus newpreflight and2extraSSM executions estimateincl100%reserve<=.90beforecredits/netcash<=1USD"
+}

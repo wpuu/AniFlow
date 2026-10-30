@@ -1,0 +1,44 @@
+{
+  "original_observed_at_utc": "2026-10-27T05:15:58.79Z",
+  "source": "Saved complete eligible-service modal text for all five grants",
+  "local_saved_scope_reinspection": true,
+  "newly_read_from_console": false,
+  "service_name_presence_does_not_prove_quota_capacity_or_every_charge_eligible": true,
+  "credits": [
+    {
+      "credit_index": 0,
+      "full_list_sha256": "b6a0ecea4488d65b6abbf1504a0c632a85bc3a31618d81e96ba2815b43573964",
+      "sagemaker": true,
+      "deadline_cloud": true,
+      "workspaces_applications": true
+    },
+    {
+      "credit_index": 1,
+      "full_list_sha256": "b6a0ecea4488d65b6abbf1504a0c632a85bc3a31618d81e96ba2815b43573964",
+      "sagemaker": true,
+      "deadline_cloud": true,
+      "workspaces_applications": true
+    },
+    {
+      "credit_index": 2,
+      "full_list_sha256": "b6a0ecea4488d65b6abbf1504a0c632a85bc3a31618d81e96ba2815b43573964",
+      "sagemaker": true,
+      "deadline_cloud": true,
+      "workspaces_applications": true
+    },
+    {
+      "credit_index": 3,
+      "full_list_sha256": "b6a0ecea4488d65b6abbf1504a0c632a85bc3a31618d81e96ba2815b43573964",
+      "sagemaker": true,
+      "deadline_cloud": true,
+      "workspaces_applications": true
+    },
+    {
+      "credit_index": 4,
+      "full_list_sha256": "b6a0ecea4488d65b6abbf1504a0c632a85bc3a31618d81e96ba2815b43573964",
+      "sagemaker": true,
+      "deadline_cloud": true,
+      "workspaces_applications": true
+    }
+  ]
+}

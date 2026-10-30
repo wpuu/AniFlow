@@ -1,0 +1,80 @@
+{
+  "source": "current_aws_billing_ui",
+  "observed_at_utc": "2026-10-28T05:12:07Z",
+  "credits": [
+    {
+      "name": "Explore AWS: Launch an instance using EC2",
+      "status": "Active",
+      "expires": "2026-10-30",
+      "booked_remaining_usd": 11.14,
+      "estimated_remaining_usd": 0.0
+    },
+    {
+      "name": "Explore AWS: Use a foundation model in the Amazon Bedrock playground",
+      "status": "Active",
+      "expires": "2026-10-30",
+      "booked_remaining_usd": 20.0,
+      "estimated_remaining_usd": 0.0
+    },
+    {
+      "name": "Explore AWS: Set up a cost budget using AWS Budgets",
+      "status": "Active",
+      "expires": "2026-10-30",
+      "booked_remaining_usd": 20.0,
+      "estimated_remaining_usd": 4.06
+    },
+    {
+      "name": "Explore AWS: Create a web app using AWS Lambda",
+      "status": "Active",
+      "expires": "2026-10-30",
+      "booked_remaining_usd": 20.0,
+      "estimated_remaining_usd": 20.0
+    },
+    {
+      "name": "Explore AWS: Create an Aurora or RDS database",
+      "status": "Active",
+      "expires": "2026-10-30",
+      "booked_remaining_usd": 20.0,
+      "estimated_remaining_usd": 20.0
+    }
+  ],
+  "all_five_active": true,
+  "expiry_date": "2026-10-30",
+  "booked_remaining_total_usd": 91.14,
+  "estimated_remaining_usd": 44.06,
+  "coverage_credit": {
+    "name": "Explore AWS: Create a web app using AWS Lambda",
+    "status": "Active",
+    "expires": "2026-10-30",
+    "booked_remaining_usd": 20.0,
+    "estimated_remaining_usd": 20.0
+  },
+  "required_service_coverage": {
+    "Amazon Elastic Compute Cloud (EC2)": true,
+    "Amazon Virtual Private Cloud (VPC)": true,
+    "AWS Systems Manager (SSM)": true,
+    "Amazon Simple Storage Service (S3)": true,
+    "AWS Lambda": true,
+    "AmazonCloudWatch": true,
+    "CloudWatch Events (EventBridge legacy name)": true,
+    "AWS CloudFormation": true,
+    "AWS Key Management Service (KMS)": true,
+    "AWS Data Transfer": true
+  },
+  "all_required_services_confirmed": true,
+  "line_item_limits": {
+    "specific EBS and public IPv4 line items individually confirmed": false,
+    "note": "Billing UI confirms EC2 and VPC service-level scope, not EBS/public IPv4 line items individually."
+  },
+  "tax_and_marketplace": {
+    "tax named in eligible-product list": false,
+    "marketplace named in eligible-product list": false,
+    "explicit tax exclusion statement shown": false,
+    "explicit marketplace exclusion statement shown": false,
+    "interpretation": "Absence from the product list is not treated as an explicit exclusion or tax exemption.",
+    "prior_tax_settings_ui_record_count": 1,
+    "prior_tax_settings_country_or_state": "unknown",
+    "prior_aws_service_seller": "Amazon Web Services, Inc.",
+    "tax_exemption_inferred": false
+  }
+}

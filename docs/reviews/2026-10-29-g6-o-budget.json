@@ -1,0 +1,30 @@
+{
+  "observed_at_utc": "2026-10-29T00:53:43.426691+00:00",
+  "estimate_only_not_invoice": true,
+  "phase": "G6 creation, real 10-minute GPU preflight and retained stopped instance; no models yet",
+  "current_hourly_usd": 0.8048,
+  "current_plan_remaining_credits_usd": 42.64,
+  "scope_currently_confirmed": true,
+  "current_credits_cover_estimated_service_spend": true,
+  "root_volume_gb": 180,
+  "retained_disk_budget_hours": 6,
+  "eligible_service_spend_estimate_usd": 0.322538095,
+  "self_cash_tax_reserve_usd": 0.322538095,
+  "all_service_fees_plus_equal_reserve_before_any_credit_usd": 0.64507619,
+  "maximum_cash_before_credits_usd": 0.94507619,
+  "cost_explorer_api_calls_authorized": 0,
+  "cash_limit_usd": 1,
+  "cost_items_usd": {
+    "gpu_max_10_minutes": 0.13413333333333333,
+    "180gb_gp3_retained_6_hours": 0.1285714285714286,
+    "ipv4_10_minutes": 0.0008333333333333334,
+    "ssm_proof_and_real_guard_executions": 0.034,
+    "lambda_events_logs_s3_kms_small_transfer_reserve": 0.025
+  },
+  "future_tax_guaranteed": false,
+  "production_deployment_budget_verified": false,
+  "stopped_instance_is_retained_not_deleted": true,
+  "retention_is_not_free_or_indefinite": true,
+  "history_not_represented_as_zero_cost": true,
+  "prior_n_service_and_equal_reserve_upper_usd": 0.3
+}

@@ -1,0 +1,69 @@
+{
+  "experiment_id": "aniflow-wan-ohio-20261027-retained-o",
+  "states": [
+    {
+      "at_utc": "2026-10-29T00:59:18.203616+00:00",
+      "state": "running"
+    },
+    {
+      "at_utc": "2026-10-29T01:02:23.301154+00:00",
+      "state": "stopping"
+    },
+    {
+      "at_utc": "2026-10-29T01:08:41.658204+00:00",
+      "state": "stopped"
+    }
+  ],
+  "gpu_preflight_passed": true,
+  "ssm_read_command_confirmed": true,
+  "models_downloaded": false,
+  "real_gpu_report": {
+    "observed_at_utc": "2026-10-29T01:00:15.726153+00:00",
+    "model_loaded": false,
+    "video_generated": false,
+    "region": "us-east-2",
+    "experiment_id": "aniflow-wan-ohio-20261027-retained-o",
+    "cpu_count": 4,
+    "python": "3.13.17",
+    "checks": {
+      "cpu_and_system_memory": true,
+      "real_fp16_cuda_matmul": true,
+      "local_fixed_deadline_armed": true,
+      "private_s3_role_roundtrip": true
+    },
+    "system_memory_total_bytes": 16109846528,
+    "torch_version": "2.11.0+cu130",
+    "cuda_build": "13.0",
+    "gpu_name": "NVIDIA L4",
+    "gpu_total_bytes": 23661248512,
+    "compute_capability": [
+      8,
+      9
+    ],
+    "supported_architectures": [
+      "sm_75",
+      "sm_80",
+      "sm_86",
+      "sm_90",
+      "sm_100",
+      "sm_120"
+    ],
+    "physical_cpu_cores": 2,
+    "threads_per_core": 2,
+    "nvidia_smi": "NVIDIA L4, 595.112.07, 23034",
+    "cuda_smoke_seconds": 10.690482376999995,
+    "cuda_smoke_peak_allocated_bytes": 46268416,
+    "cuda_smoke_peak_reserved_bytes": 65011712,
+    "ffmpeg": null,
+    "ffprobe": null,
+    "system_python": "Python 3.12.3",
+    "gpu_smoke_passed": true
+  },
+  "ssm_command_status": "Success",
+  "stop_requested_at_utc": "2026-10-29T01:02:02.727213+00:00",
+  "retained_successful_instance": true,
+  "confirmed_compute_not_running": true,
+  "runtime_upper_seconds_including_pending": 584.466128,
+  "observed_not_running_within_10min": true,
+  "real_preflight_success": true
+}

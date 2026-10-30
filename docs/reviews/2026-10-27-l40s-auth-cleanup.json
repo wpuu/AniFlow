@@ -1,0 +1,10 @@
+{
+  "observed_at_utc": "2026-10-27T07:44:25.558996+00:00",
+  "official_cli_logout": true,
+  "cached_auth_files_remaining": 0,
+  "named_task_auth_files_removed": 4,
+  "global_user_aws_config_modified": false,
+  "browser_logout_invoked": false,
+  "all_current_experiment_resources_verified_absent": true,
+  "created_gpu_count": 0
+}

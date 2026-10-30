@@ -1,0 +1,89 @@
+{
+  "date": "2026-10-25",
+  "region": "ap-northeast-1",
+  "source": "User-authorized Ego browser; Tokyo EC2 instance details",
+  "g_vt_applied_vcpus": 0,
+  "p_applied_vcpus": 0,
+  "quota_request_submitted": false,
+  "cloud_resources_created": 0,
+  "instances": [
+    {
+      "instance_type": "g6e.xlarge",
+      "vcpus": 4,
+      "system_ram_gib": 32.0,
+      "gpu_name_displayed": "L40S",
+      "gpu_memory_gib_displayed": 44.7,
+      "linux_hourly_usd": 2.699,
+      "compute_four_hours_usd": 10.796,
+      "capacity_verified": false,
+      "launch_authorized": false
+    },
+    {
+      "instance_type": "g5.2xlarge",
+      "vcpus": 8,
+      "system_ram_gib": 32.0,
+      "gpu_name_displayed": "A10G",
+      "gpu_memory_gib_displayed": 22.4,
+      "linux_hourly_usd": 1.75776,
+      "compute_four_hours_usd": 7.03104,
+      "capacity_verified": false,
+      "launch_authorized": false
+    },
+    {
+      "instance_type": "g6.2xlarge",
+      "vcpus": 8,
+      "system_ram_gib": 32.0,
+      "gpu_name_displayed": "L4",
+      "gpu_memory_gib_displayed": 22.4,
+      "linux_hourly_usd": 1.41781,
+      "compute_four_hours_usd": 5.67124,
+      "capacity_verified": false,
+      "launch_authorized": false
+    },
+    {
+      "instance_type": "g7e.2xlarge",
+      "vcpus": 8,
+      "system_ram_gib": 64.0,
+      "gpu_name_displayed": "RTX PRO Server 6000",
+      "gpu_memory_gib_displayed": 96.0,
+      "linux_hourly_usd": 4.87752,
+      "compute_four_hours_usd": 19.51008,
+      "capacity_verified": false,
+      "launch_authorized": false
+    },
+    {
+      "instance_type": "g5.4xlarge",
+      "vcpus": 16,
+      "system_ram_gib": 64.0,
+      "gpu_name_displayed": "A10G",
+      "gpu_memory_gib_displayed": 22.4,
+      "linux_hourly_usd": 2.35528,
+      "compute_four_hours_usd": 9.42112,
+      "capacity_verified": false,
+      "launch_authorized": false
+    },
+    {
+      "instance_type": "p5.4xlarge",
+      "vcpus": 16,
+      "system_ram_gib": 256.0,
+      "gpu_name_displayed": "H100",
+      "gpu_memory_gib_displayed": 80.0,
+      "linux_hourly_usd": 8.6,
+      "compute_four_hours_usd": 34.4,
+      "capacity_verified": false,
+      "launch_authorized": false
+    },
+    {
+      "instance_type": "g6e.2xlarge",
+      "vcpus": 8,
+      "system_ram_gib": 64,
+      "gpu_name_displayed": "NVIDIA L40S",
+      "gpu_memory_gib_displayed": 44.7,
+      "linux_hourly_usd": 3.25168,
+      "compute_four_hours_usd": 13.00672,
+      "source": "Same-day initial account audit",
+      "capacity_verified": false,
+      "launch_authorized": false
+    }
+  ]
+}

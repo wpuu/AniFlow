@@ -1,0 +1,20 @@
+[
+  {
+    "mode": "primary",
+    "region": "ap-northeast-1",
+    "template_bytes": 10768,
+    "valid": true,
+    "capabilities": [
+      "CAPABILITY_IAM"
+    ]
+  },
+  {
+    "mode": "backup",
+    "region": "ap-southeast-1",
+    "template_bytes": 19913,
+    "valid": true,
+    "capabilities": [
+      "CAPABILITY_IAM"
+    ]
+  }
+]

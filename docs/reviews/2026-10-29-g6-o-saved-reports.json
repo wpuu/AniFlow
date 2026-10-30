@@ -1,0 +1,18 @@
+{
+  "saved_at_utc": "2026-10-29T01:04:25.649108+00:00",
+  "reports": [
+    {
+      "name": "preflight-roundtrip.json",
+      "bytes": 92,
+      "sha256": "4591770523f689d8160364e6ea6dc1390808164b1de64c230f91c0efa44039ba"
+    },
+    {
+      "name": "preflight.json",
+      "bytes": 1065,
+      "sha256": "4258c3f9455fa7d4e397304c6eba980af77a4c2fad132170f47943d4753c20f9"
+    }
+  ],
+  "private_s3_preserved": true,
+  "instance_not_deleted": true,
+  "video_count": 0
+}

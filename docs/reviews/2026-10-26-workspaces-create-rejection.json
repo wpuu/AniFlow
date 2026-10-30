@@ -1,0 +1,9 @@
+{
+  "observed_at_utc": "2026-10-26T04:08:27.650Z",
+  "region": "ap-northeast-1",
+  "bundle_id": "wsb-9zg6r5j55",
+  "instance_type": "Graphics.g6.4xlarge",
+  "error": "ResourceLimitExceededException: You cannot create more than 0 number of Graphics.g6.4xlarge WorkSpaces in this region. Request a limit increase by contacting AWS Support.",
+  "quota_console_applied_previously_observed": 1,
+  "retry_submitted": false
+}

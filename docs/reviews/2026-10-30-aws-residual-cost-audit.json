@@ -1,0 +1,1172 @@
+{
+  "observed_at_utc": "2026-10-30T05:36:56.861635+00:00",
+  "cloud_mutations": false,
+  "identity_matched_original_deployment": true,
+  "enabled_regions": [
+    "ap-northeast-1",
+    "us-east-2",
+    "ap-southeast-1",
+    "ap-east-2",
+    "ap-east-1",
+    "ap-northeast-2",
+    "ap-south-1",
+    "ap-northeast-3",
+    "ap-southeast-2",
+    "ap-south-2",
+    "ca-central-1",
+    "eu-central-1",
+    "eu-west-1",
+    "eu-north-1",
+    "eu-west-2",
+    "eu-west-3",
+    "us-east-1",
+    "sa-east-1",
+    "us-west-2",
+    "us-west-1"
+  ],
+  "zero_inventory_checks": {
+    "instances": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "volumes": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "snapshots": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "addresses": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "nat_gateways": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "vpc_endpoints": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "capacity_reservations": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "reserved_instances": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "network_interfaces": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "fleets": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "spot_fleet_requests": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "vpn_connections": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "transit_gateway_attachments": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "autoscaling_groups": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "load_balancers_v2": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "load_balancers_classic": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "db_instances": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "db_clusters": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "db_snapshots": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "db_cluster_snapshots": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "alarms": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "schedules": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "directories": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "efs_file_systems": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "fsx_file_systems": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "sagemaker_endpoints": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "ecs_clusters": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "eks_clusters": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "cloudtrail_trails": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "config_recorders": {
+      "count": 0,
+      "ok_regions": 20
+    },
+    "stepfunctions": {
+      "count": 0,
+      "ok_regions": 20
+    }
+  },
+  "global": {
+    "observed_at_utc": "2026-10-30T05:20:42.610817+00:00",
+    "read_only": true,
+    "s3": [
+      {
+        "bucket_index": 0,
+        "region": "us-east-2",
+        "status": "ok",
+        "objects_and_versions": 11,
+        "stored_bytes": 313193,
+        "delete_markers": 0,
+        "multipart_status": "ok",
+        "incomplete_uploads": 0
+      },
+      {
+        "bucket_index": 1,
+        "region": "ap-northeast-1",
+        "status": "ok",
+        "objects_and_versions": 0,
+        "stored_bytes": 0,
+        "delete_markers": 0,
+        "multipart_status": "ok",
+        "incomplete_uploads": 0
+      },
+      {
+        "bucket_index": 2,
+        "region": "ap-southeast-1",
+        "status": "ok",
+        "objects_and_versions": 0,
+        "stored_bytes": 0,
+        "delete_markers": 0,
+        "multipart_status": "ok",
+        "incomplete_uploads": 0
+      }
+    ],
+    "other": {
+      "cloudfront_distributions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "route53_zones": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "registered_domains": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "savings_plans": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      }
+    }
+  },
+  "billed_service_extras": {
+    "us-west-1": {
+      "secrets": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_sessions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_crawlers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_jobs": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_triggers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sns_topics": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sqs_queues": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "spot_requests": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      }
+    },
+    "ca-central-1": {
+      "secrets": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_sessions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_crawlers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_jobs": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_triggers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sns_topics": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sqs_queues": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "spot_requests": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      }
+    },
+    "eu-north-1": {
+      "secrets": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_sessions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_crawlers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_jobs": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_triggers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sns_topics": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sqs_queues": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "spot_requests": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      }
+    },
+    "us-west-2": {
+      "secrets": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_sessions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_crawlers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_jobs": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_triggers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sns_topics": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sqs_queues": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "spot_requests": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "gamelift_stream_groups": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "gamelift_applications": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      }
+    },
+    "ap-south-1": {
+      "secrets": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_sessions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_crawlers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_jobs": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_triggers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sns_topics": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sqs_queues": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "spot_requests": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      }
+    },
+    "ap-south-2": {
+      "secrets": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_sessions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_crawlers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_jobs": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_triggers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sns_topics": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sqs_queues": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "spot_requests": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      }
+    },
+    "ap-east-2": {
+      "secrets": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_sessions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_crawlers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_jobs": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_triggers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sns_topics": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sqs_queues": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "spot_requests": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      }
+    },
+    "eu-central-1": {
+      "secrets": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_sessions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_crawlers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_jobs": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_triggers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sns_topics": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sqs_queues": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "spot_requests": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "gamelift_stream_groups": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "gamelift_applications": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      }
+    },
+    "eu-west-3": {
+      "secrets": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_sessions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_crawlers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_jobs": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_triggers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sns_topics": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sqs_queues": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "spot_requests": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      }
+    },
+    "eu-west-2": {
+      "secrets": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_sessions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_crawlers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_jobs": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_triggers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sns_topics": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sqs_queues": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "spot_requests": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      }
+    },
+    "ap-northeast-3": {
+      "secrets": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_sessions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_crawlers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_jobs": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_triggers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sns_topics": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sqs_queues": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "spot_requests": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      }
+    },
+    "ap-northeast-2": {
+      "secrets": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_sessions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_crawlers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_jobs": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_triggers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sns_topics": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sqs_queues": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "spot_requests": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      }
+    },
+    "sa-east-1": {
+      "secrets": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_sessions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_crawlers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_jobs": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_triggers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sns_topics": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sqs_queues": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "spot_requests": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      }
+    },
+    "ap-east-1": {
+      "secrets": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_sessions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_crawlers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_jobs": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_triggers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sns_topics": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sqs_queues": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "spot_requests": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      }
+    },
+    "ap-northeast-1": {
+      "secrets": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_sessions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_crawlers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_jobs": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_triggers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sns_topics": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sqs_queues": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "spot_requests": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "gamelift_stream_groups": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "gamelift_applications": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      }
+    },
+    "ap-southeast-2": {
+      "secrets": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_sessions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_crawlers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_jobs": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_triggers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sns_topics": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sqs_queues": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "spot_requests": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      }
+    },
+    "ap-southeast-1": {
+      "secrets": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_sessions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_crawlers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_jobs": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_triggers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sns_topics": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sqs_queues": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "spot_requests": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      }
+    },
+    "us-east-2": {
+      "secrets": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_sessions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_crawlers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_jobs": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_triggers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sns_topics": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sqs_queues": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "spot_requests": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "gamelift_stream_groups": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "gamelift_applications": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      }
+    },
+    "eu-west-1": {
+      "secrets": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_sessions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_crawlers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_jobs": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_triggers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sns_topics": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sqs_queues": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "spot_requests": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "gamelift_stream_groups": {
+        "status": "error",
+        "count": 0,
+        "error_code": null
+      },
+      "gamelift_applications": {
+        "status": "error",
+        "count": 0,
+        "error_code": null
+      }
+    },
+    "us-east-1": {
+      "secrets": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_sessions": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_crawlers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_jobs": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "glue_triggers": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sns_topics": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "sqs_queues": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "spot_requests": {
+        "status": "ok",
+        "count": 0,
+        "error_code": null
+      },
+      "gamelift_stream_groups": {
+        "status": "error",
+        "count": 0,
+        "error_code": null
+      },
+      "gamelift_applications": {
+        "status": "error",
+        "count": 0,
+        "error_code": null
+      }
+    }
+  },
+  "remaining": {
+    "s3_objects_and_versions": 11,
+    "s3_bytes": 313193,
+    "s3_incomplete_uploads": 0,
+    "log_groups": 3,
+    "log_stored_bytes": 186543,
+    "lambda_functions": 2,
+    "lambda_provisioned_concurrency_configs": 0,
+    "experiment_event_rules": 1,
+    "experiment_event_rule_state": "DISABLED",
+    "retained_experiment_stacks": 3,
+    "legacy_function_url_count": 1,
+    "legacy_function_url_auth": "NONE",
+    "ssm_active_executions_in_project_regions": 0,
+    "customer_managed_kms_keys": 0
+  },
+  "browser_billing": {
+    "month": "2026-10",
+    "page_updated_at_bjt": "2026-10-30T13:24:29+08:00",
+    "estimated_net_due_usd": "0.00",
+    "estimated_tax_usd": "0.00",
+    "approx_gross_usage_and_credit_usd": "51.13",
+    "manila_usage_before_credits_usd": {
+      "ec2": "42.98",
+      "ebs": "3.06",
+      "public_ipv4": "3.39",
+      "total": "49.43"
+    },
+    "support_plan": "Basic",
+    "marketplace_active_subscriptions": 0,
+    "anomalies": [
+      {
+        "service": "EC2 Compute",
+        "start": "2026-09-11",
+        "last_detected": "2026-09-19",
+        "impact_usd": "12.18"
+      },
+      {
+        "service": "EBS",
+        "start": "2026-09-12",
+        "last_detected": "2026-09-12",
+        "impact_usd": "0.07"
+      }
+    ]
+  },
+  "backups": {
+    "experiment_files_verified": 24,
+    "s3_bytes_verified": 313193,
+    "legacy_log_groups_verified": 2
+  },
+  "zero_future_charges_certified": false,
+  "cleanup_requires_owner_confirmation": true,
+  "limitations": [
+    "Known service/Region endpoint errors are not interpreted as zero resources.",
+    "Glue GetDevEndpoints is disabled; ListDevEndpoints returns service errors.",
+    "Not-opted-in Regions were not enabled or scanned.",
+    "Billing and cost anomaly detection can lag actual usage by up to 24 hours.",
+    "Future AWS usage and finalized tax/credit allocation are not guaranteed by the current estimated bill."
+  ]
+}

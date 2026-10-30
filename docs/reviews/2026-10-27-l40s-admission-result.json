@@ -1,0 +1,146 @@
+{
+  "observed_at_utc": "2026-10-27T07:44:25.967272+00:00",
+  "owner_l40s_approval": true,
+  "priority": "Actual running instance before model deployment",
+  "actual_creation_requests": 4,
+  "attempts": [
+    {
+      "created_at_utc": "2026-10-27T06:48:06.290128+00:00",
+      "region": "us-east-2",
+      "zone": "auto",
+      "instance_type": "g6e.2xlarge",
+      "image": "ami-0698f85d0713011e7",
+      "error_code": "InsufficientInstanceCapacity",
+      "capacity_message": "Insufficient capacity.",
+      "confirmed_nonterminated_instances": 0,
+      "confirmed_tagged_volumes": 0
+    },
+    {
+      "created_at_utc": "2026-10-27T06:50:45.025769+00:00",
+      "region": "us-east-2",
+      "zone": "us-east-2a",
+      "instance_type": "g6e.2xlarge",
+      "image": "ami-0698f85d0713011e7",
+      "error_code": "InsufficientInstanceCapacity",
+      "capacity_message": "We currently do not have sufficient g6e.2xlarge capacity in the Availability Zone you requested (us-east-2a). Our system will be working on provisioning additional capacity. You can currently get g6e.2xlarge capacity by not specifying an Availability Zone in your request or choosing us-east-2b, us-east-2c.",
+      "confirmed_nonterminated_instances": 0,
+      "confirmed_tagged_volumes": 0
+    },
+    {
+      "created_at_utc": "2026-10-27T07:28:20.159266+00:00",
+      "region": "us-east-2",
+      "zone": "us-east-2b",
+      "instance_type": "g6e.2xlarge",
+      "image": "ami-0698f85d0713011e7",
+      "error_code": "InsufficientInstanceCapacity",
+      "capacity_message": "We currently do not have sufficient g6e.2xlarge capacity in the Availability Zone you requested (us-east-2b). Our system will be working on provisioning additional capacity. You can currently get g6e.2xlarge capacity by not specifying an Availability Zone in your request or choosing us-east-2a, us-east-2c.",
+      "confirmed_nonterminated_instances": 0,
+      "confirmed_tagged_volumes": 0
+    },
+    {
+      "created_at_utc": "2026-10-27T07:29:49.945942+00:00",
+      "region": "us-east-2",
+      "zone": "us-east-2c",
+      "instance_type": "g6e.2xlarge",
+      "image": "ami-0698f85d0713011e7",
+      "error_code": "InsufficientInstanceCapacity",
+      "capacity_message": "We currently do not have sufficient g6e.2xlarge capacity in the Availability Zone you requested (us-east-2c). Our system will be working on provisioning additional capacity. You can currently get g6e.2xlarge capacity by not specifying an Availability Zone in your request or choosing us-east-2a, us-east-2b.",
+      "confirmed_nonterminated_instances": 0,
+      "confirmed_tagged_volumes": 0
+    }
+  ],
+  "created_gpu_count": 0,
+  "running_instance_count": 0,
+  "real_gpu_preflight_count": 0,
+  "model_deployments": 0,
+  "real_video_count": 0,
+  "late_requests_locally_blocked_not_counted": 2,
+  "unknown_requests_resubmitted": 0,
+  "quota": {
+    "QuotaCode": "L-DB2E81BA",
+    "QuotaName": "Running On-Demand G and VT instances",
+    "Value": 8.0,
+    "GlobalQuota": false
+  },
+  "account_plan": {
+    "accountPlanType": "PAID",
+    "accountPlanStatus": "ACTIVE",
+    "accountPlanRemainingCredits": {
+      "amount": 45.84,
+      "unit": "USD"
+    }
+  },
+  "linux_price": [
+    {
+      "sku": "SGD6XGUMSRGVZCNQ",
+      "effective_date": "2026-10-01T00:00:00Z",
+      "unit": "Hrs",
+      "usd": "2.2420800000",
+      "description": "$2.24208 per On Demand Linux g6e.2xlarge Instance Hour"
+    }
+  ],
+  "other_regions_read_only": {
+    "observed_at_utc": "2026-10-27T06:54:40.065412+00:00",
+    "read_only": true,
+    "quota_change_requests": 0,
+    "instance_creation_requests": 0,
+    "regions": [
+      {
+        "region": "us-east-1",
+        "applied_on_demand_g_vt_vcpus": 0.0,
+        "global": false
+      },
+      {
+        "region": "us-west-2",
+        "applied_on_demand_g_vt_vcpus": 0.0,
+        "global": false
+      },
+      {
+        "region": "ap-northeast-1",
+        "applied_on_demand_g_vt_vcpus": 0.0,
+        "global": false
+      },
+      {
+        "region": "ap-southeast-1",
+        "applied_on_demand_g_vt_vcpus": 0.0,
+        "global": false
+      },
+      {
+        "region": "ap-southeast-2",
+        "applied_on_demand_g_vt_vcpus": 0.0,
+        "global": false
+      },
+      {
+        "region": "eu-west-1",
+        "applied_on_demand_g_vt_vcpus": 0.0,
+        "global": false
+      },
+      {
+        "region": "eu-central-1",
+        "applied_on_demand_g_vt_vcpus": 0.0,
+        "global": false
+      }
+    ]
+  },
+  "cleanup_verified": true,
+  "quota_increase_requests": 0,
+  "plan_upgrades": 0,
+  "support_contacted": false,
+  "quality_or_precision_fallback": false,
+  "cpu_inference": false,
+  "total_actual_auxiliary_cost_usd": null,
+  "net_cash_final_invoice_usd": null,
+  "billing_note": "No GPU ran; auxiliary protection charges and credit settlement await billing",
+  "local_validation": {
+    "python_passed": 134,
+    "ruff": "passed",
+    "cloud_or_video_success": false
+  },
+  "archive": {
+    "state": "FAILED",
+    "expected_total_bytes": 68776044287,
+    "downloaded_bytes": 15344760736,
+    "verified_files": 0,
+    "observed_at_utc": "2026-10-27T06:23:57.126659+00:00"
+  }
+}

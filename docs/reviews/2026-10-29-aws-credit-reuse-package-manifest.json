@@ -1,0 +1,59 @@
+{
+  "created_at_utc": "2026-10-29T06:23:07.980211+00:00",
+  "source_commit": "f921e34a54ba28e2cd05618ac392ce2813b7eef2",
+  "kind": "source_report_and_evidence_only_not_complete_model_or_environment_archive",
+  "complete_model_archive": false,
+  "complete_environment_image": false,
+  "contains_credentials": false,
+  "real_video_count": 0,
+  "original_archives_modified": false,
+  "files": [
+    {
+      "name": "2026-10-29-aws-credit-actual-usage.json",
+      "bytes": 11251,
+      "sha256": "1d372137bdc834f46c07a8f377556e0aea859412271c24cd558e479affcc0799"
+    },
+    {
+      "name": "2026-10-29-aws-credit-ec2-region-view.json",
+      "bytes": 1461,
+      "sha256": "769187f0909c0e33b3b8df0fc8e388851f8594c146da787edef922f296adddb0"
+    },
+    {
+      "name": "2026-10-29-aws-credit-video-reuse-report.md",
+      "bytes": 24322,
+      "sha256": "7ac1fa1ea99a771fc673bbbbdfabd752c6172d179bc232a8e324c22cd531c159"
+    },
+    {
+      "name": "2026-10-29-g6-o-deployment-checkpoint.json",
+      "bytes": 3483,
+      "sha256": "b28108e89f3e250a0f7e2f03e65bf7b5b079769d2c7092a7f3c6acb22b43a74e"
+    },
+    {
+      "name": "2026-10-29-g6-o-stopped-closeout.json",
+      "bytes": 1950,
+      "sha256": "d6a4682566e3172de55feedb9f774d2129c2d434f175256d50f464c08f4c2c37"
+    },
+    {
+      "name": "AniFlow-reusable-source.zip",
+      "bytes": 11453801,
+      "sha256": "7921c8b6c3e0c9bbd6f1954f00d92ad3d29e1b20b1b4268ea54e3ca2b6a6d831"
+    },
+    {
+      "name": "AWS赠金测试与复用报告.html",
+      "bytes": 31315,
+      "sha256": "a4900b58fcf5ed80eb83d75f5450bdb2930cbf5f3e45845cc97f33704e8c24b6"
+    },
+    {
+      "name": "verified-model-source-manifest.json",
+      "bytes": 1190,
+      "sha256": "8b4d8d5a1a63ca5534505d7942d3614e36efa599f58af21d098acd4a8188adc4"
+    },
+    {
+      "name": "先读我.txt",
+      "bytes": 574,
+      "sha256": "2cba55cb0e2427246ebdbf5975fd4f0c7e9b29afe5b759b6b9269f861680050f"
+    }
+  ],
+  "zip_crc_verified": true,
+  "package_hashes_verified": 9
+}

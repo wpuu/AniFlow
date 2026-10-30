@@ -1,0 +1,55 @@
+{
+  "observed_at_utc": "2026-10-27T05:52:20.651937+00:00",
+  "source": "Actual local HTTP only",
+  "health": {
+    "mode": "REAL_WAN",
+    "provider": "wan2.2-i2v-a14b",
+    "simulation": false,
+    "ready": false,
+    "tunnel_connected": false,
+    "gpu_connected": false,
+    "blocked_reasons": [
+      "Real audit is blocked, expired, incomplete, or workflow tools/hash are invalid",
+      "ComfyUI loopback tunnel is unavailable"
+    ],
+    "note": "Tunnel connectivity alone does not verify GPU, license, credit, or shutdown protection"
+  },
+  "preflight": {
+    "mode": "LOCAL_AUDIT_PROJECTION",
+    "service": "ec2",
+    "region": "us-east-2",
+    "provider": "wan2.2-i2v-a14b",
+    "instance_type": "g7e.2xlarge",
+    "expected_gpu": "NVIDIA RTX PRO Server 6000",
+    "expected_gpu_vram_gib": 96,
+    "expected_ram_gib": 64,
+    "account_plan": "PAID / ACTIVE",
+    "estimated_credit_remaining_usd": 45.84,
+    "credit_settled_remaining_usd": null,
+    "credit_observed_at_utc": "2026-10-27T05:18:47.326734+00:00",
+    "hourly_price_usd": 3.36312,
+    "checks": {
+      "credit_ec2_eligible": true,
+      "credit_expiry_confirmed": true,
+      "ohio_gpu_quota": true,
+      "ohio_capacity_and_price": false,
+      "ssm_private_connectivity": false,
+      "wan_license_verified": true,
+      "gpu_stop_safeguard": false,
+      "independent_stop_safeguard": false,
+      "account_plan_unchanged": true,
+      "native_video_spec_confirmed": null
+    },
+    "launch_allowed": false,
+    "real_gpu_connected": false,
+    "tunnel_connected": false,
+    "aws_queries": 0,
+    "aws_writes": 0,
+    "blocked_reasons": [
+      "Real audit is blocked, expired, incomplete, or workflow tools/hash are invalid",
+      "ComfyUI loopback tunnel is unavailable"
+    ],
+    "note": "Local audit snapshot only; no live AWS query. Expected hardware is not observed hardware. ComfyUI connectivity does not establish AWS account, credit, capacity, or shutdown evidence."
+  },
+  "real_video_generated": false
+}

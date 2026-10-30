@@ -1,0 +1,71 @@
+{
+  "observed_at_utc": "2026-10-26T13:23:03.490Z",
+  "credits": [
+    {
+      "credit_index": 0,
+      "products": {
+        "workspaces": true,
+        "directory": true,
+        "ssm": true,
+        "lambda": true,
+        "events": true,
+        "s3": true,
+        "transfer": true,
+        "vpc": true
+      }
+    },
+    {
+      "credit_index": 1,
+      "products": {
+        "workspaces": true,
+        "directory": true,
+        "ssm": true,
+        "lambda": true,
+        "events": true,
+        "s3": true,
+        "transfer": true,
+        "vpc": true
+      }
+    },
+    {
+      "credit_index": 2,
+      "products": {
+        "workspaces": true,
+        "directory": true,
+        "ssm": true,
+        "lambda": true,
+        "events": true,
+        "s3": true,
+        "transfer": true,
+        "vpc": true
+      }
+    },
+    {
+      "credit_index": 3,
+      "products": {
+        "workspaces": true,
+        "directory": true,
+        "ssm": true,
+        "lambda": true,
+        "events": true,
+        "s3": true,
+        "transfer": true,
+        "vpc": true
+      }
+    },
+    {
+      "credit_index": 4,
+      "products": {
+        "workspaces": true,
+        "directory": true,
+        "ssm": true,
+        "lambda": true,
+        "events": true,
+        "s3": true,
+        "transfer": true,
+        "vpc": true
+      }
+    }
+  ],
+  "events_service_label": "CloudWatch Events"
+}

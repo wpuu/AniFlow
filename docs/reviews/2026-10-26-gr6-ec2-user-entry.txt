@@ -1,0 +1,540 @@
+[p2 "实例 | EC2 | ap-northeast-1" | space "AniFlow remaining GPU eligibility audit restored 20261026"(10): 3 managed, 0 untracked — p2* "实例 | EC2 | ap-northeast-1", p3 "目录 | Directory Service | ap-northeast-1", p4 "Amazon WorkSpaces"]
+root
+  container
+    navigation
+      container
+        image "账户颜色: 绿色"
+        container "全球"
+          container
+            container
+              anchor [ref=343, loc=href:/console/home?region=ap-northeast-1, url=https://ap-northeast-1.console.aws.amazon.com/console/home?region=ap-northeast-1]
+                svg_root
+              button "Amazon Q" [ref=344, loc=css:button[aria-label="Amazon Q"]]
+                svg_root
+              button [ref=345]
+                svg_root
+            container
+              image "搜索"
+                svg_root
+              container
+                searchbox [ref=346]
+                comboboxgrouping "搜索" [ref=347, loc=css:input[placeholder="搜索"]]
+                  text "搜索"
+              button "询问 Amazon Q" [ref=348, loc=css:button[aria-label="询问 Amazon Q"]]
+                svg_root
+              text "[Alt+S]"
+            container
+              anchor "CloudShell" [ref=349, loc=css:a[aria-label="CloudShell"], url=https://ap-northeast-1.console.aws.amazon.com/cloudshell/home?region=ap-northeast-1]
+                svg_root
+              container
+                button "通知（无可用通知）" [ref=350, loc=css:button[aria-label="通知（无可用通知）"]]
+                  image "通知"
+                    svg_root
+                image "通知"
+                  svg_root
+              unordered_list
+                list_item
+                  button "帮助和支持" [ref=351, loc=css:button[aria-label="帮助和支持"]]
+                    image "支持"
+                      svg_root
+                list_item
+                  button "设置" [ref=352, loc=css:button[aria-label="设置"]]
+                    svg_root
+                list_item
+                  comboboxgrouping "Regions (亚太地区 (东京))" [ref=353, loc=css:button[aria-label="Regions (亚太地区 (东京))"]]
+                    text "亚太地区 (东京)"
+                    svg_root
+                list_item
+                  button "rerise" [ref=354, loc=css:button[aria-label="rerise"]]
+                    container
+                      text "rerise ([ACCOUNT])"
+                      svg_root
+                    text "rerise"
+          ordered_list
+            list_item
+              button [ref=355, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1]
+                image
+                text "EC2"
+    container
+      container
+        button "打开导航抽屉" [ref=356, loc=css:button[aria-label="打开导航抽屉"]]
+          svg_root
+        container "面包屑导航"
+          ordered_list
+            list_item
+              anchor [ref=357, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#Home]
+                text "EC2"
+              svg_root
+            list_item
+              link [ref=358]
+                text "实例"
+        region "抽屉"
+          toolbar "抽屉"
+            button "打开" [ref=359, loc=css:button[aria-label="打开"]]
+              svg_root
+            button "Console-to-Code" [ref=360, loc=css:button[aria-label="Console-to-Code"]]
+              svg_root
+      container "侧边导航" [ref=361]
+        button "关闭侧边导航" [ref=362, loc=css:button[aria-label="关闭侧边导航"]]
+          svg_root
+        container
+          heading
+            anchor [ref=363, loc=href:/ec2/home?region=ap-northeast-1#Overview:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#Overview:]
+              text "EC2"
+          unordered_list
+            list_item
+              anchor [ref=364, loc=href:/ec2/home?region=ap-northeast-1#Home:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#Home:]
+                text "控制面板"
+            list_item
+              anchor [ref=365, loc=href:/awsglobalview/home, url=https://ap-northeast-1.console.aws.amazon.com/awsglobalview/home]
+                text "AWS 全球视图"
+                image "在新标签页中打开"
+                  svg_root
+            list_item
+              anchor [ref=366, loc=href:/ec2/home?region=ap-northeast-1#Events:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#Events:]
+                text "事件"
+            list_item
+              button [ref=367]
+                svg_root
+                text "实例"
+              group "实例"
+                unordered_list
+                  list_item
+                    anchor [ref=368, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#Instances:]
+                      text "实例"
+                  list_item
+                    anchor [ref=369, loc=href:/ec2/home?region=ap-northeast-1#InstanceTypes:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#InstanceTypes:]
+                      text "实例类型"
+                  list_item
+                    anchor [ref=370, loc=href:/ec2/home?region=ap-northeast-1#LaunchTemplates:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#LaunchTemplates:]
+                      text "启动模板"
+                  list_item
+                    anchor [ref=371, loc=href:/ec2/home?region=ap-northeast-1#SpotInstances:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#SpotInstances:]
+                      text "Spot 请求"
+                  list_item
+                    anchor [ref=372, loc=href:/ec2/home?region=ap-northeast-1#SavingsPlans:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#SavingsPlans:]
+                      text "Savings Plans"
+                  list_item
+                    anchor [ref=373, loc=href:/ec2/home?region=ap-northeast-1#ReservedInstances:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#ReservedInstances:]
+                      text "预留实例"
+                  list_item
+                    anchor [ref=374, loc=href:/ec2/home?region=ap-northeast-1#Hosts:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#Hosts:]
+                      text "专属主机"
+                  list_item
+                    anchor [ref=375, loc=href:/ec2/home?region=ap-northeast-1#CapacityReservations:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#CapacityReservations:]
+                      text "容量预留"
+                  list_item
+                    anchor [ref=376, loc=href:/ec2/home?region=ap-northeast-1#UltraServers:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#UltraServers:]
+                      text "UltraServer"
+                    button [ref=377]
+                      text "新功能"
+                  list_item
+                    anchor [ref=378, loc=href:/ec2/home?region=ap-northeast-1#CapacityManagerHome:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#CapacityManagerHome:]
+                      text "容量管理器"
+                    button [ref=379]
+                      text "新建"
+            list_item
+              button [ref=380]
+                svg_root
+                text "映像"
+              group "映像"
+                unordered_list
+                  list_item
+                    anchor [ref=381, loc=href:/ec2/home?region=ap-northeast-1#Images:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#Images:]
+                      text "AMI"
+                  list_item
+                    anchor [ref=382, loc=href:/ec2/home?region=ap-northeast-1#AMICatalog:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#AMICatalog:]
+                      text "AMI 目录"
+            list_item
+              button [ref=383]
+                svg_root
+                text "Elastic Block Store"
+              group "Elastic Block Store"
+                unordered_list
+                  list_item
+                    anchor [ref=384, loc=href:/ec2/home?region=ap-northeast-1#Volumes:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#Volumes:]
+                      text "卷"
+                  list_item
+                    anchor [ref=385, loc=href:/ec2/home?region=ap-northeast-1#Snapshots:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#Snapshots:]
+                      text "快照"
+                  list_item
+                    anchor [ref=386, loc=href:/ec2/home?region=ap-northeast-1#Lifecycle:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#Lifecycle:]
+                      text "生命周期管理器"
+            list_item
+              button [ref=387]
+                svg_root
+                text "网络与安全"
+              group "网络与安全"
+                unordered_list
+                  list_item
+                    anchor [ref=388, loc=href:/ec2/home?region=ap-northeast-1#SecurityGroups:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#SecurityGroups:]
+                      text "安全组"
+                  list_item
+                    anchor [ref=389, loc=href:/ec2/home?region=ap-northeast-1#Addresses:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#Addresses:]
+                      text "弹性 IP"
+                  list_item
+                    anchor [ref=390, loc=href:/ec2/home?region=ap-northeast-1#PlacementGroups:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#PlacementGroups:]
+                      text "置放群组"
+                  list_item
+                    anchor [ref=391, loc=href:/ec2/home?region=ap-northeast-1#KeyPairs:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#KeyPairs:]
+                      text "密钥对"
+                  list_item
+                    anchor [ref=392, loc=href:/ec2/home?region=ap-northeast-1#NIC:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#NIC:]
+                      text "网络接口"
+            list_item
+              button [ref=393]
+                svg_root
+                text "负载平衡"
+              group "负载平衡"
+                unordered_list
+                  list_item
+                    anchor [ref=394, loc=href:/ec2/home?region=ap-northeast-1#LoadBalancers:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#LoadBalancers:]
+                      text "负载均衡器"
+                  list_item
+                    anchor [ref=395, loc=href:/ec2/home?region=ap-northeast-1#TargetGroups:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#TargetGroups:]
+                      text "目标群组"
+                  list_item
+                    anchor [ref=396, loc=href:/ec2/home?region=ap-northeast-1#TrustStores:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#TrustStores:]
+                      text "信任存储"
+            list_item
+              button [ref=397]
+                svg_root
+                text "Auto Scaling"
+              group "Auto Scaling"
+                unordered_list
+                  list_item
+                    anchor [ref=398, loc=href:/ec2/home?region=ap-northeast-1#AutoScalingGroups:, url=https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#AutoScalingGroups:]
+                      text "Auto Scaling 组"
+      iframe [ref=399]
+        root
+          container
+            container
+              container
+                container
+                  container
+                    container
+                      container
+                        heading
+                          text "实例"
+                        button "信息：实例" [ref=400, loc=css:a[aria-label="信息：实例"]]
+                          text "信息"
+                      container
+                        button "刷新实例" [ref=401, loc=css:button[aria-label="刷新实例"]]
+                          svg_root
+                        group "更多操作"
+                          button "Connect 将在新选项卡打开" [ref=402, loc=css:button[aria-label="Connect 将在新选项卡打开"]]
+                            text "连接"
+                            svg_root
+                          button "更多操作" [ref=403]
+                            svg_root
+                        button [ref=404]
+                          text "实例状态"
+                          svg_root
+                        button [ref=405]
+                          text "操作"
+                          svg_root
+                        group "更多操作"
+                          button [ref=406]
+                            text "启动新实例"
+                          button "更多操作" [ref=407]
+                            svg_root
+                    container
+                      container
+                        container
+                          text "保存的筛选条件集"
+                          button "保存的筛选条件集 选择筛选条件集" [ref=408]
+                            text "选择筛选条件集"
+                            svg_root
+                        container
+                          svg_root
+                          comboboxgrouping "筛选实例" [ref=409, loc=css:input[placeholder="按属性或标签 （区分大小写） 筛选 实例"]]
+                            text "按属性或标签 （区分大小写） 筛选 实例"
+                      container
+                        unordered_list "表分页"
+                          list_item
+                            button "上一页" [ref=410, loc=css:button[aria-label="上一页"]]
+                              svg_root
+                          list_item
+                            button "所有页面中的第 1 页" [ref=411, loc=css:button[aria-label="所有页面中的第 1 页"]]
+                              text "1"
+                          list_item
+                            button "下一页" [ref=412, loc=css:button[aria-label="下一页"]]
+                              svg_root
+                        button "首选项" [ref=413]
+                          svg_root
+                  container [ref=414]
+                    grid
+                      table_row
+                        table_cell
+                          container "选择所有实例"
+                            container
+                              svg_root
+                              checkbox "选择所有实例" [ref=415]
+                        table_cell
+                          button [ref=416]
+                            container
+                              text "Name"
+                              image "编辑 Name 列"
+                                svg_root
+                            svg_root
+                          button "Name" [ref=417]
+                        table_cell
+                          text "实例 ID"
+                          button "实例 ID" [ref=418]
+                        table_cell
+                          button [ref=419]
+                            text "实例状态"
+                            svg_root
+                          button "实例状态" [ref=420]
+                        table_cell
+                          button [ref=421]
+                            text "实例类型"
+                            svg_root
+                          button "实例类型" [ref=422]
+                        table_cell
+                          text "状态检查"
+                          button "状态检查" [ref=423]
+                        table_cell
+                          button [ref=424]
+                            text "可用区"
+                            svg_root
+                          button "可用区" [ref=425]
+                        table_cell
+                          button [ref=426]
+                            text "公有 IPv4 DNS"
+                            svg_root
+                          button "公有 IPv4 DNS" [ref=427]
+                        table_cell
+                          button [ref=428]
+                            text "公有 IPv4 地址"
+                            svg_root
+                          button "公有 IPv4 地址" [ref=429]
+                        table_cell
+                          button [ref=430]
+                            text "弹性 IP"
+                container
+                  region "实例" [ref=431, loc=role:region[name="实例"]]
+                    grid "实例"
+                      table_row
+                        table_cell
+                          container "选择所有实例"
+                            container
+                              svg_root
+                              checkbox "选择所有实例" [ref=432]
+                        table_cell
+                          button [ref=433]
+                            container
+                              text "Name"
+                              image "编辑 Name 列"
+                                svg_root
+                            svg_root
+                          button "Name" [ref=434]
+                        table_cell
+                          text "实例 ID"
+                          button "实例 ID" [ref=435]
+                        table_cell
+                          button [ref=436]
+                            text "实例状态"
+                            svg_root
+                          button "实例状态" [ref=437]
+                        table_cell
+                          button [ref=438]
+                            text "实例类型"
+                            svg_root
+                          button "实例类型" [ref=439]
+                        table_cell
+                          text "状态检查"
+                          button "状态检查" [ref=440]
+                        table_cell
+                          button [ref=441]
+                            text "可用区"
+                            svg_root
+                          button "可用区" [ref=442]
+                        table_cell
+                          button [ref=443]
+                            text "公有 IPv4 DNS"
+                            svg_root
+                          button "公有 IPv4 DNS" [ref=444]
+                        table_cell
+                          button [ref=445]
+                            text "公有 IPv4 地址"
+                            svg_root
+                          button "公有 IPv4 地址" [ref=446]
+                        table_cell
+                          button [ref=447]
+                            text "弹性 IP"
+                      table_row
+                        table_cell
+                          text "没有实例"
+                          paragraph
+                            text "您在此区域中没有任何实例"
+                          button "启动新实例" [ref=448, loc=css:button[aria-label="启动新实例"]]
+                            text "启动新实例"
+                  container [ref=449]
+              menu
+                text "启动新实例"
+                text "从模板启动实例"
+                text "迁移服务器"
+                text "连接"
+                text "停止实例"
+                text "启动现有实例"
+                text "重启实例"
+                text "休眠实例"
+                text "终止（删除）实例"
+                text "实例诊断"
+                menuitem
+                  text "实例设置"
+                  text "▶"
+                  menu
+                    text "附加到 Auto Scaling 组"
+                    text "更改停止保护"
+                    text "更改终止保护"
+                    text "更改关闭操作"
+                    text "更改自动恢复行为"
+                    text "重启时更改实例迁移"
+                    text "使用弹性灾难恢复进行保护"
+                    text "更改实例类型"
+                    text "更改 CPU 选项"
+                    text "修改实例置放"
+                    text "修改容量预留设置"
+                    text "更改 Nitro Enclaves"
+                    text "连接 RDS 数据库"
+                    text "更改积分规范"
+                    text "更改基于资源的命名选项"
+                    text "编辑用户数据"
+                menuitem
+                  text "联网"
+                  text "▶"
+                  menu
+                    text "附加网络接口"
+                    text "分离网络接口"
+                    text "管理 IP 地址"
+                    text "取消关联弹性 IP 地址"
+                    text "更改源/目标检查"
+                    text "管理 ENA Express"
+                    text "管理 ENA 队列"
+                    text "管理带宽"
+                menuitem
+                  text "安全"
+                  text "▶"
+                  menu
+                    text "更改安全组"
+                    text "修改 IAM 角色"
+                    text "获取 Windows 密码"
+                menuitem
+                  text "映像和模板"
+                  text "▶"
+                  menu
+                    text "创建映像"
+                    text "从实例创建模板"
+                    text "启动更多类似实例"
+                menuitem
+                  text "存储"
+                  text "▶"
+                  menu
+                    text "附加卷"
+                    text "分离卷"
+                    text "替换根卷"
+                menuitem
+                  text "监控和故障排除"
+                  text "▶"
+                  menu
+                    text "管理详细监控"
+                    text "管理 CloudWatch 警报"
+                    text "配置 CloudWatch 代理"
+                    text "获取系统日志"
+                    text "获取实例屏幕截图"
+                    text "连接到串行端口"
+                    text "替换根卷"
+                    text "访问 SSM Fleet Manager"
+            container
+              slider "滑块" [ref=450, loc=role:slider[name="滑块"]]
+                svg_root
+              region "所有实例"
+                container
+                  heading
+                    text "所有实例"
+                  container
+                    button "首选项" [ref=451]
+                      svg_root
+                    button "关闭实例详细信息" [ref=452, loc=css:button[aria-label="关闭实例详细信息"]]
+                      svg_root
+                container
+                  container
+                    heading
+                      text "实例警报状态"
+                    container
+                      text "处于警报状态"
+                      container
+                        svg_root
+                        text "无"
+                    anchor [ref=453, loc=href:/cloudwatch/home#alarmsV2:, url=https://ap-northeast-1.console.aws.amazon.com/cloudwatch/home#alarmsV2:]
+                      text "在 CloudWatch 中查看"
+                      image "在新标签页中打开"
+                        svg_root
+                  container
+                    heading
+                      text "服务运行状况"
+                    container
+                      text "EC2 服务状态"
+                      container
+                        svg_root
+                        text "正常运行"
+                    anchor [ref=454, loc=href:https://health.aws.amazon.com/health/status?path=open-issues, url=https://health.aws.amazon.com/health/status?path=open-issues]
+                      text "查看服务运行状况控制面板"
+                      image "在新标签页中打开"
+                        svg_root
+                  container
+                    heading
+                      text "影响 EC2 实例的运行状况事件"
+                    container
+                      container
+                        text "打开事件"
+                        container
+                          svg_root
+                          text "无"
+                      container
+                        text "即将发生的事件"
+                        container
+                          svg_root
+                          text "无"
+                    anchor [ref=455, loc=href:/health/home#/account/dashboard, url=https://ap-northeast-1.console.aws.amazon.com/health/home#/account/dashboard]
+                      text "查看 AWS Health Dashboard"
+                      image "在新标签页中打开"
+                        svg_root
+    contentinfo
+      container
+        container
+          button [ref=456]
+            svg_root
+            text "CloudShell"
+          button [ref=457]
+            svg_root
+            text "Agent Toolkit for AWS"
+          button [ref=458]
+            text "反馈"
+          button [ref=459]
+            svg_root
+            text "控制台移动应用程序"
+        container
+          text "©"
+          text "2026"
+          text ","
+          text "Amazon Web Services, Inc."
+          text "或其关联公司。"
+        unordered_list
+          list_item
+            anchor [ref=460, loc=href:https://aws.amazon.com/privacy/, url=https://aws.amazon.com/privacy/]
+              text "隐私"
+          list_item
+            anchor [ref=461, loc=href:https://aws.amazon.com/terms/, url=https://aws.amazon.com/terms/]
+              text "条款"
+          list_item
+            button [ref=462]
+              text "Cookie 首选项"
+  svg_root
+  svg_root
+  svg_root
+  svg_root
+  svg_root
+  svg_root

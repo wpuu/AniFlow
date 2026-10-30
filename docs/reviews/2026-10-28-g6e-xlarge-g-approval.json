@@ -1,0 +1,9 @@
+{
+  "instance_type": "g6e.xlarge",
+  "vcpus": 4,
+  "ram_gib": 32,
+  "owner_accepted_insufficient_memory_risk": true,
+  "quality_change_authorized": false,
+  "cpu_inference_authorized": false,
+  "models_remain_paused_before_gpu_preflight": true
+}

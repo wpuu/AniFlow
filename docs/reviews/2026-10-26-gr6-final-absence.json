@@ -1,0 +1,29 @@
+{
+  "observed_at_utc": "2026-10-26T16:00:10.026096+00:00",
+  "experiment_id": "aniflow-h3-gr6-20261026-b",
+  "workspaces_count": 0,
+  "owned_registered_directory_absent": true,
+  "owned_directory_absent": true,
+  "stacks": [
+    {
+      "name": "aniflow-h3-gr6-primary-20261026",
+      "region": "ap-northeast-1",
+      "status": "ABSENT"
+    },
+    {
+      "name": "aniflow-h3-gr6-backup-20261026",
+      "region": "ap-southeast-1",
+      "status": "ABSENT"
+    },
+    {
+      "name": "aniflow-h3-gr6-assets-20261026",
+      "region": "ap-northeast-1",
+      "status": "ABSENT"
+    }
+  ],
+  "bucket_absent": true,
+  "owned_activations_count": 0,
+  "owned_managed_nodes_count": 0,
+  "backup_status": "Cancelled",
+  "all_known_owned_cloud_resources_absent": true
+}

@@ -1,0 +1,12 @@
+{
+  "observed_at_utc": "2026-10-27T05:22:32.271Z",
+  "source": "AWS tax settings console",
+  "tax_page": true,
+  "country_code": "CN",
+  "seller": "Amazon Web Services, Inc.",
+  "settings_changed": false,
+  "future_invoice_tax_guaranteed": false,
+  "current_month_total_tax_usd": 0,
+  "tax_observed_at_utc": "2026-10-27T05:42:44.719764+00:00",
+  "tax_source": "AWS billing current month total tax; no address or payment data published"
+}

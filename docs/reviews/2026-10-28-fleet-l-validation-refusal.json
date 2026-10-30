@@ -1,0 +1,20 @@
+{
+  "observed_at_utc": "2026-10-28T12:33:59.149248+00:00",
+  "exact_client_token_matched_in_cloudtrail": true,
+  "exact_aws_request_id_matched_privately": true,
+  "event_time_utc": "2026-10-28T12:29:37Z",
+  "error_code": "Client.InvalidParameterCombination",
+  "error_message": "Parameter: OnDemandOptions.AllocationStrategy: prioritized and OnDemandOptions.MaxTotalPrice can not be specified together.",
+  "response_elements_present": false,
+  "matching_fleets": 0,
+  "matching_instances": 0,
+  "matching_volumes": 0,
+  "matching_network_interfaces": 0,
+  "matching_elastic_ips": 0,
+  "confirmed_no_fleet_or_compute_created": true,
+  "capacity_test_performed": false,
+  "create_fleet_real_request_calls": 1,
+  "create_fleet_dry_run_calls": 2,
+  "all_create_fleet_api_calls": 3,
+  "additional_real_request_performed": false
+}

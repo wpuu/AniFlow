@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-25",
+  "source": "User-authorized Ego Bills/Tax settings; five previously captured complete applicable-product lists",
+  "bill_period": "2026-10",
+  "current_bill_total_tax_usd": 0.0,
+  "future_workspaces_tax_rate_verified": false,
+  "permanent_tax_exemption_verified": false,
+  "all_five_credit_product_matches": {
+    "Amazon WorkSpaces": true,
+    "AWS Directory Service": true,
+    "AWS Systems Manager": true,
+    "Amazon Virtual Private Cloud": true,
+    "AWS Data Transfer": true,
+    "AmazonCloudWatch": true,
+    "AWS Lambda": true,
+    "CloudWatch Events": true,
+    "Amazon Simple Storage Service": true
+  },
+  "workspaces_actual_credit_application_verified": false,
+  "all_in_zero_cash_cost_guaranteed": false,
+  "hardware": {
+    "type": "Graphics.g6.4xlarge",
+    "gpu": "NVIDIA L4",
+    "gpu_memory_gib": 24,
+    "vcpus": 16,
+    "ram_gib": 64,
+    "applied_quota": 1
+  },
+  "h3_plan": {
+    "checkpoint": "official pruned_int8_convrot",
+    "checkpoint_size_gb_approx": 21,
+    "dynamic_offload_required": true,
+    "exact_hardware_benchmark_found": false,
+    "actual_workspaces_nvidia_driver_verified": false,
+    "real_generation_completed": false
+  },
+  "cloud_resources_created": 0,
+  "model_invocations": 0
+}

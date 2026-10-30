@@ -1,0 +1,308 @@
+{
+  "observed_at_utc": "2026-10-29T06:14:08Z",
+  "source": "AWS Billing and Cost Management console; read-only UI review",
+  "billing_period": "2026-10",
+  "bill_view": {
+    "displayed_period": "2026-10-01 through 2026-10-31",
+    "status": "Pending; estimated, not finalized",
+    "page_last_refresh_displayed": "2026-10-29 14:05:27 GMT+8",
+    "estimated_total_usd": 0,
+    "estimated_pre_tax_service_total_usd": 0,
+    "estimated_tax_total_usd": 0,
+    "october_final_invoice_available": false,
+    "separate_credit_line_on_bill_service_summary": "Not displayed in the inspected Bills summary; credit application history is shown separately on the Credits page.",
+    "services": [
+      {
+        "service": "CloudFormation",
+        "estimated_pre_tax_usd": 0
+      },
+      {
+        "service": "CloudWatch",
+        "estimated_pre_tax_usd": 0
+      },
+      {
+        "service": "CloudWatch Events",
+        "estimated_pre_tax_usd": 0
+      },
+      {
+        "service": "Cost Explorer",
+        "estimated_pre_tax_usd": 0
+      },
+      {
+        "service": "Data Transfer",
+        "estimated_pre_tax_usd": 0
+      },
+      {
+        "service": "Directory Service",
+        "estimated_pre_tax_usd": 0
+      },
+      {
+        "service": "Elastic Compute Cloud",
+        "estimated_pre_tax_usd": 0
+      },
+      {
+        "service": "Glue",
+        "estimated_pre_tax_usd": 0
+      },
+      {
+        "service": "Key Management Service",
+        "estimated_pre_tax_usd": 0
+      },
+      {
+        "service": "Lambda",
+        "estimated_pre_tax_usd": 0
+      },
+      {
+        "service": "Secrets Manager",
+        "estimated_pre_tax_usd": 0
+      },
+      {
+        "service": "Simple Notification Service",
+        "estimated_pre_tax_usd": 0
+      },
+      {
+        "service": "Simple Queue Service",
+        "estimated_pre_tax_usd": 0
+      },
+      {
+        "service": "Simple Storage Service",
+        "estimated_pre_tax_usd": 0
+      },
+      {
+        "service": "Systems Manager",
+        "estimated_pre_tax_usd": 0
+      },
+      {
+        "service": "Virtual Private Cloud",
+        "estimated_pre_tax_usd": 0
+      }
+    ],
+    "tax_interpretation": "USD 0.00 is the current pending estimate only; this is not a final tax assessment or evidence of tax exemption."
+  },
+  "payment_overview": {
+    "unpaid_balance_usd": 0,
+    "unused_funds_usd": 0,
+    "due_payment_count": 0,
+    "page_refresh_timestamp": "Not displayed on Payment Overview"
+  },
+  "credit_summary": {
+    "active_credit_count": 5,
+    "original_granted_total_usd": 100,
+    "booked_used_total_usd": 8.86,
+    "booked_remaining_total_usd": 91.14,
+    "cumulative_estimated_used_total_usd": 57.81,
+    "cumulative_estimated_remaining_total_usd": 42.19,
+    "estimate_update_note": "AWS UI says estimated amounts update approximately every 24 hours; total amounts update when the monthly invoice is finalized.",
+    "cumulative_vs_history_reconciliation": "Displayed finalized September application rows total USD 8.86. Displayed October Estimated rows total USD 48.93. Together these visible rows total USD 57.79, while the Credits summary shows cumulative Estimated Used USD 57.81; preserve the USD 0.02 display difference without adjustment. Do not treat USD 57.81 as October usage."
+  },
+  "credits": [
+    {
+      "voucher_name": "Explore AWS: Launch an instance using EC2",
+      "status": "Active",
+      "granted_usd": 20,
+      "start_date": "2025-10-31",
+      "expiration_date": "2026-10-30",
+      "booked_used_usd": 8.86,
+      "booked_remaining_usd": 11.14,
+      "cumulative_estimated_used_usd": 20,
+      "estimated_remaining_usd": 0,
+      "eligible_services_observed": [
+        "Amazon Elastic Compute Cloud",
+        "Amazon Virtual Private Cloud",
+        "Amazon Simple Storage Service",
+        "Amazon Bedrock",
+        "AWS Lambda",
+        "AWS Budgets",
+        "Amazon Relational Database Service"
+      ],
+      "application_history": [
+        {
+          "month": "2026-10",
+          "status": "Estimated",
+          "service_or_product": "AmazonEC2",
+          "applied_amount_usd": -11.14
+        },
+        {
+          "month": "2026-09",
+          "status": "Finalized",
+          "service_or_product": "AmazonEC2",
+          "applied_amount_usd": -4.41
+        },
+        {
+          "month": "2026-09",
+          "status": "Finalized",
+          "service_or_product": "AmazonVPC",
+          "applied_amount_usd": -2.28
+        },
+        {
+          "month": "2026-09",
+          "status": "Finalized",
+          "service_or_product": "AmazonEC2",
+          "applied_amount_usd": -2.17
+        }
+      ]
+    },
+    {
+      "voucher_name": "Explore AWS: Use a foundation model in the Amazon Bedrock playground",
+      "status": "Active",
+      "granted_usd": 20,
+      "start_date": "2026-04-09",
+      "expiration_date": "2026-10-30",
+      "booked_used_usd": 0,
+      "booked_remaining_usd": 20,
+      "cumulative_estimated_used_usd": 20,
+      "estimated_remaining_usd": 0,
+      "eligible_services_observed": [
+        "Amazon Elastic Compute Cloud",
+        "Amazon Virtual Private Cloud",
+        "Amazon Simple Storage Service",
+        "Amazon Bedrock",
+        "AWS Lambda",
+        "AWS Budgets",
+        "Amazon Relational Database Service"
+      ],
+      "application_history": [
+        {
+          "month": "2026-10",
+          "status": "Estimated",
+          "service_or_product": "AmazonEC2",
+          "applied_amount_usd": -20
+        }
+      ]
+    },
+    {
+      "voucher_name": "Explore AWS: Set up a cost budget using AWS Budgets",
+      "status": "Active",
+      "granted_usd": 20,
+      "start_date": "2026-04-09",
+      "expiration_date": "2026-10-30",
+      "booked_used_usd": 0,
+      "booked_remaining_usd": 20,
+      "cumulative_estimated_used_usd": 17.81,
+      "estimated_remaining_usd": 2.19,
+      "eligible_services_observed": [
+        "Amazon Elastic Compute Cloud",
+        "Amazon Virtual Private Cloud",
+        "Amazon Simple Storage Service",
+        "Amazon Bedrock",
+        "AWS Lambda",
+        "AWS Budgets",
+        "Amazon Relational Database Service"
+      ],
+      "application_history": [
+        {
+          "month": "2026-10",
+          "status": "Estimated",
+          "service_or_product": "AmazonEC2",
+          "applied_amount_usd": -11.21
+        },
+        {
+          "month": "2026-10",
+          "status": "Estimated",
+          "service_or_product": "AmazonVPC",
+          "applied_amount_usd": -3.35
+        },
+        {
+          "month": "2026-10",
+          "status": "Estimated",
+          "service_or_product": "AmazonS3",
+          "applied_amount_usd": -0.01
+        },
+        {
+          "month": "2026-10",
+          "status": "Estimated",
+          "service_or_product": "AWSCostExplorer",
+          "applied_amount_usd": -0.05
+        },
+        {
+          "month": "2026-10",
+          "status": "Estimated",
+          "service_or_product": "AWSSystemsManager",
+          "applied_amount_usd": -0.14
+        },
+        {
+          "month": "2026-10",
+          "status": "Estimated",
+          "service_or_product": "AmazonEC2",
+          "applied_amount_usd": -2.99
+        },
+        {
+          "month": "2026-10",
+          "status": "Estimated",
+          "service_or_product": "AmazonEC2",
+          "applied_amount_usd": -0.04
+        }
+      ],
+      "visible_application_rows_total_usd": -17.79,
+      "summary_estimated_used_vs_rows_note": "Credits list shows cumulative estimated used USD 17.81 and estimated remaining USD 2.19; visible application rows total USD 17.79. Preserve the USD 0.02 difference."
+    },
+    {
+      "voucher_name": "Explore AWS: Create a web app using AWS Lambda",
+      "status": "Active",
+      "granted_usd": 20,
+      "start_date": "2026-04-09",
+      "expiration_date": "2026-10-30",
+      "booked_used_usd": 0,
+      "booked_remaining_usd": 20,
+      "cumulative_estimated_used_usd": 0,
+      "estimated_remaining_usd": 20,
+      "eligible_services_observed": [
+        "Amazon Elastic Compute Cloud",
+        "Amazon Virtual Private Cloud",
+        "Amazon Simple Storage Service",
+        "Amazon Bedrock",
+        "AWS Lambda",
+        "AWS Budgets",
+        "Amazon Relational Database Service"
+      ],
+      "application_history": [],
+      "application_history_note": "AWS UI displayed no application-history records for this credit at review time."
+    },
+    {
+      "voucher_name": "Explore AWS: Create an Aurora or RDS database",
+      "status": "Active",
+      "granted_usd": 20,
+      "start_date": "2026-04-09",
+      "expiration_date": "2026-10-30",
+      "booked_used_usd": 0,
+      "booked_remaining_usd": 20,
+      "cumulative_estimated_used_usd": 0,
+      "estimated_remaining_usd": 20,
+      "eligible_services_observed": [
+        "Amazon Elastic Compute Cloud",
+        "Amazon Virtual Private Cloud",
+        "Amazon Simple Storage Service",
+        "Amazon Bedrock",
+        "AWS Lambda",
+        "AWS Budgets",
+        "Amazon Relational Database Service"
+      ],
+      "application_history": [],
+      "application_history_note": "AWS UI displayed no application-history records for this credit at review time."
+    }
+  ],
+  "interpretation": {
+    "october_credit_rows": "All visible October application history entries for the five active credits are Estimated; no October Finalized row was displayed. October estimated application rows total USD 48.93.",
+    "finalized_history": "September Finalized application rows total USD 8.86.",
+    "voucher_name_vs_product": "Voucher names are kept separate from the Service/Product column. For example, the Bedrock-playground-named voucher's visible October Estimated row is AmazonEC2; do not attribute by voucher name.",
+    "attribution": "Credit and billing records are account-wide. The displayed AWS product history does not identify a specific G6 instance or video job, and this read-only review ran no GPU video job.",
+    "eligibility": "The inspected eligible-service lists include the services enumerated above. Eligibility alone does not prove a particular future charge is covered; match future bill lines to eligible service and application-history entries.",
+    "ebs_eligibility": "Not separately confirmed in this review.",
+    "pending_bill": "The October Bills page and tax amount are pending estimates. USD 0.00 is not a finalized total or tax-exemption finding."
+  },
+  "verified_arithmetic": {
+    "october_visible_estimated_credit_by_service_usd": {
+      "AWSCostExplorer": 0.05,
+      "AWSSystemsManager": 0.14,
+      "AmazonEC2": 45.38,
+      "AmazonS3": 0.01,
+      "AmazonVPC": 3.35
+    },
+    "october_visible_estimated_credit_total_usd": 48.93,
+    "september_finalized_credit_total_usd": 8.86,
+    "visible_history_total_usd": 57.79,
+    "cumulative_estimated_summary_usd": 57.81,
+    "unreconciled_ui_difference_usd": 0.02,
+    "amounts_are_account_wide_not_this_g6_experiment": true
+  }
+}

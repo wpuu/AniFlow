@@ -1,0 +1,12 @@
+{
+  "prepared_at_utc": "2026-10-26T04:12:37.618854+00:00",
+  "status": "STATIC_PREPARATION_ONLY",
+  "cloud_create_result_reported_by_lead": "ResourceLimitExceededException: actual WorkSpaces resource quota is zero",
+  "cloud_operations_performed_by_this_preparation": false,
+  "runtime_object_info_verified": false,
+  "inference_performed": false,
+  "real_video_generated": false,
+  "gpu_measurements_recorded": false,
+  "model_weights_downloaded": false,
+  "note": "This archive does not contain an approval gate or launch authorization. A future real attempt requires fresh account, license, quota, cost, safety and runtime validation."
+}

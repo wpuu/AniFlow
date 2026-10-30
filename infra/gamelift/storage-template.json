@@ -1,0 +1,40 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Tokyo-only private immutable application sources and durable experiment jobs. No compute.",
+  "Parameters": {"Suffix": {"Type": "String", "AllowedPattern": "[a-z0-9-]{8,30}"}},
+  "Resources": {
+    "Bucket": {"Type": "AWS::S3::Bucket", "Properties": {
+      "BucketName": {"Fn::Sub": "aniflow-h3-${Suffix}"},
+      "OwnershipControls": {"Rules": [{"ObjectOwnership": "BucketOwnerEnforced"}]},
+      "PublicAccessBlockConfiguration": {"BlockPublicAcls": true, "BlockPublicPolicy": true,
+        "IgnorePublicAcls": true, "RestrictPublicBuckets": true},
+      "BucketEncryption": {"ServerSideEncryptionConfiguration": [{"ServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}}]},
+      "LifecycleConfiguration": {"Rules": [{"Id": "BoundIncompleteUploads", "Status": "Enabled",
+        "AbortIncompleteMultipartUpload": {"DaysAfterInitiation": 1}}]},
+      "Tags": [{"Key": "ExperimentId", "Value": "aniflow-h3-gamelift-20261026-a"}]
+    }},
+    "Policy": {"Type": "AWS::S3::BucketPolicy", "Properties": {
+      "Bucket": {"Ref": "Bucket"}, "PolicyDocument": {"Version": "2012-10-17", "Statement": [
+        {"Effect": "Deny", "Principal": "*", "Action": "s3:*",
+          "Resource": [{"Fn::GetAtt": ["Bucket", "Arn"]}, {"Fn::Sub": "${Bucket.Arn}/*"}],
+          "Condition": {"Bool": {"aws:SecureTransport": "false"}}},
+        {"Effect": "Allow", "Principal": {"Service": "gameliftstreams.amazonaws.com"},
+          "Action": "s3:PutObject", "Resource": {"Fn::Sub": "${Bucket.Arn}/logs/*"},
+          "Condition": {"StringEquals": {"aws:SourceAccount": {"Ref": "AWS::AccountId"}}}}
+      ]}
+    }},
+    "SessionRole": {"Type": "AWS::IAM::Role", "Properties": {
+      "RoleName": {"Fn::Sub": "GameLiftStreams-AniFlow-${Suffix}"},
+      "AssumeRolePolicyDocument": {"Version": "2012-10-17", "Statement": [{
+        "Effect": "Allow", "Principal": {"Service": "gameliftstreams.amazonaws.com"}, "Action": "sts:AssumeRole",
+        "Condition": {"StringEquals": {"aws:SourceAccount": {"Ref": "AWS::AccountId"}},
+          "ArnLike": {"aws:SourceArn": {"Fn::Sub": "arn:${AWS::Partition}:gameliftstreams:ap-northeast-1:${AWS::AccountId}:streamsession/*"}}}
+      }]},
+      "Policies": [{"PolicyName": "PrivateExperimentJobsOnly", "PolicyDocument": {"Version": "2012-10-17", "Statement": [
+        {"Effect": "Allow", "Action": ["s3:GetObject", "s3:PutObject"], "Resource": {"Fn::Sub": "${Bucket.Arn}/experiments/h3-20261026/*"}},
+        {"Effect": "Allow", "Action": "s3:ListBucket", "Resource": {"Fn::GetAtt": ["Bucket", "Arn"]}}
+      ]}}]
+    }}
+  },
+  "Outputs": {"Bucket": {"Value": {"Ref": "Bucket"}}, "SessionRole": {"Value": {"Fn::GetAtt": ["SessionRole", "Arn"]}}}
+}

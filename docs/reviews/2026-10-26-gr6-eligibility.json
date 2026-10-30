@@ -1,0 +1,1006 @@
+{
+  "observed_at_utc": "2026-10-26T13:17:12.077911+00:00",
+  "region": "ap-northeast-1",
+  "read_only": true,
+  "resources_created": 0,
+  "gpu_started": false,
+  "real_video_count": 0,
+  "workspaces_quotas": [
+    {
+      "QuotaCode": "L-40A36AF9",
+      "QuotaName": "Graphics.g6.4xlarge WorkSpaces",
+      "Value": 1.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Graphics.g6.4xlarge WorkSpaces in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-BD784BE1",
+      "QuotaName": "Graphics.g6.16xlarge WorkSpaces",
+      "Value": 1.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Graphics.g6.16xlarge WorkSpaces in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-8C70C791",
+      "QuotaName": "General Purpose Value streaming instances for WorkSpaces Pools",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of General Purpose Value streaming instances that can be used for WorkSpaces Pools in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-EEB759DE",
+      "QuotaName": "Directories",
+      "Value": 50.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of directories that can be registered for use with Amazon WorkSpaces in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-843E43DA",
+      "QuotaName": "Bundles",
+      "Value": 50.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of bundles in this account in the current Region. This quota applies only to custom bundles, not to public bundles."
+    },
+    {
+      "QuotaCode": "L-0E312A12",
+      "QuotaName": "IP access control groups",
+      "Value": 100.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of IP access control groups in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-6E205E73",
+      "QuotaName": "Graphics.g6f.2xlarge WorkSpaces",
+      "Value": 1.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Graphics.g6f.2xlarge WorkSpaces in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-34278094",
+      "QuotaName": "WorkSpaces",
+      "Value": 1.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of WorkSpaces in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-BE9A8466",
+      "QuotaName": "GraphicsPro.g4dn WorkSpaces",
+      "Value": 1.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of GraphicsPro.g4dn WorkSpaces in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-EF6817EC",
+      "QuotaName": "Graphics.gr6.4xlarge WorkSpaces",
+      "Value": 1.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Graphics.gr6.4xlarge WorkSpaces in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-F61D0B79",
+      "QuotaName": "IP access control groups per directory",
+      "Value": 25.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of IP access control groups per directory in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-F7854FE2",
+      "QuotaName": "General Purpose PowerPro streaming instances for WorkSpaces Pools",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of General Purpose PowerPro streaming instances that can be used for WorkSpaces Pools in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-2F7BEDD3",
+      "QuotaName": "General Purpose Performance streaming instances for WorkSpaces Pools",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of General Purpose Performance streaming instances that can be used for WorkSpaces Pools in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-337DA39D",
+      "QuotaName": "Graphics.gr6.8xlarge WorkSpaces",
+      "Value": 1.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Graphics.gr6.8xlarge WorkSpaces in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-254B485B",
+      "QuotaName": "GraphicsPro WorkSpaces",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of GraphicsPro WorkSpaces in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-BCACAEBC",
+      "QuotaName": "Graphics.g4dn WorkSpaces",
+      "Value": 1.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Graphics.g4dn WorkSpaces in this account in the current Region"
+    },
+    {
+      "QuotaCode": "L-925915DC",
+      "QuotaName": "Graphics.g6.2xlarge WorkSpaces",
+      "Value": 1.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Graphics.g6.2xlarge WorkSpaces in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-465DA8AF",
+      "QuotaName": "GeneralPurpose 4xlarge streaming instances for WorkSpaces",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of GeneralPurpose 4xlarge streaming instances that can be used for WorkSpaces in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-18CE281C",
+      "QuotaName": "Images",
+      "Value": 40.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of images in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-07C6D3A5",
+      "QuotaName": "General Purpose Power streaming instances for WorkSpaces Pools",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of General Purpose Power streaming instances that can be used for WorkSpaces Pools in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-34D55C89",
+      "QuotaName": "Graphics.g6f.4xlarge WorkSpaces",
+      "Value": 1.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Graphics.g6f.4xlarge WorkSpaces in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-C266A5F4",
+      "QuotaName": "GeneralPurpose 8xlarge streaming instances for WorkSpaces",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of GeneralPurpose 8xlarge streaming instances that can be used for WorkSpaces in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-3AC69A9E",
+      "QuotaName": "Graphics.g6.xlarge WorkSpaces",
+      "Value": 1.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Graphics.g6.xlarge WorkSpaces in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-D6CFBE96",
+      "QuotaName": "WorkSpaces Pools",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of WorkSpaces Pools in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-0B7D5CA2",
+      "QuotaName": "Graphics.g4dn 4xlarge streaming instances for WorkSpaces Pools",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Graphics.g4dn 4xlarge streaming instances that can be used for WorkSpaces Pools in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-18F1706C",
+      "QuotaName": "Graphics.g6f.large WorkSpaces",
+      "Value": 1.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Graphics.g6f.large WorkSpaces in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-5782CB4D",
+      "QuotaName": "Rules per IP access control group",
+      "Value": 10.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of rules per IP access control group in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-011B3C20",
+      "QuotaName": "General Purpose Standard streaming instances for WorkSpaces Pools",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of General Purpose Standard instances that can be used for WorkSpaces Pools in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-C76331EA",
+      "QuotaName": "Graphics.gr6f.4xlarge WorkSpaces",
+      "Value": 1.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Graphics.gr6f.4xlarge WorkSpaces in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-158CE743",
+      "QuotaName": "Graphics.g6.8xlarge WorkSpaces",
+      "Value": 1.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Graphics.g6.8xlarge WorkSpaces in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-0798A2C9",
+      "QuotaName": "Connection aliases",
+      "Value": 20.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of connection aliases in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-D34D6523",
+      "QuotaName": "Graphics.g4dn xlarge streaming instances for WorkSpaces Pools",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Graphics.g4dn xlarge streaming instances that can be used for WorkSpaces Pools in this account in the current Region."
+    },
+    {
+      "QuotaCode": "L-70A02F17",
+      "QuotaName": "Graphics.g6f.xlarge WorkSpaces",
+      "Value": 1.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Graphics.g6f.xlarge WorkSpaces in this account in the current Region."
+    }
+  ],
+  "gamelift_quotas": [
+    {
+      "QuotaCode": "L-71AE9182",
+      "QuotaName": "Gen6n GPUs, ap-south-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen6n GPUs you can configure for streaming in the ap-south-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-9DE2CD9C",
+      "QuotaName": "Gen5n GPUs, eu-west-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen5n GPUs you can configure for streaming in the eu-west-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen5n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-57293BF5",
+      "QuotaName": "Gen6n GPUs, ap-northeast-2",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen6n GPUs you can configure for streaming in the ap-northeast-2 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-D8F36457",
+      "QuotaName": "Gen6e GPUs, us-east-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen6e GPUs you can configure for streaming in the us-east-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6e_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-261849DF",
+      "QuotaName": "Gen5n GPUs, eu-central-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen5n GPUs you can configure for streaming in the eu-central-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen5n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-8D495FC3",
+      "QuotaName": "Gen5n GPUs, us-west-2",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen5n GPUs you can configure for streaming in the us-west-2 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen5n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-29F0D4B0",
+      "QuotaName": "Gen4n GPUs, eu-north-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen4n GPUs you can configure for streaming in the eu-north-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen4n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-D525546C",
+      "QuotaName": "Gen6e GPUs, eu-central-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen6e GPUs you can configure for streaming in the eu-central-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6e_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-9CFB776D",
+      "QuotaName": "Gen5n GPUs, ap-northeast-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen5n GPUs you can configure for streaming in the ap-northeast-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen5n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-3E4E3BE1",
+      "QuotaName": "Application size (GiB)",
+      "Value": 100.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum total size (in GiB) of an application, in this account. Note that a gibibyte (GiB) equals 1024*1024*1024 bytes."
+    },
+    {
+      "QuotaCode": "L-3EEB31F4",
+      "QuotaName": "Gen6n GPUs, us-east-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen6n GPUs you can configure for streaming in the us-east-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-0597376F",
+      "QuotaName": "Files per application",
+      "Value": 30000.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of files that you can have in an application, in this account."
+    },
+    {
+      "QuotaCode": "L-76A9DAF1",
+      "QuotaName": "Gen4n GPUs, us-east-2",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen4n GPUs you can configure for streaming in the us-east-2 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen4n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-6A5970BF",
+      "QuotaName": "Gen6n GPUs, ap-southeast-2",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen6n GPUs you can configure for streaming in the ap-southeast-2 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-CBD42650",
+      "QuotaName": "Gen6n GPUs, eu-central-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen6n GPUs you can configure for streaming in the eu-central-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-E29DEEE7",
+      "QuotaName": "Gen5n GPUs, us-east-2",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen5n GPUs you can configure for streaming in the us-east-2 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen5n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-9F99CEA2",
+      "QuotaName": "Gen6n GPUs, ap-northeast-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen6n GPUs you can configure for streaming in the ap-northeast-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-629E34DF",
+      "QuotaName": "Gen5n GPUs, ap-southeast-2",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen5n GPUs you can configure for streaming in the ap-southeast-2 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen5n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-954DDDF7",
+      "QuotaName": "Gen4n GPUs, us-west-2",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen4n GPUs you can configure for streaming in the us-west-2 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen4n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-C9680889",
+      "QuotaName": "Applications",
+      "Value": 20.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of applications that you can create in this account, per AWS Region."
+    },
+    {
+      "QuotaCode": "L-32B09C2E",
+      "QuotaName": "Gen4n GPUs, eu-west-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen4n GPUs you can configure for streaming in the eu-west-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen4n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-218C36B4",
+      "QuotaName": "Gen4n GPUs, ap-south-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen4n GPUs you can configure for streaming in the ap-south-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen4n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-91D52CA7",
+      "QuotaName": "Gen5n GPUs, ap-northeast-2",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen5n GPUs you can configure for streaming in the ap-northeast-2 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen5n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-A06D94E6",
+      "QuotaName": "Gen6e GPUs, us-west-2",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen6e GPUs you can configure for streaming in the us-west-2 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6e_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-A11A958B",
+      "QuotaName": "Gen6e GPUs, ap-northeast-2",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen6e GPUs you can configure for streaming in the ap-northeast-2 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6e_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-F62975CA",
+      "QuotaName": "Gen6n GPUs, us-east-2",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen6n GPUs you can configure for streaming in the us-east-2 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-4A4CFDD3",
+      "QuotaName": "Gen4n GPUs, us-east-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen4n GPUs you can configure for streaming in the us-east-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen4n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-F92E5035",
+      "QuotaName": "Gen5n GPUs, sa-east-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen5n GPUs you can configure for streaming in the sa-east-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen5n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-76E08F33",
+      "QuotaName": "Gen6e GPUs, eu-north-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen6e GPUs you can configure for streaming in the eu-north-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6e_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-56EB55B1",
+      "QuotaName": "Gen6n GPUs, sa-east-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen6n GPUs you can configure for streaming in the sa-east-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-BD8BFCD5",
+      "QuotaName": "Gen6e GPUs, ap-northeast-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen6e GPUs you can configure for streaming in the ap-northeast-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6e_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-8BB014BB",
+      "QuotaName": "Gen4n GPUs, eu-central-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen4n GPUs you can configure for streaming in the eu-central-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen4n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-DB8A707D",
+      "QuotaName": "Gen6e GPUs, us-east-2",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen6e GPUs you can configure for streaming in the us-east-2 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6e_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-C0D474DB",
+      "QuotaName": "Gen4n GPUs, sa-east-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen4n GPUs you can configure for streaming in the sa-east-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen4n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-9BAEC660",
+      "QuotaName": "Gen5n GPUs, eu-north-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen5n GPUs you can configure for streaming in the eu-north-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen5n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-4FFB0D13",
+      "QuotaName": "Gen5n GPUs, us-east-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen5n GPUs you can configure for streaming in the us-east-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen5n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-D0609461",
+      "QuotaName": "Gen6n GPUs, eu-north-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen6n GPUs you can configure for streaming in the eu-north-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-F8BA90CD",
+      "QuotaName": "Gen6n GPUs, us-west-2",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen6n GPUs you can configure for streaming in the us-west-2 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-E3503A3C",
+      "QuotaName": "Gen5n GPUs, ap-south-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen5n GPUs you can configure for streaming in the ap-south-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen5n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-C8CFA70A",
+      "QuotaName": "Gen4n GPUs, ap-northeast-1",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen4n GPUs you can configure for streaming in the ap-northeast-1 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen4n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-23FED0E7",
+      "QuotaName": "Gen5n GPUs, eu-west-2",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen5n GPUs you can configure for streaming in the eu-west-2 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen5n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-1E69E5C6",
+      "QuotaName": "Gen4n GPUs, ap-northeast-2",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen4n GPUs you can configure for streaming in the ap-northeast-2 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen4n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-CF1BB654",
+      "QuotaName": "Gen4n GPUs, eu-west-2",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen4n GPUs you can configure for streaming in the eu-west-2 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen4n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-6743EB6B",
+      "QuotaName": "Gen6n GPUs, eu-west-2",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen6n GPUs you can configure for streaming in the eu-west-2 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen6n_high\", support streaming more than one session per GPU."
+    },
+    {
+      "QuotaCode": "L-E84C6A80",
+      "QuotaName": "Stream groups",
+      "Value": 5.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of stream groups that you can create in this account, per AWS Region. A stream group is a collection of compute resources that stream your application to end users."
+    },
+    {
+      "QuotaCode": "L-707F72E2",
+      "QuotaName": "Gen4n GPUs, ap-southeast-2",
+      "Value": 0.0,
+      "GlobalQuota": false,
+      "QuotaAppliedAtLevel": "ACCOUNT",
+      "Description": "The maximum number of Gen4n GPUs you can configure for streaming in the ap-southeast-2 location across all stream groups in this account. Multi-tenant stream classes, such as \"Gen4n_high\", support streaming more than one session per GPU."
+    }
+  ],
+  "tokyo_gr6_public_bundles": [
+    {
+      "BundleId": "wsb-1flyb93rf",
+      "Name": "Graphics.gr6f.4xlarge with Windows Server 2025 (BYOP) (Japanese)",
+      "Description": "Graphics.gr6f.4xlarge with Windows Server 2025 with No Streaming Protocol 16 vCPU 128 GiB Memory 0.5 GPU 12 GiB Video Memory (Japanese)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6F_4XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "250"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-g1gsvq9cj",
+      "Name": "Graphics.gr6f.4xlarge with Windows Server 2022 (WSP)",
+      "Description": "Graphics.gr6f.4xlarge with Windows Server 2022 with WorkSpaces Streaming Protocol 16 vCPU 128 GiB Memory 0.5 GPU 12 GiB Video Memory (English)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6F_4XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "250"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-5mpqp50vv",
+      "Name": "Graphics.gr6.4xlarge with Windows Server 2022 (WSP)",
+      "Description": "Graphics.gr6.4xlarge with Windows Server 2022 with WorkSpaces Streaming Protocol 16 vCPU 128 GiB Memory 1 GPU 24 GiB Video Memory (English)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6_4XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "250"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-vrlc2fkbd",
+      "Name": "Graphics.gr6f.4xlarge with Windows Server 2025 (WSP)",
+      "Description": "Graphics.gr6f.4xlarge with Windows Server 2025 with WorkSpaces Streaming Protocol 16 vCPU 128 GiB Memory 0.5 GPU 12 GiB Video Memory (English)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6F_4XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "250"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-fl9wqf4ml",
+      "Name": "Graphics.gr6.8xlarge with Windows Server 2022 (WSP) (Japanese)",
+      "Description": "Graphics.gr6.8xlarge with Windows Server 2022 with WorkSpaces Streaming Protocol 32 vCPU 256 GiB Memory 1 GPU 24 GiB Video Memory (Japanese)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6_8XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "300"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-vgdtx4flf",
+      "Name": "Graphics.gr6f.4xlarge with Windows Server 2022 (WSP) (Japanese)",
+      "Description": "Graphics.gr6f.4xlarge with Windows Server 2022 with WorkSpaces Streaming Protocol 16 vCPU 128 GiB Memory 0.5 GPU 12 GiB Video Memory (Japanese)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6F_4XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "250"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-06ms1w6j6",
+      "Name": "Graphics.gr6.8xlarge with Windows Server 2025 (WSP) (Japanese)",
+      "Description": "Graphics.gr6.8xlarge with Windows Server 2025 with WorkSpaces Streaming Protocol 32 vCPU 256 GiB Memory 1 GPU 24 GiB Video Memory (Japanese)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6_8XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "300"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-0hzvgpb94",
+      "Name": "Graphics.gr6.8xlarge with Windows Server 2025 (BYOP)",
+      "Description": "Graphics.gr6.8xlarge with Windows Server 2025 with No Streaming Protocol 32 vCPU 256 GiB Memory 1 GPU 24 GiB Video Memory (English)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6_8XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "300"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-k7d8jhfzq",
+      "Name": "Graphics.gr6f.4xlarge with Windows Server 2022 (BYOP)",
+      "Description": "Graphics.gr6f.4xlarge with Windows Server 2022 with No Streaming Protocol 16 vCPU 128 GiB Memory 0.5 GPU 12 GiB Video Memory (English)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6F_4XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "250"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-9sm72r6sh",
+      "Name": "Graphics.gr6.4xlarge with Windows Server 2025 (BYOP)",
+      "Description": "Graphics.gr6.4xlarge with Windows Server 2025 with No Streaming Protocol 16 vCPU 128 GiB Memory 1 GPU 24 GiB Video Memory (English)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6_4XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "250"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-kb5d40x19",
+      "Name": "Graphics.gr6.8xlarge with Windows Server 2025 (BYOP) (Japanese)",
+      "Description": "Graphics.gr6.8xlarge with Windows Server 2025 with No Streaming Protocol 32 vCPU 256 GiB Memory 1 GPU 24 GiB Video Memory (Japanese)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6_8XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "300"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-v1wbxv8z0",
+      "Name": "Graphics.gr6.8xlarge with Windows Server 2022 (BYOP) (Japanese)",
+      "Description": "Graphics.gr6.8xlarge with Windows Server 2022 with No Streaming Protocol 32 vCPU 256 GiB Memory 1 GPU 24 GiB Video Memory (Japanese)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6_8XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "300"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-f69rqkt03",
+      "Name": "Graphics.gr6.4xlarge with Windows Server 2022 (BYOP) (Japanese)",
+      "Description": "Graphics.gr6.4xlarge with Windows Server 2022 with No Streaming Protocol 16 vCPU 128 GiB Memory 1 GPU 24 GiB Video Memory (Japanese)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6_4XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "250"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-4rxq9zjsp",
+      "Name": "Graphics.gr6.4xlarge with Windows Server 2022 (WSP) (Japanese)",
+      "Description": "Graphics.gr6.4xlarge with Windows Server 2022 with WorkSpaces Streaming Protocol 16 vCPU 128 GiB Memory 1 GPU 24 GiB Video Memory (Japanese)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6_4XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "250"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-hy7kfvng3",
+      "Name": "Graphics.gr6.4xlarge with Windows Server 2025 (BYOP) (Japanese)",
+      "Description": "Graphics.gr6.4xlarge with Windows Server 2025 with No Streaming Protocol 16 vCPU 128 GiB Memory 1 GPU 24 GiB Video Memory (Japanese)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6_4XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "250"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-7wgxtkwdp",
+      "Name": "Graphics.gr6f.4xlarge with Windows Server 2025 (WSP) (Japanese)",
+      "Description": "Graphics.gr6f.4xlarge with Windows Server 2025 with WorkSpaces Streaming Protocol 16 vCPU 128 GiB Memory 0.5 GPU 12 GiB Video Memory (Japanese)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6F_4XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "250"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-f2hnb6qtk",
+      "Name": "Graphics.gr6.4xlarge with Windows Server 2022 (BYOP)",
+      "Description": "Graphics.gr6.4xlarge with Windows Server 2022 with No Streaming Protocol 16 vCPU 128 GiB Memory 1 GPU 24 GiB Video Memory (English)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6_4XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "250"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-4nqlpghrb",
+      "Name": "Graphics.gr6.8xlarge with Windows Server 2025 (WSP)",
+      "Description": "Graphics.gr6.8xlarge with Windows Server 2025 with WorkSpaces Streaming Protocol 32 vCPU 256 GiB Memory 1 GPU 24 GiB Video Memory (English)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6_8XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "300"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-cjc4703ws",
+      "Name": "Graphics.gr6.4xlarge with Windows Server 2025 (WSP) (Japanese)",
+      "Description": "Graphics.gr6.4xlarge with Windows Server 2025 with WorkSpaces Streaming Protocol 16 vCPU 128 GiB Memory 1 GPU 24 GiB Video Memory (Japanese)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6_4XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "250"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-hkffzrlwk",
+      "Name": "Graphics.gr6.8xlarge with Windows Server 2022 (BYOP)",
+      "Description": "Graphics.gr6.8xlarge with Windows Server 2022 with No Streaming Protocol 32 vCPU 256 GiB Memory 1 GPU 24 GiB Video Memory (English)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6_8XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "300"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-7vyww6ccb",
+      "Name": "Graphics.gr6.8xlarge with Windows Server 2022 (WSP)",
+      "Description": "Graphics.gr6.8xlarge with Windows Server 2022 with WorkSpaces Streaming Protocol 32 vCPU 256 GiB Memory 1 GPU 24 GiB Video Memory (English)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6_8XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "300"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-cfjzmh1dw",
+      "Name": "Graphics.gr6.4xlarge with Windows Server 2025 (WSP)",
+      "Description": "Graphics.gr6.4xlarge with Windows Server 2025 with WorkSpaces Streaming Protocol 16 vCPU 128 GiB Memory 1 GPU 24 GiB Video Memory (English)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6_4XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "250"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-4mxzkbs1m",
+      "Name": "Graphics.gr6f.4xlarge with Windows Server 2022 (BYOP) (Japanese)",
+      "Description": "Graphics.gr6f.4xlarge with Windows Server 2022 with No Streaming Protocol 16 vCPU 128 GiB Memory 0.5 GPU 12 GiB Video Memory (Japanese)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6F_4XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "250"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    },
+    {
+      "BundleId": "wsb-25st5qnb5",
+      "Name": "Graphics.gr6f.4xlarge with Windows Server 2025 (BYOP)",
+      "Description": "Graphics.gr6f.4xlarge with Windows Server 2025 with No Streaming Protocol 16 vCPU 128 GiB Memory 0.5 GPU 12 GiB Video Memory (English)",
+      "ComputeType": {
+        "Name": "GRAPHICS_GR6F_4XLARGE"
+      },
+      "RootStorage": {
+        "Capacity": "250"
+      },
+      "UserStorage": {
+        "Capacity": "200"
+      },
+      "BundleType": "REGULAR"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "captured_at_utc": "2026-10-27T14:39:41Z",
+  "read_only": true,
+  "surfaces": {
+    "ap-northeast-1": {
+      "page_title": "Amazon SageMaker AI | Amazon SageMaker | ap-northeast-1",
+      "service_content_loaded": true,
+      "verify_your_account_prompt_detected": false,
+      "verification_or_eligibility_hint_detected": false
+    },
+    "us-east-2": {
+      "page_title": "Amazon SageMaker AI | Amazon SageMaker | us-east-2",
+      "service_content_loaded": true,
+      "verify_your_account_prompt_detected": false,
+      "verification_or_eligibility_hint_detected": false
+    }
+  },
+  "interpretation": "No explicit verification or eligibility prompt was observed on either landing page; underlying account eligibility remains unknown."
+}

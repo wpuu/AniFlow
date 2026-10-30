@@ -1,0 +1,414 @@
+{
+  "captured_at_utc": "2026-10-27T22:31:26.624512+08:00",
+  "completed_at_utc": "2026-10-27T22:34:11.983516+08:00",
+  "read_only": true,
+  "enabled_regions_audited": 20,
+  "sagemaker_gpu_quotas_audited_total": 6151.0,
+  "sagemaker_gpu_nonzero_count": 0,
+  "original_full_record_sha256": "29edca59ad696e3f7d0eea446835f64f7bc31091fd7e09913de7b6a8fb23be1c",
+  "cloud_resource_mutations": 0,
+  "model_downloads_started": 0,
+  "regions": [
+    {
+      "region": "ap-east-2",
+      "ec2_spot_g_vt": {
+        "code": "L-3819A6DF",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "ec2_on_demand_p": {
+        "code": "L-417A185B",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "sagemaker_status": "complete",
+      "sagemaker_listed_count": 511,
+      "sagemaker_gpu_quota_count": 29,
+      "sagemaker_gpu_null_values": 0,
+      "sagemaker_gpu_nonzero_values": 0
+    },
+    {
+      "region": "ap-east-1",
+      "ec2_spot_g_vt": {
+        "code": "L-3819A6DF",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "ec2_on_demand_p": {
+        "code": "L-417A185B",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "sagemaker_status": "complete",
+      "sagemaker_listed_count": 852,
+      "sagemaker_gpu_quota_count": 102,
+      "sagemaker_gpu_null_values": 0,
+      "sagemaker_gpu_nonzero_values": 0
+    },
+    {
+      "region": "ap-northeast-2",
+      "ec2_spot_g_vt": {
+        "code": "L-3819A6DF",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "ec2_on_demand_p": {
+        "code": "L-417A185B",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "sagemaker_status": "complete",
+      "sagemaker_listed_count": 2147,
+      "sagemaker_gpu_quota_count": 405,
+      "sagemaker_gpu_null_values": 0,
+      "sagemaker_gpu_nonzero_values": 0
+    },
+    {
+      "region": "ap-northeast-3",
+      "ec2_spot_g_vt": {
+        "code": "L-3819A6DF",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "ec2_on_demand_p": {
+        "code": "L-417A185B",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "sagemaker_status": "complete",
+      "sagemaker_listed_count": 901,
+      "sagemaker_gpu_quota_count": 90,
+      "sagemaker_gpu_null_values": 0,
+      "sagemaker_gpu_nonzero_values": 0
+    },
+    {
+      "region": "ap-northeast-1",
+      "ec2_spot_g_vt": {
+        "code": "L-3819A6DF",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "ec2_on_demand_p": {
+        "code": "L-417A185B",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "sagemaker_status": "complete",
+      "sagemaker_listed_count": 2268,
+      "sagemaker_gpu_quota_count": 463,
+      "sagemaker_gpu_null_values": 0,
+      "sagemaker_gpu_nonzero_values": 0
+    },
+    {
+      "region": "ap-south-1",
+      "ec2_spot_g_vt": {
+        "code": "L-3819A6DF",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "ec2_on_demand_p": {
+        "code": "L-417A185B",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "sagemaker_status": "complete",
+      "sagemaker_listed_count": 2153,
+      "sagemaker_gpu_quota_count": 387,
+      "sagemaker_gpu_null_values": 0,
+      "sagemaker_gpu_nonzero_values": 0
+    },
+    {
+      "region": "ap-south-2",
+      "ec2_spot_g_vt": {
+        "code": "L-3819A6DF",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "ec2_on_demand_p": {
+        "code": "L-417A185B",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "sagemaker_status": "complete",
+      "sagemaker_listed_count": 1315,
+      "sagemaker_gpu_quota_count": 164,
+      "sagemaker_gpu_null_values": 0,
+      "sagemaker_gpu_nonzero_values": 0
+    },
+    {
+      "region": "ap-southeast-1",
+      "ec2_spot_g_vt": {
+        "code": "L-3819A6DF",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "ec2_on_demand_p": {
+        "code": "L-417A185B",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "sagemaker_status": "complete",
+      "sagemaker_listed_count": 1920,
+      "sagemaker_gpu_quota_count": 166,
+      "sagemaker_gpu_null_values": 0,
+      "sagemaker_gpu_nonzero_values": 0
+    },
+    {
+      "region": "ap-southeast-2",
+      "ec2_spot_g_vt": {
+        "code": "L-3819A6DF",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "ec2_on_demand_p": {
+        "code": "L-417A185B",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "sagemaker_status": "complete",
+      "sagemaker_listed_count": 2085,
+      "sagemaker_gpu_quota_count": 315,
+      "sagemaker_gpu_null_values": 0,
+      "sagemaker_gpu_nonzero_values": 0
+    },
+    {
+      "region": "ca-central-1",
+      "ec2_spot_g_vt": {
+        "code": "L-3819A6DF",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "ec2_on_demand_p": {
+        "code": "L-417A185B",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "sagemaker_status": "complete",
+      "sagemaker_listed_count": 1982,
+      "sagemaker_gpu_quota_count": 294,
+      "sagemaker_gpu_null_values": 0,
+      "sagemaker_gpu_nonzero_values": 0
+    },
+    {
+      "region": "eu-central-1",
+      "ec2_spot_g_vt": {
+        "code": "L-3819A6DF",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "ec2_on_demand_p": {
+        "code": "L-417A185B",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "sagemaker_status": "complete",
+      "sagemaker_listed_count": 2246,
+      "sagemaker_gpu_quota_count": 455,
+      "sagemaker_gpu_null_values": 0,
+      "sagemaker_gpu_nonzero_values": 0
+    },
+    {
+      "region": "eu-north-1",
+      "ec2_spot_g_vt": {
+        "code": "L-3819A6DF",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "ec2_on_demand_p": {
+        "code": "L-417A185B",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "sagemaker_status": "complete",
+      "sagemaker_listed_count": 1954,
+      "sagemaker_gpu_quota_count": 443,
+      "sagemaker_gpu_null_values": 0,
+      "sagemaker_gpu_nonzero_values": 0
+    },
+    {
+      "region": "eu-west-1",
+      "ec2_spot_g_vt": {
+        "code": "L-3819A6DF",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "ec2_on_demand_p": {
+        "code": "L-417A185B",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "sagemaker_status": "complete",
+      "sagemaker_listed_count": 2068,
+      "sagemaker_gpu_quota_count": 243,
+      "sagemaker_gpu_null_values": 0,
+      "sagemaker_gpu_nonzero_values": 0
+    },
+    {
+      "region": "eu-west-3",
+      "ec2_spot_g_vt": {
+        "code": "L-3819A6DF",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "ec2_on_demand_p": {
+        "code": "L-417A185B",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "sagemaker_status": "complete",
+      "sagemaker_listed_count": 1377,
+      "sagemaker_gpu_quota_count": 190,
+      "sagemaker_gpu_null_values": 0,
+      "sagemaker_gpu_nonzero_values": 0
+    },
+    {
+      "region": "eu-west-2",
+      "ec2_spot_g_vt": {
+        "code": "L-3819A6DF",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "ec2_on_demand_p": {
+        "code": "L-417A185B",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "sagemaker_status": "complete",
+      "sagemaker_listed_count": 2083,
+      "sagemaker_gpu_quota_count": 364,
+      "sagemaker_gpu_null_values": 0,
+      "sagemaker_gpu_nonzero_values": 0
+    },
+    {
+      "region": "sa-east-1",
+      "ec2_spot_g_vt": {
+        "code": "L-3819A6DF",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "ec2_on_demand_p": {
+        "code": "L-417A185B",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "sagemaker_status": "complete",
+      "sagemaker_listed_count": 1932,
+      "sagemaker_gpu_quota_count": 297,
+      "sagemaker_gpu_null_values": 0,
+      "sagemaker_gpu_nonzero_values": 0
+    },
+    {
+      "region": "us-east-1",
+      "ec2_spot_g_vt": {
+        "code": "L-3819A6DF",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "ec2_on_demand_p": {
+        "code": "L-417A185B",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "sagemaker_status": "complete",
+      "sagemaker_listed_count": 2420,
+      "sagemaker_gpu_quota_count": 561,
+      "sagemaker_gpu_null_values": 0,
+      "sagemaker_gpu_nonzero_values": 0
+    },
+    {
+      "region": "us-west-1",
+      "ec2_spot_g_vt": {
+        "code": "L-3819A6DF",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "ec2_on_demand_p": {
+        "code": "L-417A185B",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "sagemaker_status": "complete",
+      "sagemaker_listed_count": 1721,
+      "sagemaker_gpu_quota_count": 92,
+      "sagemaker_gpu_null_values": 0,
+      "sagemaker_gpu_nonzero_values": 0
+    },
+    {
+      "region": "us-east-2",
+      "ec2_spot_g_vt": {
+        "code": "L-3819A6DF",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "ec2_on_demand_p": {
+        "code": "L-417A185B",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "sagemaker_status": "complete",
+      "sagemaker_listed_count": 2383,
+      "sagemaker_gpu_quota_count": 531,
+      "sagemaker_gpu_null_values": 0,
+      "sagemaker_gpu_nonzero_values": 0
+    },
+    {
+      "region": "us-west-2",
+      "ec2_spot_g_vt": {
+        "code": "L-3819A6DF",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "ec2_on_demand_p": {
+        "code": "L-417A185B",
+        "status": "found",
+        "value": 0.0,
+        "source": "GetServiceQuota"
+      },
+      "sagemaker_status": "complete",
+      "sagemaker_listed_count": 2417,
+      "sagemaker_gpu_quota_count": 560,
+      "sagemaker_gpu_null_values": 0,
+      "sagemaker_gpu_nonzero_values": 0
+    }
+  ],
+  "matched_instance_families": "ml.g followed by a digit, or ml.p followed by a digit; includes G6e/G7e/P4/P5/P6, excludes gr6"
+}

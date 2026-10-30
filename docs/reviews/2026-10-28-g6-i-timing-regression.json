@@ -1,0 +1,28 @@
+{
+  "test_kind": "synthetic local timing regression, not a GPU success",
+  "aws_calls": 0,
+  "real_gpu_test": false,
+  "cases_passed": 4,
+  "cases": [
+    {
+      "case": "late_receipt",
+      "observed_upper_seconds": 650.0,
+      "within600": false
+    },
+    {
+      "case": "within_limit",
+      "observed_upper_seconds": 599.0,
+      "within600": true
+    },
+    {
+      "case": "wall_clock_backward",
+      "observed_upper_seconds": 599.0,
+      "within600": true
+    },
+    {
+      "case": "boundary_exceeded",
+      "observed_upper_seconds": 600.001,
+      "within600": false
+    }
+  ]
+}

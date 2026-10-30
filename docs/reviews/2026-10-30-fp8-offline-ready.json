@@ -1,0 +1,32 @@
+{
+  "verified_at_utc": "2026-10-29T17:14:01.792166+00:00",
+  "source_repository": "Comfy-Org/Wan-2.2",
+  "source_revision": "ee6f4a40737a995bf5818954cfce6d59443b0f04",
+  "transport_mirror": "https://www.modelscope.cn/models/Comfy-Org/Wan_2.2_ComfyUI_Repackaged",
+  "verified_experts": [
+    {
+      "filename": "wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
+      "bytes": 14294742832,
+      "sha256": "6122e79d55e0f235698d11d657f3b196c5273c830da00b2b013c5a048d5e6a42",
+      "full_sha256_verified": true
+    },
+    {
+      "filename": "wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors",
+      "bytes": 14294742832,
+      "sha256": "5471a457b6ac404202a5fbe6c11595a3d5641fc766b00f38763f72303fffc21e",
+      "full_sha256_verified": true
+    }
+  ],
+  "total_verified_expert_bytes": 28589485664,
+  "local_configuration_saved": true,
+  "t5_vae_reused_from_retained_cloud_installation": true,
+  "complete_local_environment_archive": false,
+  "complete_local_four_model_archive": false,
+  "original_archives_modified": false,
+  "runtime_profile_tests_passed": 119,
+  "bridge_and_staging_tests_passed": 224,
+  "aws_start_requests_this_cycle": 0,
+  "generation_posts_this_cycle": 0,
+  "real_video_generated": false,
+  "blocking_condition": "Original 15-minute runtime cannot plausibly complete the unchanged workflow; longer-window tax-budget assumptions await owner acceptance."
+}

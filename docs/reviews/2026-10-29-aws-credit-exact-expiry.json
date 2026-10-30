@@ -1,0 +1,151 @@
+{
+  "observed_at_utc": "2026-10-29T06:33:09.444900+00:00",
+  "source": "AWS Billing GetCredits API, read-only",
+  "api_http_status": 200,
+  "request_history_window_days": 364,
+  "account_matches_original_deployment": true,
+  "returned_credit_count": 6,
+  "previous_ui_active_credit_count": 5,
+  "ui_credit_name_matches": 5,
+  "all_five_ui_credits_exactly_matched": true,
+  "all_matched_have_exact_timestamps": true,
+  "all_matched_expire_at_same_instant": true,
+  "credits": [
+    {
+      "description": "AWS Free Tier",
+      "credit_type": "Promotion",
+      "credit_status": "ENABLED",
+      "console_visibility": "DISPLAY_ALL",
+      "initial_amount": {
+        "currencyCode": "USD",
+        "currencyAmount": "100.000000"
+      },
+      "booked_remaining_amount": {
+        "currencyCode": "USD",
+        "currencyAmount": "0.000000"
+      },
+      "estimated_remaining_amount": {
+        "currencyCode": "USD",
+        "currencyAmount": "0.000000"
+      },
+      "end_date_epoch_seconds": 1793330967.0,
+      "expires_at_utc": "2026-10-30T03:29:27+00:00",
+      "expires_at_beijing": "2026-10-30T11:29:27+08:00",
+      "exact_expiry_timestamp_available": true
+    },
+    {
+      "description": "Explore AWS: Launch an instance using EC2",
+      "credit_type": "Promotion",
+      "credit_status": "ENABLED",
+      "console_visibility": "DISPLAY_ALL",
+      "initial_amount": {
+        "currencyCode": "USD",
+        "currencyAmount": "20.000000"
+      },
+      "booked_remaining_amount": {
+        "currencyCode": "USD",
+        "currencyAmount": "11.140000"
+      },
+      "estimated_remaining_amount": {
+        "currencyCode": "USD",
+        "currencyAmount": "0.000000"
+      },
+      "end_date_epoch_seconds": 1793330996.0,
+      "expires_at_utc": "2026-10-30T03:29:56+00:00",
+      "expires_at_beijing": "2026-10-30T11:29:56+08:00",
+      "exact_expiry_timestamp_available": true
+    },
+    {
+      "description": "Explore AWS: Use a foundation model in the Amazon Bedrock playground",
+      "credit_type": "Promotion",
+      "credit_status": "ENABLED",
+      "console_visibility": "DISPLAY_ALL",
+      "initial_amount": {
+        "currencyCode": "USD",
+        "currencyAmount": "20.000000"
+      },
+      "booked_remaining_amount": {
+        "currencyCode": "USD",
+        "currencyAmount": "20.000000"
+      },
+      "estimated_remaining_amount": {
+        "currencyCode": "USD",
+        "currencyAmount": "0.000000"
+      },
+      "end_date_epoch_seconds": 1793330996.0,
+      "expires_at_utc": "2026-10-30T03:29:56+00:00",
+      "expires_at_beijing": "2026-10-30T11:29:56+08:00",
+      "exact_expiry_timestamp_available": true
+    },
+    {
+      "description": "Explore AWS: Set up a cost budget using AWS Budgets",
+      "credit_type": "Promotion",
+      "credit_status": "ENABLED",
+      "console_visibility": "DISPLAY_ALL",
+      "initial_amount": {
+        "currencyCode": "USD",
+        "currencyAmount": "20.000000"
+      },
+      "booked_remaining_amount": {
+        "currencyCode": "USD",
+        "currencyAmount": "20.000000"
+      },
+      "estimated_remaining_amount": {
+        "currencyCode": "USD",
+        "currencyAmount": "2.190000"
+      },
+      "end_date_epoch_seconds": 1793330996.0,
+      "expires_at_utc": "2026-10-30T03:29:56+00:00",
+      "expires_at_beijing": "2026-10-30T11:29:56+08:00",
+      "exact_expiry_timestamp_available": true
+    },
+    {
+      "description": "Explore AWS: Create a web app using AWS Lambda",
+      "credit_type": "Promotion",
+      "credit_status": "ENABLED",
+      "console_visibility": "DISPLAY_ALL",
+      "initial_amount": {
+        "currencyCode": "USD",
+        "currencyAmount": "20.000000"
+      },
+      "booked_remaining_amount": {
+        "currencyCode": "USD",
+        "currencyAmount": "20.000000"
+      },
+      "estimated_remaining_amount": {
+        "currencyCode": "USD",
+        "currencyAmount": "20.000000"
+      },
+      "end_date_epoch_seconds": 1793330996.0,
+      "expires_at_utc": "2026-10-30T03:29:56+00:00",
+      "expires_at_beijing": "2026-10-30T11:29:56+08:00",
+      "exact_expiry_timestamp_available": true
+    },
+    {
+      "description": "Explore AWS: Create an Aurora or RDS database",
+      "credit_type": "Promotion",
+      "credit_status": "ENABLED",
+      "console_visibility": "DISPLAY_ALL",
+      "initial_amount": {
+        "currencyCode": "USD",
+        "currencyAmount": "20.000000"
+      },
+      "booked_remaining_amount": {
+        "currencyCode": "USD",
+        "currencyAmount": "20.000000"
+      },
+      "estimated_remaining_amount": {
+        "currencyCode": "USD",
+        "currencyAmount": "20.000000"
+      },
+      "end_date_epoch_seconds": 1793330996.0,
+      "expires_at_utc": "2026-10-30T03:29:56+00:00",
+      "expires_at_beijing": "2026-10-30T11:29:56+08:00",
+      "exact_expiry_timestamp_available": true
+    }
+  ],
+  "resource_writes": 0,
+  "gpu_start_or_create": false,
+  "no_account_or_credit_identifiers_persisted": true,
+  "official_timestamp_definition": "https://docs.aws.amazon.com/aws-cost-management/latest/APIReference/API_billing_CreditData.html"
+}

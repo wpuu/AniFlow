@@ -1,0 +1,11 @@
+{
+  "state": "PINNED_WINDOWS_RUNTIME_VERIFIED_NOT_GPU_VALIDATED",
+  "verified_at_utc": "2026-10-26T14:33:48.632665+00:00",
+  "source": "https://github.com/Comfy-Org/ComfyUI/releases/download/v0.42.1/ComfyUI_windows_portable_nvidia.7z",
+  "file": "D:\\AniFlow-H3-Windows-20261026\\ComfyUI_windows_portable_nvidia.7z",
+  "bytes": 2018444114,
+  "sha256": "496afd18790ec685d99ebba2edf200d7371a29fbdd3a992bb0f4f52f244a6874",
+  "existing_linux_archive_modified": false,
+  "gpu_tested": false,
+  "real_video_count": 0
+}

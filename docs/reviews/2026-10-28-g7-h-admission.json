@@ -1,0 +1,22 @@
+{
+  "created_at_utc": "2026-10-28T04:10:45.490362+00:00",
+  "experiment_id": "aniflow-wan-ohio-20261027-g7-h",
+  "region": "us-east-2",
+  "zone": "auto",
+  "instance_type": "g7.2xlarge",
+  "error_code": "InsufficientInstanceCapacity",
+  "capacity_message": "Insufficient capacity.",
+  "reconciled_at_utc": "2026-10-28T04:10:58.089301+00:00",
+  "confirmed_nonterminated_instances": 0,
+  "confirmed_tagged_volumes": 0,
+  "stop_utc": "2026-10-28T04:16:17Z",
+  "cleanup_utc": "2026-10-28T04:17:17Z",
+  "root_encrypted_gb": 180,
+  "video_submitted": false,
+  "actual_gpu_request_count": 1,
+  "actual_gpu_created": false,
+  "real_gpu_preflight_completed": false,
+  "model_downloads_started": false,
+  "real_video_count": 0,
+  "total_capacity_rejections_to_date": 26
+}
